@@ -25,10 +25,15 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->name(),
+            'user_id' => strtoupper(Str::random(10)),
+            'first_name' => fake()->firstName(),
+            'last_name' => fake()->lastName(),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
+            'role' => 0,
+            'is_active' => 1,
+            'current_role' => 'student',
             'remember_token' => Str::random(10),
             /* @chisel-2fa */
             'two_factor_secret' => null,

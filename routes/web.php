@@ -2,16 +2,18 @@
 
 use Illuminate\Support\Facades\Route;
 
-use App\Http\Controllers\TutorController;
-use App\Http\Controllers\FavoriteController;
-use App\Http\Controllers\SubjectController;
-use App\Http\Controllers\AppointmentController;
-use App\Http\Controllers\AvailabilityController;
-use App\Http\Controllers\CheckScheduleController;
-use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\ContactController;
-use App\Http\Controllers\StudentProfileController;
-use App\Http\Controllers\RoleController;
+use App\Domains\TutorProfile\Http\Controllers\TutorController;
+use App\Domains\TutorProfile\Http\Controllers\FavoriteController;
+use App\Domains\Booking\Http\Controllers\SubjectController;
+use App\Domains\Booking\Http\Controllers\AppointmentController;
+use App\Domains\Scheduling\Http\Controllers\AvailabilityController;
+use App\Domains\Scheduling\Http\Controllers\CheckScheduleController;
+use App\Domains\Booking\Http\Controllers\NotificationController;
+use App\Domains\Auth\Http\Controllers\ContactController;
+use App\Domains\TutorProfile\Http\Controllers\StudentProfileController;
+use App\Domains\Auth\Http\Controllers\RoleController;
+use App\Domains\Reportreview\Http\Controllers\ReviewController;
+use App\Domains\Reportreview\Http\Controllers\Admin\ReportController;
 
 Route::get('/', [TutorController::class, 'home'])->name('home');
 
@@ -152,6 +154,40 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('/switch-role', [RoleController::class, 'switchRole'])
         ->name('role.switch');
+
+
+    // =========================
+    // รีวิว (Reviews)
+    // =========================
+
+    Route::get('/reviews', [ReviewController::class, 'index'])
+        ->name('reviews.index');
+
+    Route::get('/reviews/create', [ReviewController::class, 'create'])
+        ->name('reviews.create');
+
+    Route::post('/reviews', [ReviewController::class, 'store'])
+        ->name('reviews.store');
+
+    Route::get('/reviews/{review}/edit', [ReviewController::class, 'edit'])
+        ->name('reviews.edit');
+
+    Route::put('/reviews/{review}', [ReviewController::class, 'update'])
+        ->name('reviews.update');
+
+    Route::delete('/reviews/{review}', [ReviewController::class, 'destroy'])
+        ->name('reviews.destroy');
+
+
+    // =========================
+    // รายงาน (Reports)
+    // =========================
+
+    Route::get('/reports/create', [ReportController::class, 'create'])
+        ->name('reports.create');
+
+    Route::post('/reports', [ReportController::class, 'store'])
+        ->name('reports.store');
 });
 
 require __DIR__.'/settings.php';

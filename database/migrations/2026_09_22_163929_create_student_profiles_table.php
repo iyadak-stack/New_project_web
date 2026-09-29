@@ -9,8 +9,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('student_profiles', function (Blueprint $table) {
-            $table->id();
-            $table->integer('user_id');
+            $table->char('id', 10)->primary();
+            $table->char('user_id', 10);
             $table->text('bio')->nullable();
             $table->unique('user_id');
             $table->timestamps();

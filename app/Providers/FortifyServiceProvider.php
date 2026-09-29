@@ -3,9 +3,9 @@
 namespace App\Providers;
 
 /* @chisel-registration */
-use App\Actions\Fortify\CreateNewUser;
+use App\Domains\Auth\Actions\Fortify\CreateNewUser;
 /* @end-chisel-registration */
-use App\Actions\Fortify\ResetUserPassword;
+use App\Domains\Auth\Actions\Fortify\ResetUserPassword;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -49,21 +49,21 @@ class FortifyServiceProvider extends ServiceProvider
      */
     private function configureViews(): void
     {
-        Fortify::loginView(fn () => view('pages::auth.login'));
+        Fortify::loginView(fn () => view('domains.auth.pages.auth.login'));
         /* @chisel-email-verification */
-        Fortify::verifyEmailView(fn () => view('pages::auth.verify-email'));
+        Fortify::verifyEmailView(fn () => view('domains.auth.pages.auth.verify-email'));
         /* @end-chisel-email-verification */
         /* @chisel-2fa */
-        Fortify::twoFactorChallengeView(fn () => view('pages::auth.two-factor-challenge'));
+        Fortify::twoFactorChallengeView(fn () => view('domains.auth.pages.auth.two-factor-challenge'));
         /* @end-chisel-2fa */
         /* @chisel-password-confirmation */
-        Fortify::confirmPasswordView(fn () => view('pages::auth.confirm-password'));
+        Fortify::confirmPasswordView(fn () => view('domains.auth.pages.auth.confirm-password'));
         /* @end-chisel-password-confirmation */
         /* @chisel-registration */
-        Fortify::registerView(fn () => view('pages::auth.register'));
+        Fortify::registerView(fn () => view('domains.auth.pages.auth.register'));
         /* @end-chisel-registration */
-        Fortify::resetPasswordView(fn () => view('pages::auth.reset-password'));
-        Fortify::requestPasswordResetLinkView(fn () => view('pages::auth.forgot-password'));
+        Fortify::resetPasswordView(fn () => view('domains.auth.pages.auth.reset-password'));
+        Fortify::requestPasswordResetLinkView(fn () => view('domains.auth.pages.auth.forgot-password'));
     }
 
     /**

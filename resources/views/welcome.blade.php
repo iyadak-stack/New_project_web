@@ -1,18 +1,18 @@
-@extends('layouts.tutor')
+@extends('domains.tutor-profile.tutor.tutor')
 
-@section('title', 'Home')
+@section('title', 'หน้าแรก')
 
 @section('content')
 
     <div class="home-hero">
         <div>
-            <h1>Welcome to PeerTutor</h1>
+            <h1>ยินดีต้อนรับสู่ PeerTutor</h1>
             <p>
-                Find tutors, explore subjects, and manage your lessons.
+                ค้นหาติวเตอร์ สำรวจรายวิชา และจัดการคลาสเรียนของคุณ
             </p>
 
             <a href="{{ route('tutor.search') }}" class="btn btn-primary">
-                Search Tutor / Subject
+                ค้นหาติวเตอร์ / รายวิชา
             </a>
         </div>
     </div>
@@ -20,14 +20,14 @@
     <section class="home-section">
         <div class="section-header">
             <div>
-                <h2>Top Rated Tutors</h2>
+                <h2>ติวเตอร์ยอดนิยม</h2>
                 <p>
-                    Explore our highest-rated tutors.
+                    สำรวจติวเตอร์ที่มีคะแนนรีวิวสูงสุดของเรา
                 </p>
             </div>
 
             <a href="{{ route('tutor.ranking') }}" class="btn btn-outline-primary">
-                View Ranking
+                ดูการจัดอันดับ
             </a>
         </div>
 
@@ -43,32 +43,32 @@
                                 </div>
 
                                 <h3 class="tutor-name">
-                                    {{ $tutor->user->name ?? 'Unknown Tutor' }}
+                                    {{ $tutor->user->name ?? 'ไม่ระบุชื่อติวเตอร์' }}
                                 </h3>
 
                                 <div class="tutor-info">
-                                    <strong>Rating</strong>
+                                    <strong>คะแนนรีวิว</strong>
                                     <span>
                                         {{ number_format($tutor->average_rating, 2) }} / 5.00
                                     </span>
                                 </div>
 
                                 <div class="tutor-info">
-                                    <strong>Experience</strong>
+                                    <strong>ประสบการณ์</strong>
                                     <span>
-                                        {{ $tutor->experience_years }} years
+                                        {{ $tutor->experience_years }} ปี
                                     </span>
                                 </div>
 
                                 <div class="tutor-info">
-                                    <strong>Teaching Mode</strong>
+                                    <strong>รูปแบบการสอน</strong>
                                     <span>
                                         {{ ucfirst($tutor->teaching_mode) }}
                                     </span>
                                 </div>
 
                                 <div class="tutor-subjects">
-                                    <strong>Subjects</strong>
+                                    <strong>รายวิชาที่สอน</strong>
 
                                     <div class="mt-2">
                                         @if ($tutor->subjects->count() > 0)
@@ -80,7 +80,7 @@
 
                                         @else
                                             <span class="text-muted">
-                                                No subjects assigned yet.
+                                                ยังไม่ได้ระบุวิชาที่สอน
                                             </span>
                                         @endif
                                     </div>
@@ -88,7 +88,7 @@
 
                                 <div class="mt-4">
                                     <a href="{{ route('tutor.show', $tutor) }}" class="btn btn-primary w-100">
-                                        View Tutor
+                                        ดูรายละเอียดติวเตอร์
                                     </a>
                                 </div>
                             </div>
@@ -98,7 +98,7 @@
             </div>
         @else
             <div class="alert alert-secondary">
-                No tutors available yet.
+                ยังไม่มีข้อมูลติวเตอร์ในขณะนี้
             </div>
         @endif
     </section>
@@ -106,14 +106,14 @@
     <section class="home-section">
         <div class="section-header">
             <div>
-                <h2>Top Subjects</h2>
+                <h2>รายวิชายอดนิยม</h2>
                 <p>
-                    Explore subjects currently taught by our tutors.
+                    สำรวจรายวิชาที่กำลังเปิดสอนโดยติวเตอร์ของเรา
                 </p>
             </div>
 
             <a href="{{ route('tutor.search') }}" class="btn btn-outline-primary">
-                Search Subjects
+                ค้นหารายวิชา
             </a>
         </div>
 
@@ -130,10 +130,10 @@
                                 <h3 class="subject-name">{{ $subject->subject_name }}</h3>
 
                                 <p class="text-muted mb-0">
-                                    Tutors teaching this subject:
+                                    ติวเตอร์ที่สอนวิชานี้:
 
                                     <strong>
-                                        {{ $subject->tutors->count() }}
+                                        {{ $subject->tutors->count() }} ท่าน
                                     </strong>
                                 </p>
                             </div>
@@ -143,7 +143,7 @@
             </div>
         @else
             <div class="alert alert-secondary">
-                No subjects available yet.
+                ยังไม่มีข้อมูลรายวิชาในขณะนี้
             </div>
         @endif
     </section>
@@ -151,9 +151,9 @@
     <section class="home-section">
         <div class="section-header">
             <div>
-                <h2>Upcoming Lessons</h2>
+                <h2>ตารางเรียนที่กำลังจะมาถึง</h2>
                 <p>
-                    Your upcoming lessons will appear here.
+                    รายการคลาสเรียนของคุณจะแสดงที่นี่
                 </p>
             </div>
         </div>
@@ -161,8 +161,7 @@
         <div class="card upcoming-card">
             <div class="card-body">
                 <p class="mb-0 text-muted">
-                    This section will be connected to the team's
-                    Appointment and Schedule system later.
+                    ส่วนนี้จะเชื่อมต่อกับระบบนัดหมายและตารางเรียน (Appointment & Schedule System) ของทีมต่อไป
                 </p>
             </div>
         </div>

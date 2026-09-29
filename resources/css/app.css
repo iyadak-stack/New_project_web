@@ -1,6 +1,5 @@
 @import 'tailwindcss';
 @import '../../vendor/livewire/flux/dist/flux.css';
-@import './peer-tutor.css';
 
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
@@ -62,6 +61,701 @@ select:focus[data-flux-control] {
     @apply outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-accent-foreground;
 }
 
-/* \[:where(&)\]:size-4 {
-    @apply size-4;
-} */
+/* =========================================================
+   PeerTutor - โทนนักเรียน/เพื่อนช่วยติว
+   แนวคิด: อบอุ่น เป็นกันเอง แต่ดูน่าเชื่อถือและใช้งานง่าย
+   พื้นหลังเรียบสะอาด ไม่มีเส้นกระดาษ เน้นการ์ดนุ่มนวลมีมิติ
+========================================================= */
+
+:root {
+    --paper: #fbf8f3;
+    --surface: #ffffff;
+    --ink: #2d2a24;
+    --ink-soft: #746c5e;
+    --ink-faint: #a39a89;
+    --accent: #e8823c;
+    --accent-dark: #c96a2b;
+    --accent-soft: #fdece0;
+    --mint: #4f9e73;
+    --mint-soft: #e7f3ec;
+    --highlight: #ffe28a;
+    --card-border: #ece4d6;
+    --shadow-sm: 0 1px 2px rgba(45, 42, 36, 0.05), 0 1px 1px rgba(45, 42, 36, 0.04);
+    --shadow-md: 0 8px 20px -6px rgba(45, 42, 36, 0.12), 0 2px 6px -2px rgba(45, 42, 36, 0.06);
+    --shadow-hover: 0 14px 30px -8px rgba(201, 106, 43, 0.22), 0 4px 10px -4px rgba(45, 42, 36, 0.08);
+    --radius-md: 12px;
+    --radius-lg: 16px;
+}
+
+body {
+    margin: 0;
+    background-color: var(--paper);
+    color: var(--ink);
+    font-family: 'Kanit', 'Sarabun', Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+.page-content {
+    padding: 32px 40px;
+}
+
+/* ---------- การ์ดทั่วไป ---------- */
+
+.profile-card,
+.tutor-card,
+.subject-card,
+.ranking-card,
+.favorite-card {
+    background-color: var(--surface);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.tutor-card,
+.subject-card,
+.ranking-card,
+.favorite-card {
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.tutor-card:hover,
+.subject-card:hover,
+.ranking-card:hover,
+.favorite-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-hover);
+    border-color: #f0c9a4;
+}
+
+.section-title {
+    font-size: 21px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: var(--ink);
+    position: relative;
+    display: inline-block;
+}
+
+.section-title::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -4px;
+    width: 46px;
+    height: 4px;
+    background: var(--accent);
+    border-radius: 3px;
+}
+
+.back-link {
+    color: var(--ink-soft);
+    text-decoration: none;
+    font-size: 14px;
+    transition: color 0.2s ease;
+}
+
+.back-link:hover {
+    color: var(--accent-dark);
+}
+
+/* ---------- Empty state ---------- */
+
+.empty-favorites,
+.empty-ranking {
+    padding: 56px 20px;
+    text-align: center;
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg);
+    background-color: var(--surface);
+}
+
+.empty-favorites h2,
+.empty-ranking h2 {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: var(--ink);
+}
+
+.empty-favorites p,
+.empty-ranking p {
+    color: var(--ink-soft);
+    margin-bottom: 20px;
+}
+
+/* ========================================
+   Navbar
+======================================== */
+
+.peer-navbar {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 40px;
+    background-color: var(--surface);
+    border-bottom: 1px solid var(--card-border);
+}
+
+.peer-navbar-left {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.peer-navbar-right {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.peer-logo {
+    color: var(--accent-dark);
+    text-decoration: none;
+    font-size: 21px;
+    font-weight: 700;
+    margin-right: 8px;
+    transition: opacity 0.15s ease;
+    display: inline-block;
+}
+
+.peer-logo:hover,
+.peer-logo.active {
+    opacity: 0.85;
+}
+
+.peer-nav-link {
+    color: var(--ink-soft);
+    text-decoration: none;
+    font-size: 14px;
+    transition: color 0.2s ease;
+}
+
+.peer-nav-link:hover,
+.peer-nav-link.active {
+    color: var(--accent-dark);
+    font-weight: 600;
+}
+
+.peer-nav-text {
+    color: var(--ink-soft);
+    font-size: 14px;
+}
+
+.peer-role {
+    color: #fff;
+    font-size: 13px;
+    background-color: var(--mint);
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-weight: 600;
+}
+
+.peer-role-form {
+    margin: 0;
+}
+
+.peer-switch {
+    border: 1px solid var(--card-border);
+    background: var(--surface);
+    color: var(--ink-soft);
+    font-size: 13px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.peer-switch:hover {
+    color: var(--accent-dark);
+    border-color: var(--accent);
+}
+
+/* ========================================
+   Home
+======================================== */
+
+.home-hero {
+    background-color: var(--mint-soft);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    padding: 48px;
+    margin-bottom: 48px;
+    position: relative;
+}
+
+.home-hero h1 {
+    margin-bottom: 12px;
+    font-size: 34px;
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.home-hero p {
+    margin-bottom: 24px;
+    color: var(--ink-soft);
+    font-size: 16px;
+}
+
+.btn,
+.home-hero .btn {
+    background-color: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 22px;
+    font-weight: 600;
+    box-shadow: var(--shadow-sm);
+    transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.btn:hover {
+    background-color: var(--accent-dark);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+    color: #fff;
+}
+
+.btn-outline-primary {
+    background-color: var(--surface);
+    color: var(--accent-dark);
+    border: 1.5px solid var(--accent);
+    box-shadow: none;
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--accent-soft);
+}
+
+.home-section {
+    margin-bottom: 55px;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 25px;
+}
+
+.section-header h2 {
+    margin-bottom: 6px;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.section-header p {
+    margin: 0;
+    color: var(--ink-soft);
+}
+
+.tutor-rank,
+.subject-rank,
+.ranking-number {
+    color: var(--accent-dark);
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.tutor-name,
+.ranking-name {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: var(--ink);
+}
+
+.tutor-info {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--card-border);
+    font-size: 14px;
+}
+
+.tutor-info strong {
+    color: var(--ink);
+}
+
+.tutor-info span {
+    color: var(--ink-soft);
+    text-align: right;
+}
+
+.tutor-subjects,
+.subject-tutors {
+    margin-top: 15px;
+    font-size: 14px;
+}
+
+.subject-name {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: var(--ink);
+}
+
+.upcoming-card {
+    background-color: var(--surface);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg);
+}
+
+/* ========================================
+   Search
+======================================== */
+
+.search-header h1,
+.results-header h2,
+.search-section-title h3 {
+    color: var(--ink);
+    font-weight: 700;
+}
+
+.search-header {
+    margin-bottom: 25px;
+}
+
+.search-header h1 {
+    font-size: 30px;
+    margin-bottom: 8px;
+}
+
+.search-header p {
+    color: var(--ink-soft);
+    margin-bottom: 0;
+}
+
+.search-box {
+    margin-bottom: 40px;
+}
+
+.results-header {
+    margin-bottom: 30px;
+}
+
+.results-header h2 {
+    font-size: 24px;
+    margin-bottom: 6px;
+}
+
+.results-header p {
+    color: var(--ink-soft);
+    margin-bottom: 0;
+}
+
+.result-section {
+    margin-bottom: 50px;
+}
+
+.search-section-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.search-section-title h3 {
+    font-size: 21px;
+    margin: 0;
+}
+
+.result-count {
+    color: var(--ink-soft);
+    font-size: 14px;
+}
+
+.tutor-bio {
+    margin-top: 15px;
+    font-size: 14px;
+}
+
+.tutor-bio p {
+    color: var(--ink-soft);
+    margin-top: 7px;
+    margin-bottom: 0;
+    line-height: 1.7;
+}
+
+.tutor-result {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--card-border);
+}
+
+.tutor-result:last-child {
+    border-bottom: none;
+}
+
+.tutor-link {
+    color: var(--ink);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s ease;
+}
+
+.tutor-link:hover {
+    color: var(--accent-dark);
+}
+
+.no-results {
+    margin-top: 20px;
+}
+
+/* ========================================
+   รายละเอียดติวเตอร์
+======================================== */
+
+.profile-header h1 {
+    font-size: 30px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--ink);
+}
+
+.profile-header {
+    margin-bottom: 30px;
+}
+
+.profile-description {
+    color: var(--ink-soft);
+    margin-bottom: 0;
+}
+
+.profile-info-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.info-item {
+    padding: 16px;
+    background-color: var(--mint-soft);
+    border-radius: var(--radius-md);
+}
+
+.info-label {
+    display: block;
+    color: var(--ink-soft);
+    font-size: 13px;
+    margin-bottom: 5px;
+}
+
+.about-text {
+    color: var(--ink-soft);
+    line-height: 1.7;
+    margin-bottom: 0;
+}
+
+.subject-badge {
+    font-size: 14px;
+    font-weight: 500;
+    padding: 6px 14px;
+    margin-right: 6px;
+    margin-bottom: 6px;
+    background-color: var(--accent-soft);
+    color: var(--accent-dark);
+    border-radius: 999px;
+    display: inline-block;
+}
+
+.schedule-placeholder {
+    padding: 25px;
+    background-color: var(--paper);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-md);
+}
+
+.schedule-placeholder p {
+    margin-bottom: 6px;
+    color: var(--ink-soft);
+}
+
+.schedule-placeholder small {
+    color: var(--ink-faint);
+}
+
+.booking-note {
+    margin-top: 12px;
+    margin-bottom: 0;
+    color: var(--ink-faint);
+    font-size: 13px;
+}
+
+.favorite-card {
+    position: sticky;
+    top: 20px;
+}
+
+.favorite-status {
+    color: var(--ink-soft);
+    font-size: 14px;
+    margin-bottom: 18px;
+}
+
+.back-section {
+    margin-top: 25px;
+    padding-bottom: 20px;
+}
+
+/* ========================================
+   รายการโปรด
+======================================== */
+
+.favorites-header h1 {
+    font-size: 30px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--ink);
+}
+
+.favorites-header {
+    margin-bottom: 30px;
+}
+
+.favorites-header p {
+    color: var(--ink-soft);
+    margin-bottom: 0;
+}
+
+.favorite-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 25px;
+}
+
+.favorite-actions .btn {
+    width: 100%;
+}
+
+/* ========================================
+   จัดอันดับติวเตอร์
+======================================== */
+
+.ranking-header h1 {
+    font-size: 30px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--ink);
+}
+
+.ranking-header {
+    margin-bottom: 30px;
+}
+
+.ranking-header p {
+    color: var(--ink-soft);
+    margin-bottom: 0;
+}
+
+.ranking-list {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.ranking-info {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+}
+
+.ranking-info > div {
+    padding: 12px 15px;
+    background-color: var(--mint-soft);
+    border-radius: var(--radius-md);
+}
+
+.ranking-info span {
+    display: block;
+    color: var(--ink-soft);
+    font-size: 13px;
+    margin-bottom: 5px;
+}
+
+.ranking-info strong {
+    color: var(--ink);
+    font-size: 14px;
+}
+
+.ranking-actions {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center;
+    gap: 16px;
+    margin-top: 24px;
+}
+
+.ranking-actions form {
+    margin: 0;
+    display: inline-block;
+}
+
+.ranking-actions .btn {
+    width: auto !important;
+    white-space: nowrap;
+}
+
+/* ========================================
+   โปรไฟล์ติวเตอร์
+======================================== */
+
+.profile-actions {
+    margin-top: 24px;
+}
+
+/* ========================================
+   Responsive
+======================================== */
+
+@media (max-width: 768px) {
+
+    .home-hero {
+        padding: 30px;
+    }
+
+    .home-hero h1 {
+        font-size: 26px;
+    }
+
+    .section-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .search-section-title {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .tutor-result {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .profile-header h1 {
+        font-size: 26px;
+    }
+
+    .profile-info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .favorite-card {
+        position: static;
+    }
+
+    .ranking-info {
+        grid-template-columns: 1fr;
+    }
+}

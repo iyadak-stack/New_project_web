@@ -8,7 +8,6 @@ export default defineConfig({
         laravel({
             input: [
                 'resources/css/app.css',
-                'resources/css/peer-tutor.css',
                 'resources/js/app.js',
                 /* @chisel-passkeys */
                 'resources/js/passkeys.js',

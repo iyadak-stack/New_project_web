@@ -7,32 +7,63 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use App\Domains\Auth\Models\User;
 use App\Domains\Booking\Models\Subject;
+use App\Domains\Booking\Models\Appointment;
+use App\Domains\Reportreview\Models\Review;
 
 class TutorProfile extends Model
 {
+    protected $table = 'tutor_profiles';
+    protected $primaryKey = 'tutor_id';
+    public $incrementing = false;
+    protected $keyType = 'string';
     protected $fillable = [
-        'user_id',
+        'tutor_id',
+        'Users_user_id',
         'bio',
         'experience_years',
+        'total_teaching_seconds',
         'average_rating',
         'teaching_mode',
     ];
 
-    // ความสัมพันธ์: TutorProfile เป็นของ User 1 คน
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(
+            User::class,
+            'Users_user_id',
+            'user_id'
+        );
     }
 
     public function subjects(): BelongsToMany
     {
         return $this->belongsToMany(
             Subject::class,
-            'Tutor_profiles_has_Subject',
+            'tutor_profiles_has_subjects',
             'Tutor_profiles_tutor_id',
             'Subject_subject_id',
-            'id',
-            'Subjec_id'
+            'tutor_id',
+            'subject_id'
         );
+    }
+
+    public function appointments()
+    {
+        return $this->hasMany(
+            Appointment::class,
+            'Tutor_profiles_tutor_id',
+            'tutor_id'
+        );
+    }
+
+    public function reviews()
+    {
+        return $this->hasMany(
+            Review::class,
+            'Tutor_profiles_tutor_id',
+            'tutor_id'
+        )
+        ->withTrashed()
+        ->whereNull('reviews.deleted_at');
     }
 }

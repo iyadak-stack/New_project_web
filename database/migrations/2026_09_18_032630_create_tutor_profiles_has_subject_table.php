@@ -8,10 +8,12 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('Tutor_profiles_has_Subject', function (Blueprint $table) {
-            $table->id();
-            $table->integer('Tutor_profiles_tutor_id');
+        Schema::create('tutor_profiles_has_subjects', function (Blueprint $table) {
+            $table->char('Tutor_profiles_tutor_id', 10);
             $table->char('Subject_subject_id', 10);
+
+            $table->timestamps();
+            $table->softDeletes();
 
             $table->unique([
                 'Tutor_profiles_tutor_id',
@@ -22,6 +24,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('Tutor_profiles_has_Subject');
+        Schema::dropIfExists('tutor_profiles_has_subjects');
     }
 };

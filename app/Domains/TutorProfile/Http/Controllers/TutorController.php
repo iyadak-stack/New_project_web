@@ -30,16 +30,28 @@ class TutorController extends Controller
 
     public function profile()
     {
-        $tutorProfile = TutorProfile::where('user_id', auth()->id())->first();
+        $tutorProfile = TutorProfile::where(
+            'Users_user_id',
+            auth()->id()
+        )->first();
 
-        return view('domains.tutor-profile.tutor.profile', compact('tutorProfile'));
+        return view(
+            'domains.tutor-profile.tutor.profile',
+            compact('tutorProfile')
+        );
     }
 
     public function editProfile()
     {
-        $tutorProfile = TutorProfile::where('user_id', auth()->id())->first();
+        $tutorProfile = TutorProfile::where(
+            'Users_user_id',
+            auth()->id()
+        )->first();
 
-        return view('domains.tutor-profile.tutor.edit-profile', compact('tutorProfile'));
+        return view(
+            'domains.tutor-profile.tutor.edit-profile',
+            compact('tutorProfile')
+        );
     }
 
     public function updateProfile(Request $request)
@@ -50,7 +62,10 @@ class TutorController extends Controller
             'teaching_mode' => ['required', 'in:online,onsite,both'],
         ]);
 
-        $tutorProfile = TutorProfile::where('user_id', auth()->id())->firstOrFail();
+        $tutorProfile = TutorProfile::where(
+            'Users_user_id',
+            auth()->id()
+        )->firstOrFail();
 
         $tutorProfile->update([
             'bio' => $request->bio,
@@ -60,8 +75,12 @@ class TutorController extends Controller
 
         return redirect()
             ->route('tutor.profile')
-            ->with('success', 'Tutor profile updated successfully.');
+            ->with(
+                'success',
+                'อัปเดตโปรไฟล์ติวเตอร์เรียบร้อยแล้ว'
+            );
     }
+
     public function search(Request $request)
     {
         $search = trim($request->input('search', ''));
@@ -70,16 +89,22 @@ class TutorController extends Controller
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($q) use ($search) {
 
-                    // Search by Tutor name
+                    // ค้นหาจากชื่อหรือนามสกุล Tutor
                     $q->whereHas('user', function ($userQuery) use ($search) {
-                        $userQuery->where(
-                            'name',
-                            'like',
-                            "%{$search}%"
-                        );
+                        $userQuery->where(function ($nameQuery) use ($search) {
+                            $nameQuery->where(
+                                'first_name',
+                                'like',
+                                "%{$search}%"
+                            )->orWhere(
+                                'last_name',
+                                'like',
+                                "%{$search}%"
+                            );
+                        });
                     })
 
-                    // OR search by Subject name
+                    // ค้นหาจากชื่อวิชา
                     ->orWhereHas('subjects', function ($subjectQuery) use ($search) {
                         $subjectQuery->where(
                             'subject_name',
@@ -93,21 +118,13 @@ class TutorController extends Controller
             ->orderByDesc('experience_years')
             ->get();
 
-        /*
-        * Subjects shown in the result should be
-        * the subjects taught by the tutors found above.
-        */
         $subjects = $tutors
             ->flatMap(function ($tutor) {
                 return $tutor->subjects;
             })
-            ->unique('Subjec_id')
+            ->unique('subject_id')
             ->values();
 
-        /*
-        * If the search matches a Subject directly,
-        * also make sure that subject appears in the result.
-        */
         if ($search !== '') {
             $matchedSubjects = Subject::with('tutors.user')
                 ->where(
@@ -119,16 +136,20 @@ class TutorController extends Controller
 
             $subjects = $subjects
                 ->merge($matchedSubjects)
-                ->unique('Subjec_id')
+                ->unique('subject_id')
                 ->values();
         }
 
-        return view('domains.tutor-profile.tutor.search', compact(
-            'tutors',
-            'subjects',
-            'search'
-        ));
+        return view(
+            'domains.tutor-profile.tutor.search',
+            compact(
+                'tutors',
+                'subjects',
+                'search'
+            )
+        );
     }
+
     public function ranking()
     {
         $tutors = TutorProfile::with('user')
@@ -136,21 +157,37 @@ class TutorController extends Controller
             ->orderByDesc('experience_years')
             ->get();
 
-        return view('domains.tutor-profile.tutor.ranking', compact('tutors'));
+        return view(
+            'domains.tutor-profile.tutor.ranking',
+            compact('tutors')
+        );
     }
 
     public function show(TutorProfile $tutorProfile)
     {
-        $tutorProfile->load(['user', 'subjects']);
+        $tutorProfile->load([
+            'user',
+            'subjects',
+            'reviews',
+            'appointments',
+        ]);
 
-        $isFavorite = Favorite::where('user_id', auth()->id())
-            ->where('favoritable_type', TutorProfile::class)
-            ->where('favoritable_id', $tutorProfile->id)
+        $isFavorite = Favorite::where(
+            'Users_user_id',
+            auth()->id()
+        )
+            ->where(
+                'Tutor_profiles_tutor_id',
+                $tutorProfile->tutor_id
+            )
             ->exists();
 
-        return view('domains.tutor-profile.tutor.show', compact(
-            'tutorProfile',
-            'isFavorite'
-        ));
+        return view(
+            'domains.tutor-profile.tutor.show',
+            compact(
+                'tutorProfile',
+                'isFavorite'
+            )
+        );
     }
 }

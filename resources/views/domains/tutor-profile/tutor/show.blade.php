@@ -1,152 +1,100 @@
-@extends('layouts.tutor')
+@extends('domains.tutor-profile.tutor.tutor')
 
 @section('title', 'รายละเอียดติวเตอร์')
 
 @section('content')
 
-    {{-- ส่วนหัวของหน้า --}}
-    <div class="profile-header">
-        <div>
-            <h1>{{ $tutorProfile->user->name ?? 'ไม่ระบุชื่อติวเตอร์' }}</h1>
+    <h1>
+        {{ $tutorProfile->user?->first_name }}
+        {{ $tutorProfile->user?->last_name }}
+    </h1>
 
-            <p class="profile-description">
-                ดูข้อมูลประวัติ รายวิชาที่สอน ตารางเวลาที่สะดวก และตัวเลือกการจองเรียน
-            </p>
-        </div>
-    </div>
+    <p>ดูข้อมูลประวัติ รายวิชาที่สอน ตารางเวลาที่สะดวก และตัวเลือกการจองเรียน</p>
+    <hr>
+    <h2>ข้อมูลติวเตอร์</h2>
+    <p>คะแนนรีวิว: {{ number_format($tutorProfile->average_rating, 2) }} / 5.00</p>
+    <p>ประสบการณ์: {{ $tutorProfile->experience_years }} ปี</p>
+    <p>รูปแบบการสอน: {{ ucfirst($tutorProfile->teaching_mode) }}</p>
+    <hr>
+    <h2>เกี่ยวกับติวเตอร์</h2>
+    <p>{{ $tutorProfile->bio ?? 'ไม่มีข้อมูลประวัติ' }}</p>
+    <hr>
+    <h2>รายวิชาที่เปิดสอน</h2>
 
-    <div class="row g-4">
-        <div class="col-lg-8">
-            <div class="card profile-card mb-4">
-                <div class="card-body">
-                    <h2 class="section-title">ข้อมูลติวเตอร์</h2>
-                    <div class="profile-info-grid">
-                        <div class="info-item">
-                            <span class="info-label">คะแนนรีวิว</span>
+    @if ($tutorProfile->subjects->count() > 0)
+        @foreach ($tutorProfile->subjects as $subject)
+            <p>{{ $subject->subject_name }}</p>
+        @endforeach
+    @else
+        <p>ยังไม่ได้ระบุวิชาที่สอน</p>
+    @endif
+    <hr>
 
-                            <strong>
-                                {{ number_format($tutorProfile->average_rating, 2) }} / 5.00
-                            </strong>
-                        </div>
-
-                        <div class="info-item">
-                            <span class="info-label">ประสบการณ์</span>
-
-                            <strong>
-                                {{ $tutorProfile->experience_years }} ปี
-                            </strong>
-                        </div>
-
-                        <div class="info-item">
-                            <span class="info-label">รูปแบบการสอน</span>
-
-                            <strong>
-                                {{ ucfirst($tutorProfile->teaching_mode) }}
-                            </strong>
-                        </div>
-                    </div>
-                </div>
+    <h2>รีวิวจากผู้เรียน</h2>
+    @if ($tutorProfile->reviews->count() > 0)
+        @foreach ($tutorProfile->reviews as $review)
+            <div>
+                <p>คะแนน: {{ $review->rating }} / 5</p>
+                <p>ความคิดเห็น: {{ $review->Comment }}</p>
             </div>
+            <hr>
+        @endforeach
+    @else
+        <p>ยังไม่มีรีวิว</p>
+    @endif
 
-            <div class="card profile-card mb-4">
-                <div class="card-body">
-                    <h2 class="section-title">เกี่ยวกับติวเตอร์</h2>
-                    <p class="about-text">
-                        {{ $tutorProfile->bio ?? 'ไม่มีข้อมูลประวัติ' }}
-                    </p>
-                </div>
+    <h2>การนัดหมาย</h2>
+
+    @if ($tutorProfile->appointments->count() > 0)
+        @foreach ($tutorProfile->appointments as $appointment)
+            <div>
+                <p> วันที่: {{ $appointment->start_datetime }}</p>
+                <p>ถึง:{{ $appointment->end_datetime }}</p>
+                <p>สถานะ:{{ $appointment->status }}</p>
             </div>
+            <hr>
+        @endforeach
+    @else
+        <p>ยังไม่มีการนัดหมาย</p>
+    @endif
+    <hr>
 
-            <div class="card profile-card mb-4">
-                <div class="card-body">
-                    <h2 class="section-title">รายวิชาที่เปิดสอน</h2>
-                    @if ($tutorProfile->subjects->count() > 0)
-                        <div>
-                            @foreach ($tutorProfile->subjects as $subject)
-                                <span class="badge bg-light text-dark border subject-badge">
-                                    {{ $subject->subject_name }}
-                                </span>
-                            @endforeach
-                        </div>
-                    @else
-                        <p class="text-muted mb-0">
-                            ยังไม่ได้ระบุวิชาที่สอน
-                        </p>
-                    @endif
-                </div>
-            </div>
+    <h2>ตารางเวลาสอนที่ว่าง</h2>
+    <p>ตารางเวลาสอนที่ว่างของติวเตอร์จะแสดงที่นี่</p>
 
-            <div class="card profile-card mb-4">
-                <div class="card-body">
-                    <h2 class="section-title">ตารางเวลาสอนที่ว่าง</h2>
-                    <div class="schedule-placeholder">
-                        <p>
-                            ตารางเวลาสอนที่ว่างของติวเตอร์จะแสดงที่นี่
-                        </p>
+    <p>ส่วนนี้จะเชื่อมต่อกับระบบจัดการเวลาว่าง (Availability System) ของทีม</p><hr>
 
-                        <small>
-                            ส่วนนี้จะเชื่อมต่อกับระบบจัดการเวลาว่าง (Availability System) ของทีมต่อไป
-                        </small>
-                    </div>
-                </div>
-            </div>
+    <h2>จองเวลาเรียน</h2>
+    <p>เลือกรอบเวลาที่ต้องการเพื่อทำการจองเรียนกับติวเตอร์ท่านนี้</p>
 
-            <div class="card profile-card">
-                <div class="card-body">
-                    <h2 class="section-title">จองเวลาเรียน</h2>
-                    <p class="text-muted">
-                        เลือกรอบเวลาที่ต้องการเพื่อทำการจองเรียนกับติวเตอร์ท่านนี้
-                    </p>
+    <button type="button" disabled> จองเรียน </button>
 
-                    <button type="button" class="btn btn-primary" disabled>
-                        จองเรียน
-                    </button>
+    <p>ระบบจองเรียนจะเชื่อมต่อกับระบบนัดหมาย (Appointment System) ของทีม</p><hr>
 
-                    <p class="booking-note">
-                        ระบบจองเรียนจะเชื่อมต่อกับระบบนัดหมาย (Appointment System) ของทีมต่อไป
-                    </p>
-                </div>
-            </div>
-        </div>
+    <h2>รายการโปรด</h2>
+    @if ($isFavorite)
+        <p>ติวเตอร์คนนี้อยู่ในรายการโปรดของคุณแล้ว</p>
+        <form
+            action="{{ route('tutor.favorite.destroy', $tutorProfile) }}"
+            method="POST"
+        >
+            @csrf
+            <button type="submit">ลบออกจากรายการโปรด</button>
+        </form>
+    @else
+        <p>บันทึกติวเตอร์คนนี้ไว้ในรายการโปรดของคุณ</p>
 
-        <div class="col-lg-4">
-            <div class="card profile-card favorite-card">
-                <div class="card-body">
-                    <h2 class="section-title">ติวเตอร์รายการโปรด</h2>
-                    @if ($isFavorite)
+        <form
+            action="{{ route('tutor.favorite.store', $tutorProfile) }}"
+            method="POST"
+        >
+            @csrf
+            <button type="submit">เพิ่มในรายการโปรด</button>
+        </form>
+    @endif
 
-                        <p class="favorite-status">
-                            ติวเตอร์คนนี้อยู่ในรายการโปรดของคุณแล้ว
-                        </p>
+    <hr>
 
-                        <form action="{{ route('tutor.favorite.destroy', $tutorProfile) }}" method="POST">
-                            @csrf
+    <a href="{{ route('tutor.search') }}">กลับไปหน้าค้นหา</a>
 
-                            <button type="submit" class="btn btn-outline-danger w-100">
-                                ลบออกจากรายการโปรด
-                            </button>
-                        </form>
-                    @else
-                        <p class="favorite-status">
-                            บันทึกติวเตอร์คนนี้ไว้ในรายการโปรดของคุณ
-                        </p>
-
-                        <form action="{{ route('tutor.favorite.store', $tutorProfile) }}" method="POST">
-                            @csrf
-
-                            <button type="submit" class="btn btn-outline-primary w-100">
-                                เพิ่มในรายการโปรด
-                            </button>
-                        </form>
-                    @endif
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="back-section">
-        <a href="{{ route('tutor.search') }}" class="back-link">
-            กลับไปหน้าค้นหา
-        </a>
-    </div>
 @endsection

@@ -9,11 +9,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('favorites', function (Blueprint $table) {
-            $table->char('id', 10)->primary();
-            $table->char('user_id', 10);
-            $table->string('favoritable_type');
-            $table->char('favoritable_id', 10);
-            $table->timestamps();
+            $table->char('favorite_id', 10)->primary();
+            $table->char('Users_user_id', 10);
+            $table->char('Tutor_profiles_tutor_id', 10)->nullable();
+            $table->char('Subject_subject_id', 10)->nullable();
+            $table->timestamp('created_at')->useCurrent();
+            $table->timestamp('deleted_at')->nullable();
         });
     }
 

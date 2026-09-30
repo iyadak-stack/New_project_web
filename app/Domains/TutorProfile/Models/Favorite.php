@@ -3,27 +3,53 @@
 namespace App\Domains\TutorProfile\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\MorphTo;
 use App\Domains\Auth\Models\User;
+use App\Domains\Booking\Models\Subject;
 
 class Favorite extends Model
 {
+    use SoftDeletes;
+
+    protected $table = 'favorites';
+    protected $primaryKey = 'favorite_id';
+    public $incrementing = false;
+    protected $keyType = 'string';
+    public const CREATED_AT = 'created_at';
+    public const UPDATED_AT = null;
+
     protected $fillable = [
-        'user_id',
-        'favoritable_type',
-        'favoritable_id',
+        'favorite_id',
+        'Users_user_id',
+        'Tutor_profiles_tutor_id',
+        'Subject_subject_id',
     ];
 
-    // ความสัมพันธ์: Favorite เป็นของ User คนที่กดเซฟ[cite: 1]
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(
+            User::class,
+            'Users_user_id',
+            'user_id'
+        );
     }
 
-    // ความสัมพันธ์แบบ Polymorphic (ชี้ได้ทั้ง User/Tutor และ Subject ของทับทิม)[cite: 1]
-    public function favoritable(): MorphTo
+    public function tutorProfile(): BelongsTo
     {
-        return $this->morphTo();
+        return $this->belongsTo(
+            TutorProfile::class,
+            'Tutor_profiles_tutor_id',
+            'tutor_id'
+        );
+    }
+
+    public function subject(): BelongsTo
+    {
+        return $this->belongsTo(
+            Subject::class,
+            'Subject_subject_id',
+            'subject_id'
+        );
     }
 }

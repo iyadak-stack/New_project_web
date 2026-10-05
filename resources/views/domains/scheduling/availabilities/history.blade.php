@@ -1,5 +1,7 @@
-<x-layouts::app :title="__('ประวัติเวลาว่าง')">
-    <div class="mx-auto max-w-4xl space-y-6 p-6">
+@extends('domains.scheduling.layout')
+@section('title', 'ประวัติเวลาว่าง')
+@section('content')
+    <div class="container py-4">
         <div class="flex items-center justify-between gap-3">
             <h1 class="section-title">ประวัติเวลาว่าง</h1>
             <a class="underline" href="{{ route('availabilities.index') }}">กลับไปจัดการเวลาว่าง</a>
@@ -17,4 +19,4 @@
             @endforelse
         </div>
     </div>
-</x-layouts::app>
+@endsection

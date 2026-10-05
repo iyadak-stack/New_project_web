@@ -1,5 +1,7 @@
-<x-layouts::app :title="__('แก้ไขเวลาว่าง')">
-    <div class="mx-auto max-w-2xl space-y-6 p-6">
+@extends('domains.scheduling.layout')
+@section('title', 'แก้ไขเวลาว่าง')
+@section('content')
+    <div class="container py-4">
         <div class="flex items-center justify-between gap-3">
             <h1 class="section-title">แก้ไขเวลาว่าง</h1>
             <a class="underline" href="{{ route('availabilities.index') }}">กลับ</a>
@@ -21,4 +23,4 @@
             <button class="rounded bg-black px-4 py-2 text-white" type="submit">บันทึกการแก้ไข</button>
         </form>
     </div>
-</x-layouts::app>
+@endsection

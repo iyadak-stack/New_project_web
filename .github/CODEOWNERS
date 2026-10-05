@@ -1,0 +1,5 @@
+/app/Domains/Scheduling/ @pokpong007
+/resources/views/domains/scheduling/ @pokpong007
+/database/migrations/2026_09_16_000000_create_availabilities_table.php @pokpong007
+/tests/Feature/Scheduling/ @pokpong007
+/tests/Unit/Scheduling/ @pokpong007

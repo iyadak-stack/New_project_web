@@ -31,8 +31,8 @@ class ScheduleMatcher
         }
 
         foreach ($bookedTimes as $appointment) {
-            $bookedStart = $appointment->appointment_datetime;
-            $bookedEnd = $bookedStart->copy()->addHour();
+            $bookedStart = Carbon::parse($appointment->start_datetime);
+            $bookedEnd = Carbon::parse($appointment->end_datetime);
             $remainingTimes = [];
 
             foreach ($sharedTimes as $time) {

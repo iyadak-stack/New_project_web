@@ -38,7 +38,7 @@ class User extends Authenticatable implements PasskeyUser
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, SoftDeletes, PasskeyAuthenticatable;
 
-    protected $table = 'Users';
+    protected $table = 'users';
     protected $primaryKey = 'user_id';
     public $incrementing = false;
     protected $keyType = 'string';
@@ -67,6 +67,7 @@ class User extends Authenticatable implements PasskeyUser
     protected function casts(): array
     {
         return [
+            'password' => 'hashed',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
             'deleted_at' => 'datetime',
@@ -85,16 +86,21 @@ class User extends Authenticatable implements PasskeyUser
             : $initials;
     }
 
+    public function getNameAttribute(): string
+    {
+        return trim($this->first_name.' '.$this->last_name);
+    }
+
     // ความสัมพันธ์กับโปรไฟล์ติวเตอร์
     public function tutorProfile(): HasOne
     {
-        return $this->hasOne(TutorProfile::class, 'Users_user_id', 'user_id');
+        return $this->hasOne(TutorProfile::class, 'user_id', 'user_id');
     }
 
     // ความสัมพันธ์กับโปรไฟล์นักเรียน
     public function studentProfile(): HasOne
     {
-        return $this->hasOne(StudentProfile::class, 'Users_user_id', 'user_id');
+        return $this->hasOne(StudentProfile::class, 'user_id', 'user_id');
     }
 
     // รายการ Favorite ทั้งหมดที่ User คนนี้กดเซฟไว้

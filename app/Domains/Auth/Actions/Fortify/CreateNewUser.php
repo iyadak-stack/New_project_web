@@ -6,6 +6,7 @@ use App\Domains\Auth\Concerns\PasswordValidationRules;
 use App\Domains\Auth\Concerns\ProfileValidationRules;
 use App\Domains\Auth\Models\User;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
 
 class CreateNewUser implements CreatesNewUsers
@@ -24,10 +25,17 @@ class CreateNewUser implements CreatesNewUsers
             'password' => $this->passwordRules(),
         ])->validate();
 
+        $nameParts = preg_split('/\s+/u', trim($input['name']), 2) ?: [];
+
         return User::create([
-            'name' => $input['name'],
+            'user_id' => strtoupper(Str::random(10)),
+            'first_name' => $nameParts[0] ?? '',
+            'last_name' => $nameParts[1] ?? '',
             'email' => $input['email'],
             'password' => $input['password'],
+            'role' => 'student',
+            'current_role' => 'student',
+            'is_active' => true,
         ]);
     }
 }

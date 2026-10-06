@@ -5,8 +5,12 @@ namespace App\Providers;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Support\Facades\Gate;
+use App\Domains\Reportreview\Models\Review;
+use App\Domains\Reportreview\Policies\ReviewPolicy;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -23,6 +27,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Blade::anonymousComponentPath(resource_path('views/layouts'), 'layouts');
+        Blade::anonymousComponentPath(resource_path('views/domains/auth/layouts'), 'layouts');
+        Blade::anonymousComponentPath(resource_path('views/domains/auth/pages'), 'pages');
+
+        Gate::policy(Review::class, ReviewPolicy::class);
         $this->configureDefaults();
     }
 

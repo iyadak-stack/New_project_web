@@ -30,7 +30,7 @@ return new class extends Migration
 
             $table->foreign('Users_user_id')
                 ->references('user_id')
-                ->on('Users');
+                ->on('users');
         });
     }
 

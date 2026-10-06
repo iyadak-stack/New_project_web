@@ -1,61 +1,48 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Reviews</title>
+<x-layouts::app :title="'Reviews'">
+    <main>
+        <h1>รีวิวทั้งหมด</h1>
 
-    <link
-        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-        rel="stylesheet"
-    >
+        @if (session('success'))
+            <p>{{ session('success') }}</p>
+        @endif
 
-</head>
+        <p><a href="{{ route('reviews.create') }}">เขียนรีวิวจากนัดหมายของฉัน</a></p>
 
-<body>
+        @forelse ($reviews as $review)
+            <article>
+                <h2>รีวิว {{ $review->Review_id }} · {{ $review->rating }}/5</h2>
+                <p>{{ $review->Comment }}</p>
+                <dl>
+                    <dt>ผู้รีวิว</dt>
+                    <dd>{{ $review->appointment?->studentProfile?->user?->name ?? 'ไม่พบข้อมูล' }}</dd>
+                    <dt>ติวเตอร์</dt>
+                    <dd>{{ $review->tutorProfile?->user?->name ?? 'ไม่พบข้อมูล' }}</dd>
+                    <dt>นัดหมาย</dt>
+                    <dd>{{ $review->appointment?->Appointment_id ?? 'ไม่พบข้อมูล' }}</dd>
+                    <dt>วันที่สร้าง</dt>
+                    <dd>{{ $review->created_at?->format('d/m/Y H:i') ?? '—' }}</dd>
+                </dl>
 
-@foreach ($reviews as $review)
+                @can('update', $review)
+                    <a href="{{ route('reviews.edit', $review) }}">แก้ไขรีวิว</a>
+                @endcan
 
-    <div class="card mb-3">
-        <div class="card-body">
+                @can('delete', $review)
+                    <form action="{{ route('reviews.destroy', $review) }}" method="POST">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit">ลบรีวิว</button>
+                    </form>
+                @endcan
 
-            <h5>
-                {{ $review->rating }}/5
-            </h5>
+                @if (auth()->user()->role !== 'admin' && $review->appointment?->studentProfile?->user_id !== auth()->user()->user_id)
+                    <a href="{{ route('reports.create', $review) }}">รายงานรีวิวนี้</a>
+                @endif
+            </article>
+        @empty
+            <p>ยังไม่มีรีวิว</p>
+        @endforelse
 
-            <p>
-                {{ $review->Comment }}
-            </p>
-
-            @can('update', $review)
-                <a
-                    href="{{ route('reviews.edit', $review->Review_id) }}"
-                    class="btn btn-warning"
-                >
-                    แก้ไข
-                </a>
-            @endcan
-
-            @can('delete', $review)
-                <form
-                    action="{{ route('reviews.destroy', $review->Review_id) }}"
-                    method="POST"
-                    class="d-inline"
-                >
-                    @csrf
-                    @method('DELETE')
-
-                    <button
-                        type="submit"
-                        class="btn btn-danger"
-                        onclick="return confirm('ต้องการลบรีวิวนี้หรือไม่?')"
-                    >
-                        ลบ
-                    </button>
-                </form>
-            @endcan
-
-        </div>
-    </div>
-
-@endforeach
-</html>
+        {{ $reviews->links() }}
+    </main>
+</x-layouts::app>

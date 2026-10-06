@@ -1,4 +1,4 @@
-@extends('layouts.tutor')
+@extends('domains.tutor-profile.tutor.tutor')
 
 @section('title', 'แก้ไขโปรไฟล์ติวเตอร์')
 

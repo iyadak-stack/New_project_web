@@ -15,7 +15,23 @@
                     <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
                         {{ __('Dashboard') }}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="star" :href="route('reviews.index')" :current="request()->routeIs('reviews.*')" wire:navigate>
+                        รีวิวและรายงาน
+                    </flux:sidebar.item>
                 </flux:sidebar.group>
+                @if (auth()->user()->role === 'admin')
+                    <flux:sidebar.group heading="Admin" class="grid">
+                        <flux:sidebar.item icon="chart-bar" :href="route('admin.dashboard')" :current="request()->routeIs('admin.dashboard')" wire:navigate>
+                            Dashboard
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="star" :href="route('admin.reviews.index')" :current="request()->routeIs('admin.reviews.*')" wire:navigate>
+                            Review Management
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="flag" :href="route('admin.reports.index')" :current="request()->routeIs('admin.reports.*')" wire:navigate>
+                            Report Management
+                        </flux:sidebar.item>
+                    </flux:sidebar.group>
+                @endif
             </flux:sidebar.nav>
 
             <flux:spacer />

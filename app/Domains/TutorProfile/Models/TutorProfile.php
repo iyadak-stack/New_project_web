@@ -10,6 +10,11 @@ use App\Domains\Booking\Models\Subject;
 
 class TutorProfile extends Model
 {
+    protected $table = 'tutor_profiles';
+    protected $primaryKey = 'id';
+    public $incrementing = false;
+    protected $keyType = 'string';
+
     protected $fillable = [
         'user_id',
         'bio',
@@ -21,7 +26,7 @@ class TutorProfile extends Model
     // ความสัมพันธ์: TutorProfile เป็นของ User 1 คน
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
 
     public function subjects(): BelongsToMany

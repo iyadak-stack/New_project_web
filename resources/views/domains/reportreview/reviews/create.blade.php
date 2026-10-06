@@ -20,18 +20,19 @@
                     <form action="{{ route('reviews.store') }}" method="POST">
                         @csrf
 
-                        {{-- Temporary test data --}}
-                        <input
-                            type="hidden"
-                            name="Appointment_Appointment_id"
-                            value="AP00000001"
-                        >
-
-                        <input
-                            type="hidden"
-                            name="Tutor_profiles_tutor_id"
-                            value="TP00000001"
-                        >
+                        <div class="mb-4">
+                            <label for="appointment" class="form-label">นัดหมายที่ต้องการรีวิว</label>
+                            <select class="form-select" id="appointment" name="Appointment_Appointment_id" required>
+                                <option value="">เลือกนัดหมาย</option>
+                                @foreach ($appointments as $appointment)
+                                    <option value="{{ $appointment->Appointment_id }}" @selected(old('Appointment_Appointment_id') === $appointment->Appointment_id)>
+                                        {{ $appointment->tutorProfile?->user?->first_name ?? 'ติวเตอร์' }} {{ $appointment->tutorProfile?->user?->last_name ?? '' }}
+                                        — {{ $appointment->start_datetime?->format('d/m/Y H:i') ?? $appointment->Appointment_id }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('Appointment_Appointment_id') <div class="text-danger">{{ $message }}</div> @enderror
+                        </div>
 
                         {{-- Rating --}}
                         <div class="mb-4">
@@ -78,7 +79,7 @@
                                 rows="6"
                                 placeholder="แสดงความคิดเห็นเกี่ยวกับการเรียน..."
                                 required
-                            ></textarea>
+                            >{{ old('Comment') }}</textarea>
                         </div>
 
                         <div class="d-flex justify-content-end">

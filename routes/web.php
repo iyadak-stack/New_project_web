@@ -12,14 +12,30 @@ use App\Domains\Booking\Http\Controllers\NotificationController;
 use App\Domains\Auth\Http\Controllers\ContactController;
 use App\Domains\TutorProfile\Http\Controllers\StudentProfileController;
 use App\Domains\Auth\Http\Controllers\RoleController;
+use App\Domains\Auth\Http\Controllers\DashboardController;
 use App\Domains\Reportreview\Http\Controllers\ReviewController;
+use App\Domains\Reportreview\Http\Controllers\ReportController as UserReportController;
 use App\Domains\Reportreview\Http\Controllers\Admin\ReportController;
+use App\Domains\Reportreview\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Domains\Reportreview\Http\Controllers\Admin\ReviewManagementController;
 
 Route::get('/', [TutorController::class, 'home'])->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
 
-    Route::view('dashboard', 'dashboard')->name('dashboard');
+    Route::get('dashboard', DashboardController::class)->name('dashboard');
+
+    Route::prefix('admin')->name('admin.')->middleware('role:admin')->group(function () {
+        Route::get('/', AdminDashboardController::class)->name('dashboard');
+        Route::get('/reviews', [ReviewManagementController::class, 'index'])->name('reviews.index');
+        Route::get('/reviews/{review}', [ReviewManagementController::class, 'show'])->name('reviews.show');
+        Route::delete('/reviews/{review}', [ReviewManagementController::class, 'destroy'])->name('reviews.destroy');
+        Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+        Route::get('/reports/{report}', [ReportController::class, 'show'])->name('reports.show');
+        Route::patch('/reports/{report}/investigate', [ReportController::class, 'investigate'])->name('reports.investigate');
+        Route::patch('/reports/{report}/resolve', [ReportController::class, 'resolve'])->name('reports.resolve');
+        Route::patch('/reports/{report}/reject', [ReportController::class, 'reject'])->name('reports.reject');
+    });
 
     // =========================
     // โปรไฟล์ติวเตอร์ (Tutor Profile)
@@ -169,6 +185,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/reviews', [ReviewController::class, 'store'])
         ->name('reviews.store');
 
+    Route::get('/reviews/{review}/report', [UserReportController::class, 'create'])
+        ->name('reports.create');
+
+    Route::post('/reviews/{review}/report', [UserReportController::class, 'store'])
+        ->name('reports.store');
+
     Route::get('/reviews/{review}/edit', [ReviewController::class, 'edit'])
         ->name('reviews.edit');
 
@@ -183,11 +205,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // รายงาน (Reports)
     // =========================
 
-    Route::get('/reports/create', [ReportController::class, 'create'])
-        ->name('reports.create');
-
-    Route::post('/reports', [ReportController::class, 'store'])
-        ->name('reports.store');
 });
 
 require __DIR__.'/settings.php';

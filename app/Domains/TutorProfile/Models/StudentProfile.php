@@ -8,6 +8,11 @@ use App\Domains\Auth\Models\User;
 
 class StudentProfile extends Model
 {
+    protected $table = 'student_profiles';
+    protected $primaryKey = 'id';
+    public $incrementing = false;
+    protected $keyType = 'string';
+
     protected $fillable = [
         'user_id',
         'bio',
@@ -15,6 +20,6 @@ class StudentProfile extends Model
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
 }

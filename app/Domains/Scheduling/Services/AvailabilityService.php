@@ -47,14 +47,14 @@ class AvailabilityService
         }
 
         $studentProfileIds = StudentProfile::query()
-            ->where('user_id', $studentId)
+            ->whereIN('user_id',[ $studentId, $tutorId])
             ->pluck('id')
             ->map(fn ($id): string => (string) $id)
             ->all();
 
         $tutorProfileIds = TutorProfile::query()
-            ->where('user_id', $tutorId)
-            ->pluck('id')
+            ->whereIn('Users_user_id', [$studentId, $tutorId])
+            ->pluck('tutor_id')
             ->map(fn ($id): string => (string) $id)
             ->all();
 

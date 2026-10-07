@@ -31,7 +31,10 @@
             <section class="space-y-3">
                 <h2 class="text-lg font-medium">ช่วงเวลาที่ว่างตรงกัน</h2>
                 @forelse ($times as $time)
-                    <div class="schedule-placeholder"><p>{{ \Illuminate\Support\Carbon::parse($time['start'])->format('d/m/Y H:i') }} – {{ \Illuminate\Support\Carbon::parse($time['end'])->format('d/m/Y H:i') }}</p></div>
+                    <div class="schedule-placeholder">
+                        <p>{{ \Illuminate\Support\Carbon::parse($time['start'])->format('d/m/Y H:i') }} – {{ \Illuminate\Support\Carbon::parse($time['end'])->format('d/m/Y H:i') }}</p>
+                        <a href="{{ route('schedule.booking', ['tutor_id' => ($filters ?? [])['tutor_id'], 'start_datetime' => $time['start'], 'end_datetime' => $time['end']]) }}" class="underline">เลือกเวลานี้</a>
+                    </div>
                 @empty
                     <div class="schedule-placeholder"><p>ไม่พบช่วงเวลาว่างตรงกันในช่วงที่เลือก</p></div>
                 @endforelse

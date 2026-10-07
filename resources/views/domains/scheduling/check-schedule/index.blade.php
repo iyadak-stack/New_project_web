@@ -1,8 +1,11 @@
-<x-layouts::app :title="__('เช็กเวลาว่างตรงกัน')">
-    <div class="mx-auto max-w-4xl space-y-6 p-6">
+@extends('domains.scheduling.layout')
+@section('title', 'เช็กเวลาว่างตรงกัน')
+@section('content')
+    <div class="container py-4">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <h1 class="section-title">เช็กเวลาว่างตรงกัน</h1>
             <a class="underline" href="{{ route('availabilities.index') }}">จัดการเวลาว่างของฉัน</a>
+            <a href="{{ route('schedule.history') }}">ประวัติการเรียนและการสอน</a>
         </div>
 
         <form action="{{ route('schedule.check.results') }}" method="POST" class="profile-card space-y-4 p-5">
@@ -31,11 +34,14 @@
             <section class="space-y-3">
                 <h2 class="text-lg font-medium">ช่วงเวลาที่ว่างตรงกัน</h2>
                 @forelse ($times as $time)
-                    <div class="schedule-placeholder"><p>{{ \Illuminate\Support\Carbon::parse($time['start'])->format('d/m/Y H:i') }} – {{ \Illuminate\Support\Carbon::parse($time['end'])->format('d/m/Y H:i') }}</p></div>
+                    <div class="schedule-placeholder">
+                        <p>{{ \Illuminate\Support\Carbon::parse($time['start'])->format('d/m/Y H:i') }} – {{ \Illuminate\Support\Carbon::parse($time['end'])->format('d/m/Y H:i') }}</p>
+                        <a href="{{ route('schedule.booking', ['tutor_id' => $filters['tutor_id'], 'start_datetime' => $time['start'], 'end_datetime' => $time['end']]) }}">เลือกวิชาและจอง</a>
+                    </div>
                 @empty
                     <div class="schedule-placeholder"><p>ไม่พบช่วงเวลาว่างตรงกันในช่วงที่เลือก</p></div>
                 @endforelse
             </section>
         @endisset
     </div>
-</x-layouts::app>
+@endsection

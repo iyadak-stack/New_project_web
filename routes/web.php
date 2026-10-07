@@ -85,6 +85,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/availabilities/{availability}', [AvailabilityController::class, 'destroy'])->name('availabilities.destroy');
 
     Route::get('/schedule/check', [CheckScheduleController::class, 'index'])->name('schedule.check');
+    Route::get('/schedule/history', [CheckScheduleController::class, 'history'])->name('schedule.history');
+    Route::get('/schedule/booking', [CheckScheduleController::class, 'booking'])->name('schedule.booking');
     Route::post('/schedule/check', [CheckScheduleController::class, 'check'])->name('schedule.check.results');
 
 

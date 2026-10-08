@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
@@ -24,6 +25,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        $this->configureViews();
     }
 
     /**
@@ -45,6 +47,17 @@ class AppServiceProvider extends ServiceProvider
                 ->symbols()
                 ->uncompromised()
             : null,
+        );
+    }
+
+    /**
+     * ให้ <x-layouts::auth> ชี้ไปที่ resources/views/domains/auth/layouts
+     */
+    protected function configureViews(): void
+    {
+        Blade::anonymousComponentPath(
+            resource_path('views/domains/auth/layouts'),
+            'layouts'
         );
     }
 }

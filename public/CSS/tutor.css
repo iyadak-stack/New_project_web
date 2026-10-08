@@ -1,0 +1,235 @@
+/* ==========================================
+   TUTOR PAGE
+========================================== */
+
+body {
+    margin: 0;
+
+    font-family: 'Prompt', sans-serif;
+
+    background: #ffffff;
+
+    color: #222;
+}
+
+
+.tutor-page {
+
+    max-width: 1180px;
+
+    margin: 0 auto;
+
+    padding: 32px 28px 60px;
+
+    box-sizing: border-box;
+}
+
+
+/* ==========================================
+   PROFILE HEADER
+========================================== */
+
+.profile-header {
+
+    margin-bottom: 24px;
+}
+
+
+.profile-header h1 {
+
+    margin: 0 0 7px;
+
+    font-size: 28px;
+
+    font-weight: 700;
+
+    color: #222;
+}
+
+
+.profile-description {
+
+    margin: 0;
+
+    color: #777;
+
+    font-size: 14px;
+}
+
+
+/* ==========================================
+   ALERT
+========================================== */
+
+.alert {
+
+    padding: 13px 16px;
+
+    margin-bottom: 20px;
+
+    border-radius: 10px;
+
+    font-size: 14px;
+}
+
+
+.alert-success {
+
+    background: #edf9f1;
+
+    border: 1px solid #ccebd6;
+
+    color: #287a43;
+}
+
+
+/* ==========================================
+   PROFILE CARD
+========================================== */
+
+.profile-card {
+
+    background: #ffffff;
+
+    border: 1px solid #f0d9d0;
+
+    border-radius: 18px;
+
+    overflow: hidden;
+}
+
+
+.profile-card .card-body {
+
+    padding: 28px;
+}
+
+
+.section-title {
+
+    margin-top: 0;
+
+    color: #222;
+
+    font-size: 20px;
+
+    font-weight: 700;
+}
+
+
+/* ==========================================
+   PROFILE INFO
+========================================== */
+
+.info-label {
+
+    margin-bottom: 5px;
+
+    color: #999;
+
+    font-size: 13px;
+}
+
+
+.profile-card strong {
+
+    color: #333;
+
+    font-size: 15px;
+
+    line-height: 1.7;
+}
+
+
+/* ==========================================
+   BUTTON
+========================================== */
+
+.profile-actions {
+
+    margin-top: 25px;
+
+    padding-top: 20px;
+
+    border-top: 1px solid #f1f1f1;
+}
+
+
+.profile-actions .btn {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    padding: 11px 20px;
+
+    border-radius: 10px;
+
+    text-decoration: none;
+
+    font-family: inherit;
+
+    font-size: 14px;
+
+    cursor: pointer;
+}
+
+
+.profile-actions .btn-primary {
+
+    background: #e87557;
+
+    border: 1px solid #e87557;
+
+    color: #ffffff;
+}
+
+
+.profile-actions .btn-primary:hover {
+
+    background: #d96447;
+
+    border-color: #d96447;
+}
+
+
+/* ==========================================
+   LINKS
+========================================== */
+
+.profile-card a {
+
+    color: #e87557;
+}
+
+
+.profile-card a:hover {
+
+    color: #d96447;
+}
+
+
+/* ==========================================
+   RESPONSIVE
+========================================== */
+
+@media (max-width: 650px) {
+
+    .tutor-page {
+
+        padding: 22px 15px 40px;
+    }
+
+    .profile-header h1 {
+
+        font-size: 24px;
+    }
+
+    .profile-card .card-body {
+
+        padding: 20px;
+    }
+
+}

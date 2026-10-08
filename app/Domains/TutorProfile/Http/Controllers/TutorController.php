@@ -7,46 +7,57 @@ use App\Domains\TutorProfile\Models\TutorProfile;
 use App\Domains\Booking\Models\Subject;
 use App\Domains\TutorProfile\Models\Favorite;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class TutorController extends Controller
 {
     public function home()
     {
-        $topTutors = TutorProfile::with(['user', 'subjects'])
+        $tutors = TutorProfile::with(['user', 'subjects'])
+            ->withCount('reviews')
             ->orderByDesc('average_rating')
             ->orderByDesc('experience_years')
-            ->take(5)
+            ->take(3)
             ->get();
 
-        $topSubjects = Subject::with('tutors')
-            ->take(5)
+        $subjects = Subject::withCount('tutors')
+            ->orderByDesc('tutors_count')
+            ->take(3)
             ->get();
 
-        return view('welcome', compact(
-            'topTutors',
-            'topSubjects'
-        ));
+        // ชื่อ view ให้ตรงกับไฟล์ blade หน้าแรกจริง
+        return view('welcome', compact('tutors', 'subjects'));
     }
 
     public function profile()
     {
-        $tutorProfile = TutorProfile::where(
-            'Users_user_id',
-            auth()->id()
-        )->first();
+        $user = Auth::user();
 
+        // เช็กบทบาทปัจจุบันของผู้ใช้
+        if ($user->current_role === 'tutor') {
+            $tutorProfile = TutorProfile::where(
+                'Users_user_id',
+                $user->user_id
+            )->first();
+
+            // ส่งไปยัง View Dashboard หน้าติวเตอร์
+            return view(
+                'domains.tutor-profile.tutor.tutor',
+                compact('tutorProfile', 'user')
+            );
+        }
+
+        // กรณีเป็นนักเรียน (student)
         return view(
-            'domains.tutor-profile.tutor.profile',
-            compact('tutorProfile')
+            'domains.tutor-profile.student.profile',
+            compact('user')
         );
     }
 
     public function editProfile()
     {
-        $tutorProfile = TutorProfile::where(
-            'Users_user_id',
-            auth()->id()
-        )->first();
+        $tutorProfile = TutorProfile::firstOrNew(['Users_user_id' => Auth::id()]);
 
         return view(
             'domains.tutor-profile.tutor.edit-profile',
@@ -57,28 +68,52 @@ class TutorController extends Controller
     public function updateProfile(Request $request)
     {
         $request->validate([
-            'bio' => ['nullable', 'string'],
+            'avatar'           => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
+            'bio'              => ['nullable', 'string'],
             'experience_years' => ['required', 'integer', 'min:0'],
-            'teaching_mode' => ['required', 'in:online,onsite,both'],
+            'teaching_mode'    => ['required', 'in:online,onsite,both'],
+            'line_id'          => ['nullable', 'string', 'max:255'],
+            'discord_id'       => ['nullable', 'string', 'max:255'],
+            'zoom_link'        => ['nullable', 'url', 'max:255'],
         ]);
 
-        $tutorProfile = TutorProfile::where(
-            'Users_user_id',
-            auth()->id()
-        )->firstOrFail();
+        // ดึงโปรไฟล์เดิม หรือสร้างขึ้นใหม่หากยังไม่มีในฐานข้อมูล
+        $tutorProfile = TutorProfile::firstOrCreate([
+            'Users_user_id' => Auth::id(),
+        ]);
 
-        $tutorProfile->update([
-            'bio' => $request->bio,
+        $dataToUpdate = [
+            'bio'              => $request->bio,
             'experience_years' => $request->experience_years,
-            'teaching_mode' => $request->teaching_mode,
-        ]);
+            'teaching_mode'    => $request->teaching_mode,
+            'line_id'          => $request->line_id,
+            'discord_id'       => $request->discord_id,
+            'zoom_link'        => $request->zoom_link,
+        ];
+
+        // จัดการอัปโหลดรูปโปรไฟล์
+        if ($request->hasFile('avatar')) {
+            // ลบรูปภาพเก่าใน Disk ออกก่อน (ถ้ามี)
+            if ($tutorProfile->avatar && Storage::disk('public')->exists($tutorProfile->avatar)) {
+                Storage::disk('public')->delete($tutorProfile->avatar);
+            }
+
+            // อัปโหลดรูปใหม่
+            $path = $request->file('avatar')->store('avatars', 'public');
+            $dataToUpdate['avatar'] = $path;
+
+            // อัปเดตไปยัง User หลักด้วย (กรณีมี profile_photo_path)
+            $user = Auth::user();
+            if ($user && isset($user->profile_photo_path)) {
+                $user->update(['profile_photo_path' => $path]);
+            }
+        }
+
+        $tutorProfile->update($dataToUpdate);
 
         return redirect()
             ->route('tutor.profile')
-            ->with(
-                'success',
-                'อัปเดตโปรไฟล์ติวเตอร์เรียบร้อยแล้ว'
-            );
+            ->with('success', 'อัปเดตโปรไฟล์ติวเตอร์เรียบร้อยแล้ว');
     }
 
     public function search(Request $request)
@@ -86,6 +121,7 @@ class TutorController extends Controller
         $search = trim($request->input('search', ''));
 
         $tutors = TutorProfile::with(['user', 'subjects'])
+            ->withCount('reviews')
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($q) use ($search) {
 
@@ -152,7 +188,8 @@ class TutorController extends Controller
 
     public function ranking()
     {
-        $tutors = TutorProfile::with('user')
+        $tutors = TutorProfile::with(['user', 'subjects'])
+            ->withCount('reviews')
             ->orderByDesc('average_rating')
             ->orderByDesc('experience_years')
             ->get();
@@ -174,7 +211,7 @@ class TutorController extends Controller
 
         $isFavorite = Favorite::where(
             'Users_user_id',
-            auth()->id()
+            Auth::id()
         )
             ->where(
                 'Tutor_profiles_tutor_id',

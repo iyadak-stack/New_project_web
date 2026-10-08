@@ -1,31 +1,50 @@
-<x-layouts::auth :title="__('Forgot password')">
-    <div class="flex flex-col gap-6">
-        <x-auth-header :title="__('Forgot password')" :description="__('Enter your email to receive a password reset link')" />
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ลืมรหัสผ่าน - PeerTutor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('css/auth.css') }}?v={{ time() }}">
+</head>
+<body class="auth-page">
+
+    <!-- Top Logo -->
+    <a href="{{ route('home') }}" class="app-logo">PeerTutor</a>
+
+    <!-- Auth Card -->
+    <div class="auth-card">
+        <h1 class="auth-title">ลืมรหัสผ่าน</h1>
+        <div class="step-indicator">ขั้นตอนที่ 1 จาก 2</div>
+        <p class="auth-subtitle">กรอกอีเมลที่ใช้สมัครของคุณ</p>
 
         <!-- Session Status -->
-        <x-auth-session-status class="text-center" :status="session('status')" />
+        @if (session('status'))
+            <div class="alert-status">
+                {{ session('status') }}
+            </div>
+        @endif
 
-        <form method="POST" action="{{ route('password.email') }}" class="flex flex-col gap-6">
+        <form method="POST" action="{{ route('password.email') }}">
             @csrf
 
-            <!-- Email Address -->
-            <flux:input
-                name="email"
-                :label="__('Email address')"
-                type="email"
-                required
-                autofocus
-                placeholder="email@example.com"
-            />
+            <div class="form-group">
+                <label for="email" class="form-label">อีเมล</label>
+                <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus class="form-input" placeholder="iyada.k@kkumail.com">
+                @error('email')
+                    <p class="alert-error">{{ $message }}</p>
+                @enderror
+            </div>
 
-            <flux:button variant="primary" type="submit" class="w-full" data-test="email-password-reset-link-button">
-                {{ __('Email password reset link') }}
-            </flux:button>
+            <button type="submit" class="btn-primary">
+                ต่อไป
+            </button>
         </form>
 
-        <div class="space-x-1 rtl:space-x-reverse text-center text-sm text-zinc-400">
-            <span>{{ __('Or, return to') }}</span>
-            <flux:link :href="route('login')" wire:navigate>{{ __('log in') }}</flux:link>
+        <div class="auth-footer">
+            <a href="{{ route('login') }}">กลับไปเข้าสู่ระบบ</a>
         </div>
     </div>
-</x-layouts::auth>
+
+</body>
+</html>

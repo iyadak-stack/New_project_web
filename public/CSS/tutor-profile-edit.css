@@ -1,0 +1,196 @@
+/* สไตล์เฉพาะหน้า "แก้ไขโปรไฟล์ติวเตอร์" */
+.tp-page {
+    max-width: 580px;
+    margin: 24px auto 48px;
+    padding: 0 16px;
+}
+
+.tp-card {
+    background-color: #ffffff;
+    border: 1px solid #f3f4f6;
+    border-radius: 20px;
+    padding: 32px 36px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.tp-title {
+    margin: 0 0 6px;
+    font-size: 20px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.tp-sub {
+    margin: 0 0 24px;
+    font-size: 13px;
+    color: #9ca3af;
+}
+
+.tp-errors {
+    margin-bottom: 20px;
+    padding: 12px 16px;
+    background-color: #fdeee8;
+    border: 1px solid #f6cfc2;
+    border-radius: 12px;
+}
+
+.tp-errors ul {
+    margin: 0;
+    padding-left: 20px;
+    font-size: 13px;
+    color: #c0452a;
+}
+
+/* รูปโปรไฟล์ */
+.tp-avatar-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 28px;
+}
+
+.tp-avatar {
+    width: 88px;
+    height: 88px;
+    margin-bottom: 14px;
+    border-radius: 50%;
+    border: 2px solid #e07a5f;
+    background-color: #fdf7f4;
+    overflow: hidden;
+}
+
+.tp-avatar img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.tp-avatar-btn {
+    display: inline-block;
+    padding: 8px 22px;
+    background-color: #fdeee8;
+    border-radius: 30px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #e07a5f;
+    cursor: pointer;
+}
+
+.tp-avatar-btn:hover {
+    background-color: #f9ddd2;
+}
+
+/* หัวข้อส่วน + ช่องกรอก */
+.tp-section {
+    margin-bottom: 24px;
+}
+
+.tp-section h2 {
+    margin: 0 0 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 14px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.tp-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.tp-field {
+    flex: 1;
+    min-width: 0;
+}
+
+.tp-field label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.tp-field input,
+.tp-field textarea,
+.tp-field select {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background-color: #ffffff;
+    font-family: inherit;
+    font-size: 13px;
+    color: #1f2937;
+    outline: none;
+}
+
+.tp-field textarea {
+    padding: 12px 14px;
+    border: 1.5px solid #f2a38f;
+    resize: vertical;
+}
+
+.tp-field select {
+    padding-right: 36px;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' fill='none' stroke='%23666666' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.tp-field input:focus,
+.tp-field textarea:focus,
+.tp-field select:focus {
+    border-color: #e07a5f;
+}
+
+.tp-optional {
+    font-weight: 400;
+    color: #9ca3af;
+}
+
+/* ปุ่ม */
+.tp-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.tp-save {
+    padding: 10px 24px;
+    border: none;
+    border-radius: 30px;
+    background-color: #e07a5f;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: #ffffff;
+    cursor: pointer;
+}
+
+.tp-save:hover {
+    background-color: #d15838;
+}
+
+.tp-cancel {
+    display: inline-block;
+    padding: 10px 24px;
+    border-radius: 30px;
+    background-color: #f3f4f6;
+    font-size: 13px;
+    font-weight: 600;
+    color: #4b5563;
+    text-decoration: none;
+}
+
+@media (max-width: 520px) {
+    .tp-card { padding: 24px 20px; }
+    .tp-row { flex-direction: column; }
+}

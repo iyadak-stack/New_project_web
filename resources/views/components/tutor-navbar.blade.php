@@ -41,7 +41,8 @@
                 </button>
             </form>
 
-            <a href="{{ route('settings.profile') }}" class="peer-nav-link {{ request()->routeIs('settings.*') ? 'active' : '' }}">
+            <a href="{{ route('profile.edit') }}"
+               class="peer-nav-link {{ request()->routeIs('profile.edit', 'appearance.edit', 'security.edit') ? 'active' : '' }}">
                 ตั้งค่าบัญชี
             </a>
         @else

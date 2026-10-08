@@ -2,16 +2,16 @@
 
 namespace App\Domains\TutorProfile\Models;
 
+use App\Domains\Auth\Models\User;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Domains\Auth\Models\User;
 
 class StudentProfile extends Model
 {
+    use HasUuids;
+
     protected $table = 'student_profiles';
-    protected $primaryKey = 'id';
-    public $incrementing = false;
-    protected $keyType = 'string';
 
     protected $fillable = [
         'id',
@@ -21,6 +21,6 @@ class StudentProfile extends Model
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
 }

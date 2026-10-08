@@ -10,7 +10,9 @@ class RoleMiddleware
 {
     public function handle(Request $request, Closure $next, string $role): Response
     {
-        if (auth()->user()->current_role !== $role) {
+        $user = $request->user();
+
+        if (! $user || $user->current_role !== $role) {
             return redirect()
                 ->route('home')
                 ->with('error', 'You do not have permission to access this page.');

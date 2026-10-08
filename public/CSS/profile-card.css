@@ -1,0 +1,191 @@
+/* สไตล์การ์ด "โปรไฟล์ของฉัน" (เมนูที่เด้งลงมาจากรูปโปรไฟล์ในแถบเมนู)
+   โหลดต่อจาก home.css เพื่อทับสไตล์เดิมของการ์ดนี้
+   ใส่ !important ในจุดที่สไตล์เดิมอาจชนะ (เช่น สไตล์ที่เขียนฝังในปุ่ม) */
+
+/* ---------- ส่วนหัว ---------- */
+.user-profile-wrapper .profile-card-dropdown .card-head h3 {
+    margin: 0 0 4px;
+    font-size: 20px;
+    font-weight: 700;
+    color: #111827;
+}
+
+.user-profile-wrapper .profile-card-dropdown .card-head p {
+    margin: 0;
+    font-size: 12px;
+    color: #9ca3af;
+}
+
+/* ปุ่มฟันเฟือง: วงกลมสีเทาอ่อน */
+.user-profile-wrapper .profile-card-dropdown .btn-settings-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50% !important;
+    background-color: #f3f4f6 !important;
+    color: #6b7280 !important;
+    font-size: 15px;
+    text-decoration: none;
+}
+
+.user-profile-wrapper .profile-card-dropdown .btn-settings-icon:hover {
+    background-color: #fdeee8 !important;
+    color: #e07a5f !important;
+}
+
+/* ---------- กล่องข้อมูลผู้ใช้ (พื้นพีช) ---------- */
+.user-profile-wrapper .profile-card-dropdown .user-info-box {
+    display: flex !important;
+    align-items: center;
+    flex-wrap: nowrap !important;
+    gap: 12px;
+    margin: 16px 0;
+    padding: 16px;
+    background-color: #fdeee8 !important;
+    border: 1px solid #f9ddd3 !important;
+    border-radius: 18px !important;
+}
+
+/* รูปโปรไฟล์ (รูปที่อัปโหลด) เป็นสี่เหลี่ยมมุมมน */
+.user-profile-wrapper .profile-card-dropdown .info-avatar {
+    flex-shrink: 0;
+    width: 56px !important;
+    height: 56px !important;
+    border-radius: 14px !important;
+    object-fit: cover;
+}
+
+/* กรณียังไม่มีรูป: ช่องตัวอักษรสีส้ม */
+.user-profile-wrapper .profile-card-dropdown .user-info-box .user-avatar-placeholder {
+    flex-shrink: 0;
+    width: 56px !important;
+    height: 56px !important;
+    border-radius: 14px !important;
+    background-color: #e07a5f !important;
+    color: #ffffff !important;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.user-profile-wrapper .profile-card-dropdown .info-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.user-profile-wrapper .profile-card-dropdown .info-details h4 {
+    margin: 0 0 4px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #111827;
+}
+
+.user-profile-wrapper .profile-card-dropdown .info-details p {
+    margin: 0 0 8px;
+    font-size: 12px;
+    line-height: 1.4;
+    color: #6b7280;
+}
+
+/* ป้ายบทบาท: ขาว ขอบพีช */
+.user-profile-wrapper .profile-card-dropdown .badge-role {
+    display: inline-block;
+    padding: 3px 12px;
+    background-color: #ffffff !important;
+    border: 1px solid #f6cfc2 !important;
+    border-radius: 20px;
+    font-size: 11px;
+    color: #6b4a40 !important;
+}
+
+/* ปุ่มแก้ไขโปรไฟล์: ส้ม อยู่ด้านขวา */
+.user-profile-wrapper .profile-card-dropdown .btn-edit-profile {
+    flex-shrink: 0;
+    padding: 8px 16px;
+    background-color: #e07a5f !important;
+    border: none !important;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #ffffff !important;
+    text-decoration: none;
+}
+
+.user-profile-wrapper .profile-card-dropdown .btn-edit-profile:hover {
+    background-color: #d15838 !important;
+}
+
+/* ---------- สลับบทบาท ---------- */
+.user-profile-wrapper .profile-card-dropdown .card-section-title {
+    margin: 20px 0 10px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #111827;
+}
+
+.user-profile-wrapper .profile-card-dropdown .role-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+/* ไม่มีกรอบ ไม่มีพื้นหลัง */
+.user-profile-wrapper .profile-card-dropdown .role-card {
+    padding: 0 !important;
+    background: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.user-profile-wrapper .profile-card-dropdown .role-card h5 {
+    margin: 0 0 4px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #111827;
+}
+
+.user-profile-wrapper .profile-card-dropdown .role-card p {
+    margin: 0;
+    font-size: 11px;
+    line-height: 1.5;
+    color: #9ca3af;
+}
+
+.user-profile-wrapper .profile-card-dropdown .role-card:hover h5 {
+    color: #e07a5f;
+}
+
+/* บทบาทที่ใช้อยู่: มีจุดสีส้มนำหน้า */
+.user-profile-wrapper .profile-card-dropdown .role-card.active h5::before {
+    content: "";
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    margin-right: 6px;
+    border-radius: 50%;
+    background-color: #e07a5f;
+    vertical-align: middle;
+}
+
+/* ---------- ปุ่มออกจากระบบ ---------- */
+.user-profile-wrapper .profile-card-dropdown .card-logout-btn {
+    width: 100%;
+    padding: 12px;
+    background-color: #faf5f3 !important;
+    border: 1px solid #ece3df !important;
+    border-radius: 14px !important;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    color: #e0533d !important;
+    cursor: pointer;
+}
+
+.user-profile-wrapper .profile-card-dropdown .card-logout-btn:hover {
+    background-color: #fdeee8 !important;
+}

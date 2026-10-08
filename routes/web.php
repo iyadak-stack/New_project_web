@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Http\Request;
 
 use App\Domains\TutorProfile\Http\Controllers\TutorController;
 use App\Domains\TutorProfile\Http\Controllers\FavoriteController;
@@ -14,8 +16,52 @@ use App\Domains\TutorProfile\Http\Controllers\StudentProfileController;
 use App\Domains\Auth\Http\Controllers\RoleController;
 use App\Domains\Reportreview\Http\Controllers\ReviewController;
 use App\Domains\Reportreview\Http\Controllers\Admin\ReportController;
+use App\Domains\Auth\Models\User;
 
-Route::get('/', [TutorController::class, 'home'])->name('home');
+// หน้าแรก: ตรวจสอบบทบาท ล็อกอินเป็น tutor ให้ไปหน้า tutor.profile ทันที
+Route::get('/', function (Request $request) {
+    if (auth()->check()) {
+        if (auth()->user()->current_role === 'tutor') {
+            return redirect()->route('tutor.profile');
+        }
+    }
+    return app(TutorController::class)->home($request);
+})->name('home');
+
+// =========================
+// ลืมรหัสผ่านแบบข้ามการส่งอีเมล (Direct Reset Password)
+// =========================
+
+Route::post('/forgot-password', function (Request $request) {
+    $request->validate([
+        'email' => ['required', 'email', 'exists:users,email'],
+    ], [
+        'email.exists' => 'ไม่พบอีเมลนี้ในระบบ',
+    ]);
+
+    // เด้งไปหน้ากรอกรหัสผ่านใหม่ (Step 2) ทันที
+    return redirect()->route('password.reset', [
+        'token' => 'direct-reset',
+        'email' => $request->email,
+    ]);
+})->name('password.email');
+
+Route::post('/reset-password', function (Request $request) {
+    $request->validate([
+        'email' => ['required', 'email', 'exists:users,email'],
+        'password' => ['required', 'string', 'min:8', 'confirmed'],
+    ]);
+
+    $user = User::where('email', $request->email)->first();
+    if ($user) {
+        $user->forceFill([
+            'password' => Hash::make($request->password),
+        ])->save();
+    }
+
+    return redirect()->route('login')->with('status', 'เปลี่ยนรหัสผ่านสำเร็จแล้ว กรุณาเข้าสู่ระบบ');
+})->name('password.update');
+
 
 Route::middleware(['auth', 'verified'])->group(function () {
 

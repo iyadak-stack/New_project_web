@@ -11,6 +11,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
+use Laravel\Fortify\Contracts\LoginResponse;
+use Laravel\Fortify\Contracts\RegisterResponse;
 use Laravel\Fortify\Fortify;
 
 class FortifyServiceProvider extends ServiceProvider
@@ -31,6 +33,29 @@ class FortifyServiceProvider extends ServiceProvider
         $this->configureActions();
         $this->configureViews();
         $this->configureRateLimiting();
+        $this->configureResponses();
+    }
+
+    /**
+     * Configure Fortify responses for Login and Registration.
+     */
+    private function configureResponses(): void
+    {
+        // เมื่อ Login สำเร็จ ให้ Redirect กลับหน้าหลัก (/)
+        $this->app->instance(LoginResponse::class, new class implements LoginResponse {
+            public function toResponse($request)
+            {
+                return redirect('/');
+            }
+        });
+
+        // เมื่อ Register สำเร็จ ให้ Redirect กลับหน้าหลัก (/)
+        $this->app->instance(RegisterResponse::class, new class implements RegisterResponse {
+            public function toResponse($request)
+            {
+                return redirect('/');
+            }
+        });
     }
 
     /**
@@ -49,19 +74,29 @@ class FortifyServiceProvider extends ServiceProvider
      */
     private function configureViews(): void
     {
-        Fortify::loginView(fn () => view('domains.auth.pages.auth.login'));
+        // ใช้ redirect()->to('/') เพื่อป้องกัน CSRF Session Mismatch (419 Page Expired)
+        Fortify::loginView(function () {
+            return redirect()->to('/')->with('open_login', true);
+        });
+
+        /* @chisel-registration */
+        Fortify::registerView(function () {
+            return redirect()->to('/')->with('open_register', true);
+        });
+        /* @end-chisel-registration */
+
         /* @chisel-email-verification */
         Fortify::verifyEmailView(fn () => view('domains.auth.pages.auth.verify-email'));
         /* @end-chisel-email-verification */
+
         /* @chisel-2fa */
         Fortify::twoFactorChallengeView(fn () => view('domains.auth.pages.auth.two-factor-challenge'));
         /* @end-chisel-2fa */
+
         /* @chisel-password-confirmation */
         Fortify::confirmPasswordView(fn () => view('domains.auth.pages.auth.confirm-password'));
         /* @end-chisel-password-confirmation */
-        /* @chisel-registration */
-        Fortify::registerView(fn () => view('domains.auth.pages.auth.register'));
-        /* @end-chisel-registration */
+
         Fortify::resetPasswordView(fn () => view('domains.auth.pages.auth.reset-password'));
         Fortify::requestPasswordResetLinkView(fn () => view('domains.auth.pages.auth.forgot-password'));
     }

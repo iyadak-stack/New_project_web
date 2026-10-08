@@ -1,0 +1,674 @@
+@import "tailwindcss";
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: 'Prompt', sans-serif;
+    background-color: #ffffff;
+    color: #222;
+}
+
+/* ---------- Navbar ---------- */
+.navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 14px 28px;
+}
+
+.logo {
+    font-size: 26px;
+    font-weight: 700;
+    color: #e07a5f;
+    text-decoration: none;
+}
+
+.search-box {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    max-width: 420px;
+    border: 1px solid #e5e5e5;
+    border-radius: 30px;
+    padding: 6px 8px 6px 16px;
+}
+
+.search-box input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-family: inherit;
+    font-size: 14px;
+}
+
+.search-box button {
+    background-color: #e07a5f;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.menu {
+    display: flex;
+    gap: 8px;
+}
+
+.menu-btn {
+    border: 1px solid #e5e5e5;
+    border-radius: 30px;
+    padding: 6px 14px;
+    font-size: 14px;
+    color: #444;
+    text-decoration: none;
+}
+
+.menu-btn.active {
+    background-color: #fdeee8;
+    color: #e07a5f;
+    border-color: #f6cfc2;
+}
+
+.menu-btn.login {
+    background-color: #e07a5f;
+    color: white;
+    border-color: #e07a5f;
+}
+
+/* ---------- Page ---------- */
+.page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 28px 40px;
+}
+
+.welcome-box {
+    background-color: #fdeee8;
+    border: 1px solid #f6cfc2;
+    border-radius: 14px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+}
+
+.welcome-box h1 {
+    margin: 0 0 6px;
+    font-size: 22px;
+    font-weight: 500;
+}
+
+.welcome-box p {
+    margin: 0;
+    font-size: 13px;
+    color: #555;
+}
+
+.section-title {
+    margin: 24px 0 4px;
+    font-size: 24px;
+    font-weight: 500;
+}
+
+.section-sub {
+    margin: 0 0 14px;
+    font-size: 13px;
+    color: #666;
+}
+
+/* ---------- Grid + Card ---------- */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.card {
+    border: 1px solid #f0d9d0;
+    border-radius: 16px;
+    padding: 16px;
+    background-color: white;
+}
+
+.card-subject {
+    background-color: #fdf3ee;
+}
+
+.card-tutor {
+    display: flex;
+    flex-direction: column;
+}
+
+.card-tutor .card-actions {
+    margin-top: auto;
+}
+
+.tutor-top {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 10px;
+    background-color: #d9c7bd;
+    flex-shrink: 0;
+}
+
+img.avatar {
+    object-fit: cover;
+    display: block;
+}
+
+.avatar-initial {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 20px;
+    font-weight: 500;
+}
+
+.avatar-c0 { background-color: #6366f1; }
+.avatar-c1 { background-color: #ec4899; }
+.avatar-c2 { background-color: #10b981; }
+.avatar-c3 { background-color: #0ea5e9; }
+.avatar-c4 { background-color: #f59e0b; }
+
+.card h3 {
+    margin: 0 0 4px;
+    font-size: 17px;
+    font-weight: 500;
+}
+
+.small {
+    margin: 0 0 4px;
+    font-size: 12px;
+    color: #555;
+}
+
+.rating {
+    margin: 0;
+    font-size: 11px;
+    color: #666;
+}
+
+.rating b:first-child {
+    color: #e07a5f;
+}
+
+.desc {
+    font-size: 13px;
+    color: #444;
+    line-height: 1.5;
+    margin: 0 0 12px;
+}
+
+.subject-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.count {
+    border: 1px solid #f0d9d0;
+    background-color: white;
+    border-radius: 20px;
+    padding: 2px 10px;
+    font-size: 11px;
+    color: #e07a5f;
+    font-weight: 600;
+}
+
+.tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.tag {
+    border: 1px solid #f0d9d0;
+    background-color: white;
+    color: #e07a5f;
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 11px;
+}
+
+.btn {
+    display: inline-block;
+    background-color: #e07a5f;
+    color: white;
+    border-radius: 20px;
+    padding: 7px 18px;
+    font-size: 13px;
+    text-decoration: none;
+}
+
+/* ---------- จอเล็ก ---------- */
+@media (max-width: 900px) {
+    .grid {
+        grid-template-columns: 1fr;
+    }
+
+    .navbar {
+        flex-wrap: wrap;
+    }
+}
+
+/* ==========================================
+   Auth: Modal (login / register) + หน้าสมัครสมาชิก
+   ========================================== */
+dialog.login-modal,
+dialog.register-modal {
+    border: none;
+    border-radius: 24px;
+    padding: 0;
+    max-width: 400px;
+    width: calc(100% - 32px);
+    background: #ffffff;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+dialog::backdrop {
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+}
+
+.login-box,
+.register-box {
+    position: relative;
+    padding: 28px;
+    background-color: white;
+    text-align: left;
+    font-family: 'Prompt', sans-serif;
+}
+
+.close-btn,
+.login-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: transparent;
+    border: none;
+    font-size: 22px;
+    line-height: 1;
+    color: #9ca3af;
+    cursor: pointer;
+}
+
+.close-btn:hover,
+.login-close:hover {
+    color: #4b5563;
+}
+
+.modal-header h2,
+.login-box h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.modal-header p,
+.login-sub {
+    margin: 4px 0 18px;
+    font-size: 12px;
+    color: #6b7280;
+}
+
+/* Form */
+.form-group {
+    margin-bottom: 12px;
+    text-align: left;
+}
+
+.form-group label,
+.login-box label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #374151;
+}
+
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="password"],
+.login-box input[type="text"],
+.login-box input[type="email"],
+.login-box input[type="password"] {
+    width: 100%;
+    padding: 8px 14px;
+    border-radius: 16px;
+    border: 1px solid #e5e7eb;
+    font-family: inherit;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.login-box input:focus {
+    border-color: #e07a5f;
+}
+
+.login-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 12px 0 16px;
+    font-size: 12px;
+}
+
+.login-row label.login-remember {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    font-size: 12px;
+    color: #555;
+}
+
+.login-row a,
+.login-foot a {
+    color: #e07a5f;
+    text-decoration: none;
+}
+
+.login-error {
+    margin: 0 0 4px;
+    padding: 8px 12px;
+    background-color: #fdeee8;
+    border: 1px solid #f6cfc2;
+    border-radius: 10px;
+    font-size: 12px;
+    color: #c0452a;
+}
+
+.login-foot {
+    margin: 16px 0 0;
+    text-align: center;
+    font-size: 12px;
+    color: #666;
+}
+
+/* ปุ่ม Primary */
+.btn-submit,
+.login-submit {
+    width: 100%;
+    background-color: #e07a5f;
+    color: #ffffff;
+    border: none;
+    border-radius: 9999px;
+    padding: 10px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-submit:hover,
+.login-submit:hover {
+    background-color: #c85a42;
+}
+
+/* หน้าสมัครสมาชิก */
+.auth-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 24px 16px;
+    background-color: #fdf7f4;
+}
+
+.auth-page .login-box {
+    width: 100%;
+    max-width: 400px;
+    border: 1px solid #f0d9d0;
+    border-radius: 16px;
+}
+
+.auth-submit {
+    margin-top: 20px;
+}
+
+.role-selector {
+    display: flex;
+    gap: 16px;
+    margin-top: 6px;
+}
+
+.role-option {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+/* ==========================================
+   User Profile Dropdown
+   ========================================== */
+.user-profile-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.user-avatar-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.user-avatar-img,
+.user-avatar-placeholder {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    background-color: #e07a5f;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 18px;
+}
+
+.profile-card-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    width: 360px;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    padding: 20px;
+    z-index: 1000;
+    border: 1px solid #f1f1f1;
+}
+
+.profile-card-dropdown.show {
+    display: block;
+    animation: fadeInDropdown 0.2s ease-in-out;
+}
+
+@keyframes fadeInDropdown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.profile-card-dropdown .card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.profile-card-dropdown .card-head h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.profile-card-dropdown .card-head p {
+    margin: 2px 0 0;
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.profile-card-dropdown .btn-settings-icon {
+    text-decoration: none;
+    font-size: 18px;
+}
+
+.profile-card-dropdown .user-info-box {
+    margin-bottom: 16px;
+}
+
+.profile-card-dropdown .user-info-inner {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.profile-card-dropdown .info-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    object-fit: cover;
+}
+
+.profile-card-dropdown .info-details h4 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.profile-card-dropdown .info-details p {
+    margin: 2px 0;
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.profile-card-dropdown .badge-role {
+    font-size: 11px;
+    background: #f3f4f6;
+    padding: 2px 8px;
+    border-radius: 12px;
+}
+
+.profile-card-dropdown .btn-edit-profile {
+    display: inline-block;
+    font-size: 12px;
+    color: #e07a5f;
+    text-decoration: none;
+    margin-top: 4px;
+}
+
+.profile-card-dropdown .card-section-title {
+    font-weight: 600;
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+
+.profile-card-dropdown .role-grid {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.profile-card-dropdown .role-btn {
+    width: 100%;
+    text-align: left;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 8px;
+    cursor: pointer;
+}
+
+.profile-card-dropdown .role-btn h5 {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.profile-card-dropdown .role-btn p {
+    margin: 2px 0 0;
+    font-size: 10px;
+    color: #6b7280;
+}
+
+.profile-card-dropdown .appointment-table {
+    width: 100%;
+    font-size: 12px;
+    margin-bottom: 8px;
+}
+
+.profile-card-dropdown .appointment-table thead tr {
+    text-align: left;
+    color: #6b7280;
+}
+
+.profile-card-dropdown .status-badge-confirmed {
+    color: #e07a5f;
+    border-color: #fceade;
+}
+
+.profile-card-dropdown .status-badge-pending {
+    color: #6b7280;
+    border-color: #e5e7eb;
+}
+
+.profile-card-dropdown .more-appointments-wrapper {
+    text-align: center;
+    margin-top: 8px;
+}
+
+.profile-card-dropdown .more-appointments-btn {
+    text-decoration: none;
+    display: inline-block;
+    font-size: 12px;
+    color: #e07a5f;
+}
+
+.profile-card-dropdown .no-appointments-box {
+    text-align: center;
+    padding: 12px;
+    color: #9ca3af;
+    font-size: 13px;
+    background-color: #fdf8f6;
+    border-radius: 12px;
+    margin-bottom: 12px;
+}
+
+.profile-card-dropdown .card-logout-btn {
+    width: 100%;
+    padding: 8px;
+    background: #f3f4f6;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+}

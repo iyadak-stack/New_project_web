@@ -22,5 +22,10 @@ class DatabaseSeeder extends Seeder
             'last_name' => 'User',
             'email' => 'test@example.com',
         ]);
+
+        // 🟢 เรียกใช้ SubjectSeeder ที่แยกไว้
+        $this->call([
+            SubjectSeeder::class,
+        ]);
     }
 }

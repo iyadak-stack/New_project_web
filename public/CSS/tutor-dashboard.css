@@ -1,0 +1,270 @@
+/* เนื้อหาหน้าแรกติวเตอร์ (ดีไซน์โทนพีช-ส้ม เหมือนฝั่งนักเรียน)
+   หน้านี้ไม่ใช้ Bootstrap แล้ว จึงมีรีเซ็ตพื้นฐานไว้ข้างล่าง */
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: 'Prompt', sans-serif;
+    background-color: #ffffff;
+    color: #222;
+}
+
+/* ---------- โครงหน้า ---------- */
+.td-page {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 28px 40px;
+}
+
+.td-welcome {
+    margin: 0 0 16px;
+    padding: 16px 20px;
+    background-color: #fdeee8;
+    border: 1px solid #f6cfc2;
+    border-radius: 14px;
+}
+
+.td-welcome h1 {
+    margin: 0 0 6px;
+    font-size: 22px;
+    font-weight: 500;
+}
+
+.td-welcome h1 b {
+    font-weight: 700;
+}
+
+.td-welcome p {
+    margin: 0;
+    font-size: 13px;
+    color: #555;
+}
+
+.td-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 2.7fr) minmax(0, 1fr);
+    gap: 16px;
+    align-items: start;
+}
+
+.td-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* ---------- การ์ด ---------- */
+.td-card {
+    padding: 16px;
+    background-color: #ffffff;
+    border: 1px solid #f0d9d0;
+    border-radius: 16px;
+}
+
+.td-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.td-card-head h2 {
+    margin: 0 0 4px;
+    font-size: 20px;
+    font-weight: 500;
+}
+
+.td-card-head p {
+    margin: 0;
+    font-size: 13px;
+    color: #666;
+}
+
+.td-pill {
+    flex-shrink: 0;
+    padding: 2px 12px;
+    background-color: #ffffff;
+    border: 1px solid #f0d9d0;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #e07a5f;
+    white-space: nowrap;
+}
+
+/* ---------- กล่องสรุปคำขอจอง ---------- */
+.td-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.td-stat {
+    padding: 10px 14px;
+    background-color: #fdf3ee;
+    border: 1px solid #f6e3da;
+    border-radius: 12px;
+}
+
+.td-stat small {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 12px;
+    color: #666;
+}
+
+.td-stat strong {
+    font-size: 22px;
+    font-weight: 700;
+}
+
+/* ---------- ตารางคำขอจอง ---------- */
+.td-table-wrap {
+    overflow-x: auto;
+    border: 1px solid #f0d9d0;
+    border-radius: 12px;
+}
+
+.td-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.td-table th {
+    padding: 10px 14px;
+    background-color: #fdf3ee;
+    font-size: 12px;
+    font-weight: 400;
+    text-align: left;
+    color: #666;
+    white-space: nowrap;
+}
+
+.td-table td {
+    padding: 10px 14px;
+    border-top: 1px solid #f6e3da;
+    vertical-align: middle;
+}
+
+.td-main {
+    display: block;
+    font-weight: 500;
+}
+
+.td-sub {
+    display: block;
+    font-size: 12px;
+    color: #666;
+}
+
+.td-sub.strong {
+    font-weight: 600;
+    color: #333;
+}
+
+.td-cell-actions {
+    display: flex;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+/* ---------- ป้ายสถานะ + ปุ่ม ---------- */
+.td-status {
+    display: inline-block;
+    padding: 3px 12px;
+    background-color: #ffffff;
+    border: 1px solid #f0d9d0;
+    border-radius: 20px;
+    font-size: 11px;
+    color: #e07a5f;
+    white-space: nowrap;
+}
+
+.td-status.muted {
+    border-color: #e5e7eb;
+    color: #6b7280;
+}
+
+.td-btn {
+    display: inline-block;
+    padding: 5px 14px;
+    background-color: #e07a5f;
+    border: 1px solid #e07a5f;
+    border-radius: 20px;
+    font-family: inherit;
+    font-size: 12px;
+    color: #ffffff;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.td-btn:hover {
+    background-color: #c85a42;
+    border-color: #c85a42;
+}
+
+.td-btn.outline {
+    background-color: #ffffff;
+    border-color: #e5e5e5;
+    color: #444;
+}
+
+.td-btn.outline:hover {
+    background-color: #fafafa;
+}
+
+/* ---------- ตารางสอนวันนี้ ---------- */
+.td-lesson {
+    margin-bottom: 8px;
+    padding: 10px 12px;
+    background-color: #fdf3ee;
+    border: 1px solid #f6e3da;
+    border-radius: 12px;
+}
+
+.td-lesson-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.td-lesson-top strong {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.td-lesson p {
+    margin: 4px 0 0;
+    font-size: 12px;
+    color: #666;
+}
+
+.td-lesson p b {
+    font-weight: 600;
+    color: #333;
+}
+
+.td-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+/* ---------- จอเล็ก ---------- */
+@media (max-width: 900px) {
+    .td-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .td-page {
+        padding: 0 16px 32px;
+    }
+}

@@ -16,15 +16,26 @@ class TutorProfile extends Model
     protected $primaryKey = 'tutor_id';
     public $incrementing = false;
     protected $keyType = 'string';
+
     protected $fillable = [
-        'tutor_id',
         'Users_user_id',
+        'tutor_id',
         'bio',
         'experience_years',
-        'total_teaching_seconds',
-        'average_rating',
         'teaching_mode',
+        'line_id',
+        'discord_id',
+        'zoom_link',
+        'approval_status',
     ];
+
+    /**
+     * 🟢 ระบุให้ Route Model Binding ค้นหาจากคอลัมน์ tutor_id
+     */
+    public function getRouteKeyName()
+    {
+        return 'tutor_id';
+    }
 
     public function user(): BelongsTo
     {

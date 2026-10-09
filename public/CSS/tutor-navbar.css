@@ -1,0 +1,227 @@
+/* นาบบาร์ + แผงโปรไฟล์ สำหรับหน้าติวเตอร์ (หน้าตาเหมือนฝั่งนักเรียน)
+   คัดมาจาก home.css โดยเปลี่ยน .navbar เป็น .pt-navbar เพื่อไม่ชนกับ .navbar ของ Bootstrap
+   ใช้คู่กับ profile-card.css (โหลดต่อท้ายไฟล์นี้) */
+
+.pt-navbar,
+.pt-navbar .user-profile-wrapper {
+    font-family: 'Prompt', sans-serif;
+}
+
+/* ---------- Navbar ---------- */
+.pt-navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 14px 28px;
+    background-color: #ffffff;
+    position: relative;
+    z-index: 1000;
+}
+
+.pt-navbar .logo {
+    font-size: 26px;
+    font-weight: 700;
+    color: #e07a5f;
+    text-decoration: none;
+}
+
+.pt-navbar .search-box {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    max-width: 420px;
+    margin: 0;
+    border: 1px solid #e5e5e5;
+    border-radius: 30px;
+    padding: 6px 8px 6px 16px;
+}
+
+.pt-navbar .search-box input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 14px;
+}
+
+.pt-navbar .search-box button {
+    background-color: #e07a5f;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.pt-navbar .menu {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pt-navbar .menu-btn {
+    border: 1px solid #e5e5e5;
+    border-radius: 30px;
+    padding: 6px 14px;
+    font-size: 14px;
+    color: #444;
+    text-decoration: none;
+}
+
+.pt-navbar .menu-btn.active {
+    background-color: #fdeee8;
+    color: #e07a5f;
+    border-color: #f6cfc2;
+}
+
+@media (max-width: 900px) {
+    .pt-navbar {
+        flex-wrap: wrap;
+    }
+}
+
+/* ---------- วงกลมโปรไฟล์ ---------- */
+.pt-navbar .user-profile-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.pt-navbar .user-avatar-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pt-navbar .user-avatar-img,
+.pt-navbar .user-avatar-placeholder {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    background-color: #e07a5f;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 18px;
+}
+
+/* ---------- แผงโปรไฟล์ที่เด้งลงมา ---------- */
+.pt-navbar .profile-card-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    width: 360px;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    padding: 20px;
+    z-index: 1000;
+    border: 1px solid #f1f1f1;
+}
+
+.pt-navbar .profile-card-dropdown.show {
+    display: block;
+    animation: fadeInDropdown 0.2s ease-in-out;
+}
+
+@keyframes fadeInDropdown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.profile-card-dropdown .card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.profile-card-dropdown .btn-settings-icon {
+    text-decoration: none;
+    font-size: 18px;
+}
+
+.profile-card-dropdown .user-info-box {
+    margin-bottom: 16px;
+}
+
+.profile-card-dropdown .user-info-inner {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.profile-card-dropdown .role-grid {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.profile-card-dropdown .role-btn {
+    width: 100%;
+    text-align: left;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 8px;
+    cursor: pointer;
+}
+
+.profile-card-dropdown .appointment-table {
+    width: 100%;
+    font-size: 12px;
+    margin-bottom: 8px;
+}
+
+.profile-card-dropdown .appointment-table thead tr {
+    text-align: left;
+    color: #6b7280;
+}
+
+.profile-card-dropdown .status-badge-confirmed {
+    color: #e07a5f;
+    border-color: #fceade;
+}
+
+.profile-card-dropdown .status-badge-pending {
+    color: #6b7280;
+    border-color: #e5e7eb;
+}
+
+.profile-card-dropdown .more-appointments-wrapper {
+    text-align: center;
+    margin-top: 8px;
+}
+
+.profile-card-dropdown .more-appointments-btn {
+    text-decoration: none;
+    display: inline-block;
+    font-size: 12px;
+    color: #e07a5f;
+}
+
+.profile-card-dropdown .no-appointments-box {
+    text-align: center;
+    padding: 12px;
+    color: #9ca3af;
+    font-size: 13px;
+    background-color: #fdf8f6;
+    border-radius: 12px;
+    margin-bottom: 12px;
+}
+
+.profile-card-dropdown .card-logout-btn {
+    cursor: pointer;
+}

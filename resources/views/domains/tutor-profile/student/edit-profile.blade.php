@@ -23,7 +23,7 @@
 
         <nav class="menu">
             <a href="{{ route('home') }}" class="menu-btn">หน้าแรก</a>
-            <a href="{{ route('tutor.ranking') }}" class="menu-btn">จัดอันดับติวเตอร์</a>
+            <a href="{{ route('tutor.ranking') }}" class="menu-btn {{ request()->routeIs('tutor.ranking') ? 'active' : '' }}">จัดอันดับติวเตอร์</a>
             <a href="{{ route('notifications.index') }}" class="menu-btn">แจ้งเตือน</a>
         </nav>
     </header>

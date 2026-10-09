@@ -18,13 +18,16 @@ use App\Domains\Reportreview\Http\Controllers\ReviewController;
 use App\Domains\Reportreview\Http\Controllers\Admin\ReportController;
 use App\Domains\Auth\Models\User;
 
-// หน้าแรก: ตรวจสอบบทบาท ล็อกอินเป็น tutor ให้ไปหน้า tutor.profile ทันที
+// หน้าแรก (/): ตรวจสอบบทบาทผู้ใช้
 Route::get('/', function (Request $request) {
     if (auth()->check()) {
         if (auth()->user()->current_role === 'tutor') {
-            return redirect()->route('tutor.profile');
+            return view('domains.tutor-profile.tutor.tutor');
         }
+
+        return app(TutorController::class)->home($request);
     }
+
     return app(TutorController::class)->home($request);
 })->name('home');
 
@@ -39,7 +42,6 @@ Route::post('/forgot-password', function (Request $request) {
         'email.exists' => 'ไม่พบอีเมลนี้ในระบบ',
     ]);
 
-    // เด้งไปหน้ากรอกรหัสผ่านใหม่ (Step 2) ทันที
     return redirect()->route('password.reset', [
         'token' => 'direct-reset',
         'email' => $request->email,
@@ -63,9 +65,12 @@ Route::post('/reset-password', function (Request $request) {
 })->name('password.update');
 
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth'])->group(function () {
 
-    Route::view('dashboard', 'dashboard')->name('dashboard');
+    // กันเข้า URL /dashboard ให้วิ่งกลับไปหน้าหลัก
+    Route::get('/dashboard', function () {
+        return redirect()->route('home');
+    })->name('dashboard');
 
     // =========================
     // โปรไฟล์ติวเตอร์ (Tutor Profile)

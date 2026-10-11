@@ -7,6 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/home.css') }}?v={{ time() }}">
     <link rel="stylesheet" href="{{ asset('css/profile-card.css') }}?v={{ time() }}">
+    <link rel="stylesheet" href="{{ asset('css/tutor-navbar.css') }}?v={{ time() }}">
 </head>
 <body>
 
@@ -14,15 +15,18 @@
     <header class="navbar">
         <a href="{{ route('home') }}" class="logo">PeerTutor</a>
 
-        <form action="{{ route('tutor.search') }}" method="GET" class="search-box">
+        <form action="{{ route('student.tutors.index') }}" method="GET" class="search-box">
             <input type="text" name="search" value="{{ request('search') }}" placeholder="ค้นหาวิชา ติวเตอร์">
             <button type="submit">ค้นหา</button>
         </form>
 
         <nav class="menu">
-            <a href="{{ route('home') }}" class="menu-btn active">หน้าแรก</a>
-            <a href="{{ route('tutor.ranking') }}" class="menu-btn {{ request()->routeIs('tutor.ranking') ? 'active' : '' }}">จัดอันดับติวเตอร์</a>
-            <a href="{{ route('notifications.index') }}" class="menu-btn">แจ้งเตือน</a>
+            <a href="{{ route('home') }}" class="menu-btn {{ request()->routeIs('home') ? 'active' : '' }}">หน้าแรก</a>
+            <a href="{{ route('subjects.index') }}" class="menu-btn {{ request()->routeIs('subjects.*') ? 'active' : '' }}">รายวิชาทั้งหมด</a>
+            <a href="{{ route('student.tutors.index') }}" class="menu-btn {{ request()->routeIs('student.tutors.*') ? 'active' : '' }}">ติวเตอร์ทั้งหมด</a>
+            <a href="{{ route('appointments.index') }}" class="menu-btn {{ request()->routeIs('appointments.*') ? 'active' : '' }}">ตารางนัดหมาย</a>
+            <a href="{{ route('tutor.favorites') }}" class="menu-btn {{ request()->routeIs('tutor.favorites') ? 'active' : '' }}">รายการโปรด</a>
+            <a href="{{ route('notifications.index') }}" class="menu-btn {{ request()->routeIs('notifications.*') ? 'active' : '' }}">แจ้งเตือน</a>
 
             <!-- รูปโปรไฟล์วงกลม + Pop-over Card "โปรไฟล์ของฉัน" -->
             <div class="user-profile-wrapper">
@@ -36,104 +40,54 @@
                     @endif
                 </button>
                 
-                <!-- Pop-over Card -->
+                <!-- Pop-over Card แบบคลีน ใช้งานง่าย ไม่ซับซ้อน -->
                 <div class="profile-card-dropdown" id="profileDropdown">
-                    <div class="card-head">
-                        <div>
-                            <h3>โปรไฟล์ของฉัน</h3>
-                            <p>ดูข้อมูลส่วนตัว และตารางนัดหมายของคุณ</p>
-                        </div>
-                        <a href="{{ route('student.profile.edit') }}" class="btn-settings-icon" title="ตั้งค่าโปรไฟล์">⚙</a>
-                    </div>
-
-                    <!-- User Info -->
-                    <div class="user-info-box">
-                        <div class="user-info-inner">
+                    <div class="card-head" style="padding-bottom: 12px; border-bottom: 1px solid #f1f5f9; margin-bottom: 12px;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
                             @if (Auth::user()->profile_picture)
-                                <img src="{{ asset('storage/' . Auth::user()->profile_picture) }}" alt="Profile" class="info-avatar">
+                                <img src="{{ asset('storage/' . Auth::user()->profile_picture) }}" alt="Profile" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover;">
                             @else
-                                <div class="user-avatar-placeholder" style="width:48px; height:48px; border-radius:12px;">
+                                <div class="user-avatar-placeholder" style="width:44px; height:44px; border-radius:50%; font-size: 16px;">
                                     {{ mb_substr(Auth::user()->first_name ?? Auth::user()->email, 0, 1) }}
                                 </div>
                             @endif
-
-                            <div class="info-details">
-                                <h4>คุณ{{ Auth::user()->first_name }} {{ Auth::user()->last_name }}</h4>
-                                <p>นักเรียน - พร้อมเรียนวิชาเพิ่มเติม</p>
+                            <div>
+                                <h4 style="margin: 0; font-size: 15px; font-weight: 600; color: #1e293b;">คุณ{{ Auth::user()->first_name }} {{ Auth::user()->last_name }}</h4>
+                                <p style="margin: 0; font-size: 12px; color: #64748b;">นักเรียน</p>
                             </div>
                         </div>
-
-                        <a href="{{ route('student.profile.edit') }}" class="btn-edit-profile">แก้ไขโปรไฟล์</a>
                     </div>
 
+                    <!-- ปุ่มเข้าหน้าโปรไฟล์เต็มจุดเดียวชัดๆ -->
+                    <a href="{{ route('student.profile') }}" style="display: block; text-align: center; text-decoration: none; background-color: #fdeee8; color: #e07a5f; font-weight: 600; padding: 10px; border-radius: 8px; margin-bottom: 16px; transition: background-color 0.2s;">
+                        👤 ดูโปรไฟล์ของฉัน
+                    </a>
+
                     <!-- Role Switcher -->
-                    <div class="card-section-title">สลับบทบาท</div>
-                    <div class="role-grid">
+                    <div class="card-section-title" style="font-size: 12px; color: #94a3b8; font-weight: 600; margin-bottom: 8px;">สลับบทบาท</div>
+                    <div class="role-grid" style="display: flex; gap: 8px; margin-bottom: 16px;">
                         <form action="{{ route('role.switch') }}" method="POST" style="margin: 0; flex:1;">
                             @csrf
                             <input type="hidden" name="role" value="student">
-                            <button type="submit" class="role-card role-btn active">
-                                <h5>นักเรียน</h5>
-                                <p>ค้นหาติวเตอร์ และจองเรียนตามตารางที่สะดวก</p>
+                            <button type="submit" class="role-card role-btn active" style="width: 100%; text-align: left; padding: 8px 10px; border-radius: 8px;">
+                                <h5 style="margin: 0; font-size: 13px;">นักเรียน</h5>
                             </button>
                         </form>
                         <form action="{{ route('role.switch') }}" method="POST" style="margin: 0; flex:1;">
                             @csrf
                             <input type="hidden" name="role" value="tutor">
-                            <button type="submit" class="role-card role-btn">
-                                <h5>ติวเตอร์</h5>
-                                <p>เปิดรับเรียนและจัดการนัดหมายของนักเรียน</p>
+                            <button type="submit" class="role-card role-btn" style="width: 100%; text-align: left; padding: 8px 10px; border-radius: 8px;">
+                                <h5 style="margin: 0; font-size: 13px;">ติวเตอร์</h5>
                             </button>
                         </form>
                     </div>
 
-                    <!-- Appointment Table Summary -->
-                    <div class="card-section-title">ตารางนัดหมาย</div>
-                    @if(isset($displayAppointments) && $displayAppointments->count() > 0)
-                        <table class="appointment-table">
-                            <thead>
-                                <tr>
-                                    <th>วันที่</th>
-                                    <th>เวลา</th>
-                                    <th>รายวิชา</th>
-                                    <th>สถานะ</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($displayAppointments as $item)
-                                    <tr>
-                                        <td>{{ \Carbon\Carbon::parse($item->date ?? $item->appointment_date)->locale('th')->translatedFormat('d ม.ค.') }}</td>
-                                        <td>{{ \Carbon\Carbon::parse($item->time ?? $item->start_time)->format('H:i') }}</td>
-                                        <td>{{ $item->subject_name ?? $item->subject->name ?? '-' }}</td>
-                                        <td>
-                                            @if(($item->status ?? '') == 'confirmed')
-                                                <span class="status-badge status-badge-confirmed">ยืนยันแล้ว</span>
-                                            @elseif(($item->status ?? '') == 'pending')
-                                                <span class="status-badge status-badge-pending">รอการตอบรับ</span>
-                                            @else
-                                                <span class="status-badge">{{ $item->status ?? 'รอยืนยัน' }}</span>
-                                            @endif
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-
-                        @if(isset($hasMoreAppointments) && $hasMoreAppointments)
-                            <div class="more-appointments-wrapper">
-                                <a href="{{ route('appointments.index') }}" class="more-appointments-btn">เพิ่มเติม ∨</a>
-                            </div>
-                        @endif
-                    @else
-                        <div class="no-appointments-box">
-                            ไม่มีรายการนัดหมายในขณะนี้
-                        </div>
-                    @endif
-
                     <!-- Logout -->
-                    <form method="POST" action="{{ route('logout') }}" style="margin-top: 12px;">
+                    <form method="POST" action="{{ route('logout') }}" style="margin: 0;">
                         @csrf
-                        <button type="submit" class="card-logout-btn">ออกจากระบบ</button>
+                        <button type="submit" class="card-logout-btn" style="width: 100%; padding: 8px; border-radius: 8px; background: #fef2f2; color: #ef4444; border: none; font-size: 13px; font-weight: 500; cursor: pointer;">
+                            ออกจากระบบ
+                        </button>
                     </form>
                 </div>
             </div>
@@ -141,53 +95,80 @@
     </header>
 
     <main class="page">
-        <!-- Welcome Section (ปรับให้อ่านชื่อผู้ใช้ตรงๆ ไม่ต้องเช็ก Auth::check และระยะห่างตรงกับติวเตอร์) -->
+        <!-- Welcome Section -->
         <section class="welcome-box">
             <h1>ยินดีต้อนรับคุณ <b style="color:#e07a5f;">{{ Auth::user()->first_name }}</b> สู่ <b>PeerTutor</b></h1>
             <p>ค้นหาติวเตอร์ที่เข้าใจเนื้อหาเดียวกัน แล้วเริ่มเรียนได้ทันทีด้วยประสบการณ์ที่ใกล้ตัวมากขึ้น</p>
         </section>
 
-        <!-- Top Tutors -->
-        <h2 class="section-title">ติวเตอร์ยอดนิยม</h2>
-        <p class="section-sub">สำรวจติวเตอร์ที่มีคะแนนสูงสุด</p>
-
-        <div class="grid">
-            @foreach($tutors as $tutor)
-                <x-tutor-card :tutor="$tutor" />
-            @endforeach
+        <!-- Top Tutors Section -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 32px; margin-bottom: 12px;">
+            <div>
+                <h2 class="section-title" style="margin: 0;">ติวเตอร์ยอดนิยม</h2>
+                <p class="section-sub" style="margin: 4px 0 0 0;">สำรวจติวเตอร์ที่มีคะแนนสูงสุด</p>
+            </div>
+            <!-- ปุ่มดูติวเตอร์ทั้งหมด -->
+            <a href="{{ route('student.tutors.index') }}" style="color: #e07a5f; font-weight: 600; font-size: 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                ดูติวเตอร์ทั้งหมด ➔
+            </a>
         </div>
 
-        <!-- Top Subjects -->
-        <h2 class="section-title">รายวิชายอดนิยม</h2>
-        <p class="section-sub">รายวิชาที่นักเรียนค้นหามากที่สุดใน <b>PeerTutor</b></p>
+        <div class="grid">
+            @if(isset($tutors) && count($tutors) > 0)
+                @foreach($tutors as $tutor)
+                    <x-tutor-card :tutor="$tutor" />
+                @endforeach
+            @else
+                <p style="color: #94a3b8; font-size: 14px; grid-column: 1 / -1;">ยังไม่มีข้อมูลติวเตอร์ในระบบ</p>
+            @endif
+        </div>
+
+        <!-- Top Subjects Section -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 40px; margin-bottom: 12px;">
+            <div>
+                <h2 class="section-title" style="margin: 0;">รายวิชายอดนิยม</h2>
+                <p class="section-sub" style="margin: 4px 0 0 0;">รายวิชาที่นักเรียนค้นหามากที่สุดใน <b>PeerTutor</b></p>
+            </div>
+            <!-- ปุ่มดูรายวิชาทั้งหมด -->
+            <a href="{{ route('subjects.index') }}" style="color: #e07a5f; font-weight: 600; font-size: 14px; text-decoration: none;">
+                ดูรายวิชาทั้งหมด ➔
+            </a>
+        </div>
 
         <div class="grid">
-            @foreach($subjects as $subject)
-                @php
-                    $title = is_array($subject) ? ($subject['title'] ?? '') : ($subject->subject_name ?? $subject->title ?? '');
-                    $count = is_array($subject) ? ($subject['count'] ?? 0) : ($subject->tutors_count ?? 0);
-                    $description = is_array($subject) ? ($subject['description'] ?? '') : ($subject->description ?? 'รายวิชาคุณภาพเยี่ยม');
-                    $tags = is_array($subject) ? ($subject['tags'] ?? []) : ($subject->tags ?? []);
-                @endphp
-                <div class="card card-subject">
-                    <div class="subject-top">
-                        <h3>{{ $title }}</h3>
-                        <span class="count">{{ $count }}+</span>
+            @if(isset($subjects) && count($subjects) > 0)
+                @foreach($subjects as $subject)
+                    @php
+                        $title = is_array($subject) ? ($subject['title'] ?? '') : ($subject->subject_name ?? $subject->title ?? '');
+                        $count = is_array($subject) ? ($subject['count'] ?? 0) : ($subject->tutors_count ?? 0);
+                        $description = is_array($subject) ? ($subject['description'] ?? '') : ($subject->description ?? 'รายวิชาคุณภาพเยี่ยม');
+                        $tags = is_array($subject) ? ($subject['tags'] ?? []) : ($subject->tags ?? []);
+                        $subjectId = is_array($subject) ? ($subject['id'] ?? $subject['subject_id'] ?? null) : ($subject->subject_id ?? $subject->id ?? null);
+                    @endphp
+                    <div class="card card-subject">
+                        <div class="subject-top">
+                            <h3>{{ $title }}</h3>
+                            <span class="count">{{ $count }}+</span>
+                        </div>
+
+                        <p class="desc">{{ $description }}</p>
+
+                        <div class="tags">
+                            @if(is_iterable($tags))
+                                @foreach($tags as $tag)
+                                    <span class="tag">{{ is_array($tag) ? ($tag['name'] ?? $tag) : $tag }}</span>
+                                @endforeach
+                            @endif
+                        </div>
+
+                        <a href="{{ route('subjects.show', $subject->subject_id) }}" class="btn">
+                            ดูติวเตอร์วิชานี้
+                        </a>
                     </div>
-
-                    <p class="desc">{{ $description }}</p>
-
-                    <div class="tags">
-                        @if(is_iterable($tags))
-                            @foreach($tags as $tag)
-                                <span class="tag">{{ is_array($tag) ? ($tag['name'] ?? $tag) : $tag }}</span>
-                            @endforeach
-                        @endif
-                    </div>
-
-                    <a href="{{ route('tutor.search', ['search' => $title]) }}" class="btn">ดูรายวิชา</a>
-                </div>
-            @endforeach
+                @endforeach
+            @else
+                <p style="color: #94a3b8; font-size: 14px; grid-column: 1 / -1;">ยังไม่มีข้อมูลรายวิชาในระบบ</p>
+            @endif
         </div>
     </main>
 

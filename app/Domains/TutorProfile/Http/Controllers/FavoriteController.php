@@ -10,8 +10,11 @@ use Illuminate\Support\Str;
 
 class FavoriteController extends Controller
 {
-    public function storeTutor(TutorProfile $tutorProfile): RedirectResponse
+    public function storeTutor($id): RedirectResponse
     {
+        // ค้นหา TutorProfile จากคีย์จริง (tutor_id)
+        $tutorProfile = TutorProfile::where('tutor_id', $id)->firstOrFail();
+
         $favorite = Favorite::withTrashed()
             ->where('Users_user_id', auth()->id())
             ->where('Tutor_profiles_tutor_id', $tutorProfile->tutor_id)
@@ -21,18 +24,21 @@ class FavoriteController extends Controller
             $favorite->restore();
         } else {
             Favorite::create([
-                'favorite_id' => strtoupper(Str::random(10)),
-                'Users_user_id' => auth()->id(),
+                'favorite_id'             => strtoupper(Str::random(10)),
+                'Users_user_id'           => auth()->id(),
                 'Tutor_profiles_tutor_id' => $tutorProfile->tutor_id,
-                'Subject_subject_id' => null,
+                'Subject_subject_id'      => null,
             ]);
         }
 
         return back()->with('success', 'เพิ่มติวเตอร์ในรายการโปรดเรียบร้อยแล้ว');
     }
 
-    public function destroyTutor(TutorProfile $tutorProfile): RedirectResponse
+    public function destroyTutor($id): RedirectResponse
     {
+        // ค้นหา TutorProfile ก่อนลบ
+        $tutorProfile = TutorProfile::where('tutor_id', $id)->firstOrFail();
+
         Favorite::where('Users_user_id', auth()->id())
             ->where('Tutor_profiles_tutor_id', $tutorProfile->tutor_id)
             ->delete();

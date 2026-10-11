@@ -24,14 +24,11 @@
         </form>
 
         <nav class="menu">
-            @php
-                $prevUrl = url()->previous();
-                $isFromRanking = request()->routeIs('tutor.ranking') || (request()->routeIs('tutor.show') && str_contains($prevUrl, 'ranking'));
-                $isFromHome = (request()->routeIs('home') || request()->routeIs('tutor.dashboard')) && !$isFromRanking;
-            @endphp
-            {{-- 🟢 เช็ก active ตาม Route จริง ไม่ฮาร์ดโค้ด active ค้างไว้ --}}
-            <a href="{{ route('home') }}" class="menu-btn {{ request()->routeIs('home') || request()->routeIs('tutor.dashboard') ? 'active' : '' }}">หน้าแรก</a>
-            <a href="{{ route('tutor.ranking') }}" class="menu-btn {{ request()->routeIs('tutor.ranking') ? 'active' : '' }}">จัดอันดับติวเตอร์</a>
+            <a href="{{ route('home') }}" class="menu-btn {{ request()->routeIs('home') ? 'active' : '' }}">หน้าแรก</a>
+            <a href="{{ route('subjects.index') }}" class="menu-btn {{ request()->routeIs('subjects.*') ? 'active' : '' }}">รายวิชาทั้งหมด</a>
+            <a href="{{ route('tutor.search') }}" class="menu-btn {{ request()->routeIs('tutor.search') ? 'active' : '' }}">ติวเตอร์ทั้งหมด</a>
+            <a href="{{ route('appointments.index') }}" class="menu-btn {{ request()->routeIs('appointments.*') ? 'active' : '' }}">ตารางนัดหมาย</a>
+            <a href="{{ route('tutor.favorites') }}" class="menu-btn {{ request()->routeIs('tutor.favorites') ? 'active' : '' }}">รายการโปรด</a>
             <a href="{{ route('notifications.index') }}" class="menu-btn {{ request()->routeIs('notifications.*') ? 'active' : '' }}">แจ้งเตือน</a>
 
             <!-- รูปโปรไฟล์วงกลม + Pop-over Card "โปรไฟล์ของฉัน" -->
@@ -46,90 +43,54 @@
                     @endif
                 </button>
 
-                <!-- Pop-over Card -->
+                <!-- Pop-over Card แบบคลีน ใช้งานง่าย ไม่ซับซ้อน -->
                 <div class="profile-card-dropdown" id="profileDropdown">
-                    <div class="card-head">
-                        <div>
-                            <h3>โปรไฟล์ของฉัน</h3>
-                            <p>ดูข้อมูลส่วนตัว และตารางนัดหมายของคุณ</p>
-                        </div>
-                        <a href="{{ Auth::user()->current_role === 'tutor' ? route('tutor.profile.edit') : route('student.profile.edit') }}" class="btn-settings-icon" title="ตั้งค่าโปรไฟล์">⚙</a>
-                    </div>
-
-                    <!-- User Info -->
-                    <div class="user-info-box">
-                        <div class="user-info-inner">
+                    <div class="card-head" style="padding-bottom: 12px; border-bottom: 1px solid #f1f5f9; margin-bottom: 12px;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
                             @if (Auth::user()->profile_picture)
-                                <img src="{{ asset('storage/' . Auth::user()->profile_picture) }}" alt="Profile" class="info-avatar">
+                                <img src="{{ asset('storage/' . Auth::user()->profile_picture) }}" alt="Profile" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover;">
                             @else
-                                <div class="user-avatar-placeholder" style="width:48px; height:48px; border-radius:12px;">
+                                <div class="user-avatar-placeholder" style="width:44px; height:44px; border-radius:50%; font-size: 16px;">
                                     {{ mb_substr(Auth::user()->first_name ?? Auth::user()->email, 0, 1) }}
                                 </div>
                             @endif
-
-                            <div class="info-details">
-                                <h4>คุณ{{ Auth::user()->first_name }} {{ Auth::user()->last_name }}</h4>
-                                <p>{{ Auth::user()->current_role === 'tutor' ? 'ติวเตอร์' : 'นักเรียน' }} - พร้อมสอนวิชาเพิ่มเติม</p>
+                            <div>
+                                <h4 style="margin: 0; font-size: 15px; font-weight: 600; color: #1e293b;">คุณ{{ Auth::user()->first_name }} {{ Auth::user()->last_name }}</h4>
+                                <p style="margin: 0; font-size: 12px; color: #e07a5f; font-weight: 500;">ติวเตอร์</p>
                             </div>
                         </div>
-
-                        @if(Auth::user()->current_role === 'tutor')
-                            <a href="{{ route('tutor.profile.edit') }}" class="btn-edit-profile">แก้ไขโปรไฟล์</a>
-                        @else
-                            <a href="{{ route('student.profile.edit') }}" class="btn-edit-profile">แก้ไขโปรไฟล์</a>
-                        @endif
                     </div>
 
+                    <!-- ปุ่มเข้าหน้าโปรไฟล์เต็มจุดเดียวชัดๆ -->
+                    <a href="{{ route('tutor.profile') }}" style="display: block; text-align: center; text-decoration: none; background-color: #fdeee8; color: #e07a5f; font-weight: 600; padding: 10px; border-radius: 8px; margin-bottom: 16px; transition: background-color 0.2s;">
+                        👤 ดูโปรไฟล์ของฉัน
+                    </a>
+
                     <!-- Role Switcher -->
-                    <div class="card-section-title">สลับบทบาท</div>
-                    <div class="role-grid">
+                    <div class="card-section-title" style="font-size: 12px; color: #94a3b8; font-weight: 600; margin-bottom: 8px;">สลับบทบาท</div>
+                    <div class="role-grid" style="display: flex; gap: 8px; margin-bottom: 16px;">
                         <form action="{{ route('role.switch') }}" method="POST" style="margin: 0; flex:1;">
                             @csrf
                             <input type="hidden" name="role" value="student">
-                            <button type="submit" class="role-card role-btn {{ Auth::user()->current_role !== 'tutor' ? 'active' : '' }}">
-                                <h5>นักเรียน</h5>
-                                <p>ค้นหาติวเตอร์ และจองเรียนตามตารางที่สะดวก</p>
+                            <button type="submit" class="role-card role-btn {{ Auth::user()->current_role !== 'tutor' ? 'active' : '' }}" style="width: 100%; text-align: left; padding: 8px 10px; border-radius: 8px;">
+                                <h5 style="margin: 0; font-size: 13px;">นักเรียน</h5>
                             </button>
                         </form>
                         <form action="{{ route('role.switch') }}" method="POST" style="margin: 0; flex:1;">
                             @csrf
                             <input type="hidden" name="role" value="tutor">
-                            <button type="submit" class="role-card role-btn {{ Auth::user()->current_role === 'tutor' ? 'active' : '' }}">
-                                <h5>ติวเตอร์</h5>
-                                <p>เปิดรับเรียนและจัดการนัดหมายของนักเรียน</p>
+                            <button type="submit" class="role-card role-btn {{ Auth::user()->current_role === 'tutor' ? 'active' : '' }}" style="width: 100%; text-align: left; padding: 8px 10px; border-radius: 8px;">
+                                <h5 style="margin: 0; font-size: 13px;">ติวเตอร์</h5>
                             </button>
                         </form>
                     </div>
 
-                    <!-- ช่องทางติดต่อในการสอน -->
-                    @php
-                        $userContact = Auth::user()->contact 
-                            ?? \App\Domains\Auth\Models\Contact::where('Users_user_id', Auth::id())->first();
-                    @endphp
-
-                    <div class="contact-channels-box" style="margin-top: 16px; background: #fff; border-radius: 12px; padding: 16px; border: 1px solid #f3f4f6;">
-                        <h4 style="font-size: 15px; font-weight: 600; color: #1f2937; margin-bottom: 12px;">📞 ช่องทางติดต่อในการสอน</h4>
-    
-                        <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13px; color: #4b5563;">
-                            <div><strong>Line ID:</strong> {{ $userContact?->line_id ?: '-' }}</div>
-                            <div><strong>Discord:</strong> {{ $userContact?->discord_id ?: '-' }}</div>
-                            <div>
-                                <strong>Zoom:</strong> 
-                                @if(!empty($userContact?->zoom_link))
-                                    <a href="{{ $userContact->zoom_link }}" target="_blank" style="color: #2563eb; text-decoration: underline; word-break: break-all;">
-                                        เปิดลิงก์ Zoom
-                                    </a>
-                                @else
-                                    -
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- Logout -->
-                    <form method="POST" action="{{ route('logout') }}" style="margin-top: 12px;">
+                    <form method="POST" action="{{ route('logout') }}" style="margin: 0;">
                         @csrf
-                        <button type="submit" class="card-logout-btn">ออกจากระบบ</button>
+                        <button type="submit" class="card-logout-btn" style="width: 100%; padding: 8px; border-radius: 8px; background: #fef2f2; color: #ef4444; border: none; font-size: 13px; font-weight: 500; cursor: pointer;">
+                            ออกจากระบบ
+                        </button>
                     </form>
                 </div>
             </div>
@@ -137,13 +98,13 @@
     </header>
 
     <main class="td-page">
-        {{-- 🟢 ถ้ามี content จากหน้าย่อย (เช่น ranking.blade.php) ให้โชว์เฉพาะหน้าย่อย --}}
+        {{-- ถ้ามี content จากหน้าย่อย (เช่น profile.blade.php หรือ ranking.blade.php) ให้โชว์เฉพาะหน้าย่อย --}}
         @hasSection('content')
-            <div class="td-card" style="margin-bottom: 24px;">
+            <div class="td-card" style="margin-bottom: 24px; border-radius: 16px; background: #ffffff;">
                 @yield('content')
             </div>
         @else
-            {{-- 🟢 ถ้าไม่มี content ให้โชว์หน้า Dashboard หลัก --}}
+            {{-- ถ้าไม่มี content ให้โชว์หน้า Dashboard หลัก --}}
             <section class="td-welcome">
                 <h1>ยินดีต้อนรับคุณ <b style="color:#e07a5f;">{{ Auth::check() ? Auth::user()->first_name : '' }}</b> สู่ <b>PeerTutor</b></h1>
                 <p>จัดการคำขอจอง ตารางสอน จากหน้านี้ พร้อมตัดสินใจตอบรับหรือปฏิเสธคำขอจองได้ทันที</p>

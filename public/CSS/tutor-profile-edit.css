@@ -194,3 +194,69 @@
     .tp-card { padding: 24px 20px; }
     .tp-row { flex-direction: column; }
 }
+/* ==========================================
+   ส่วนเลือกวิชาแบบ Tag/Chip สวยงาม
+   ========================================== */
+.pe-select-hint {
+    font-size: 13px;
+    color: #64748b;
+    margin-bottom: 10px;
+}
+
+.pe-tags-box {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+    min-height: 42px;
+    padding: 10px;
+    background-color: #f8fafc;
+    border: 1.5px dashed #cbd5e1;
+    border-radius: 12px;
+    align-items: center;
+}
+
+.pe-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #fdeee8;
+    color: #e07a5f;
+    border: 1px solid #e07a5f;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.pe-tag .remove-btn {
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    color: #e07a5f;
+    line-height: 1;
+    margin-left: 2px;
+}
+
+.pe-tag .remove-btn:hover {
+    color: #c0563b;
+}
+
+.pe-custom-select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 14px;
+    font-family: 'Prompt', sans-serif;
+    color: #334155;
+    background-color: #ffffff;
+    outline: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.pe-custom-select:focus {
+    border-color: #e07a5f;
+    box-shadow: 0 0 0 3px rgba(224, 122, 95, 0.15);
+}

@@ -4,7 +4,11 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 
-use App\Domains\TutorProfile\Http\Controllers\TutorController;
+use App\Domains\TutorProfile\Http\Controllers\StudentHomeController;
+use App\Domains\TutorProfile\Http\Controllers\StudentProfileController;
+use App\Domains\TutorProfile\Http\Controllers\TutorProfileController;
+use App\Domains\TutorProfile\Http\Controllers\TutorSearchController;
+
 use App\Domains\TutorProfile\Http\Controllers\FavoriteController;
 use App\Domains\Booking\Http\Controllers\SubjectController;
 use App\Domains\Booking\Http\Controllers\AppointmentController;
@@ -12,29 +16,31 @@ use App\Domains\Scheduling\Http\Controllers\AvailabilityController;
 use App\Domains\Scheduling\Http\Controllers\CheckScheduleController;
 use App\Domains\Booking\Http\Controllers\NotificationController;
 use App\Domains\Auth\Http\Controllers\ContactController;
-use App\Domains\TutorProfile\Http\Controllers\StudentProfileController;
 use App\Domains\Auth\Http\Controllers\RoleController;
 use App\Domains\Reportreview\Http\Controllers\ReviewController;
 use App\Domains\Reportreview\Http\Controllers\Admin\ReportController;
 use App\Domains\Auth\Models\User;
 
+// =========================
 // หน้าแรก (/): ตรวจสอบบทบาทผู้ใช้
+// =========================
 Route::get('/', function (Request $request) {
     if (auth()->check()) {
         if (auth()->user()->current_role === 'tutor') {
             return view('domains.tutor-profile.tutor.tutor');
         }
 
-        return app(TutorController::class)->home($request);
+        return app(StudentHomeController::class)->index($request);
     }
 
-    return app(TutorController::class)->home($request);
+    return app(StudentHomeController::class)->index($request);
 })->name('home');
+
 
 // =========================
 // ลืมรหัสผ่านแบบข้ามการส่งอีเมล (Direct Reset Password)
+// หมายเหตุ: ใช้เฉพาะตอนพัฒนา ห้ามใช้บนระบบจริง (ไม่มีการตรวจ token)
 // =========================
-
 Route::post('/forgot-password', function (Request $request) {
     $request->validate([
         'email' => ['required', 'email', 'exists:users,email'],
@@ -65,6 +71,29 @@ Route::post('/reset-password', function (Request $request) {
 })->name('password.update');
 
 
+// =========================
+// ค้นหา / ดูโปรไฟล์ติวเตอร์ (Public Views Access)
+// สำคัญ: route ที่เป็นคำตายตัว (ranking, favorites) ต้องอยู่ก่อน /tutors/{id}
+// =========================
+Route::get('/tutors', [TutorSearchController::class, 'search'])
+    ->name('tutor.search');
+
+Route::get('/tutors/ranking', [TutorSearchController::class, 'ranking'])
+    ->name('tutor.ranking');
+
+// รายการโปรดของฉัน (ต้องล็อกอิน) — ย้ายมาไว้ก่อน /tutors/{id} เพื่อไม่ให้ถูกบัง
+Route::get('/tutors/favorites', [FavoriteController::class, 'tutorFavorites'])
+    ->middleware('auth')
+    ->name('tutor.favorites');
+
+// หน้าโปรไฟล์ติวเตอร์รายบุคคล
+Route::get('/tutors/{id}', [TutorProfileController::class, 'show'])
+    ->name('tutor.show');
+
+
+// =========================
+// กลุ่ม Route ที่ต้องล็อกอิน (Auth Middleware)
+// =========================
 Route::middleware(['auth'])->group(function () {
 
     // กันเข้า URL /dashboard ให้วิ่งกลับไปหน้าหลัก
@@ -72,62 +101,57 @@ Route::middleware(['auth'])->group(function () {
         return redirect()->route('home');
     })->name('dashboard');
 
-    // =========================
-    // โปรไฟล์ติวเตอร์ (Tutor Profile)
-    // =========================
 
-    Route::get('/tutor/profile', [TutorController::class, 'profile'])
+    // =========================
+    // หน้ารวมวิชาทั้งหมดโดยเฉพาะ (Dedicated All Subjects Page)
+    // =========================
+    Route::get('/subjects', [StudentHomeController::class, 'allSubjects'])
+        ->name('subjects.index');
+
+    // หน้าติวเตอร์ทั้งหมดสำหรับนักเรียน
+    Route::get('/student/tutors', [StudentHomeController::class, 'allTutors'])
+        ->name('student.tutors.index');
+
+
+    // =========================
+    // โปรไฟล์ติวเตอร์ (Tutor Profile - Private/Management)
+    // =========================
+    Route::get('/tutor/profile', [TutorProfileController::class, 'profile'])
         ->middleware('role:tutor')
         ->name('tutor.profile');
 
-    Route::get('/tutor/profile/edit', [TutorController::class, 'editProfile'])
+    Route::get('/tutor/profile/edit', [TutorProfileController::class, 'editProfile'])
         ->middleware('role:tutor')
         ->name('tutor.profile.edit');
 
-    Route::post('/tutor/profile', [TutorController::class, 'updateProfile'])
+    Route::post('/tutor/profile', [TutorProfileController::class, 'updateProfile'])
         ->middleware('role:tutor')
         ->name('tutor.profile.update');
 
+    Route::post('/tutor/application/submit', [TutorProfileController::class, 'submitApplication'])
+        ->middleware('role:tutor')
+        ->name('tutor.application.submit');
+
 
     // =========================
-    // รายการโปรดติวเตอร์ (Tutor Favorite)
+    // รายการโปรดติวเตอร์ (Tutor Favorite) — POST เท่านั้น
     // =========================
-
-    Route::post('/tutor/{tutorProfile}/favorite', [FavoriteController::class, 'storeTutor'])
+    Route::post('/tutor/{id}/favorite', [FavoriteController::class, 'storeTutor'])
         ->name('tutor.favorite.store');
 
-    Route::post('/tutor/{tutorProfile}/favorite/remove', [FavoriteController::class, 'destroyTutor'])
+    Route::post('/tutor/{id}/favorite/remove', [FavoriteController::class, 'destroyTutor'])
         ->name('tutor.favorite.destroy');
 
 
     // =========================
-    // ค้นหา / จัดอันดับติวเตอร์ (Search / Ranking / Tutor)
+    // จัดการรายวิชา (Subjects Resource)
     // =========================
-
-    Route::get('/tutors', [TutorController::class, 'search'])
-        ->name('tutor.search');
-
-    Route::get('/tutors/ranking', [TutorController::class, 'ranking'])
-        ->name('tutor.ranking');
-
-    Route::get('/tutors/favorites', [FavoriteController::class, 'tutorFavorites'])
-        ->name('tutor.favorites');
-
-    Route::get('/tutors/{tutorProfile}', [TutorController::class, 'show'])
-        ->name('tutor.show');
-
-
-    // =========================
-    // จัดการรายวิชา (Subjects)
-    // =========================
-
-    Route::resource('subjects', SubjectController::class);
+    Route::resource('subjects', SubjectController::class)->except(['index']);
 
 
     // =========================
     // ตารางเวลาและความพร้อม (Availability & Schedule Check)
     // =========================
-
     Route::get('/availabilities', [AvailabilityController::class, 'index'])->name('availabilities.index');
     Route::post('/availabilities', [AvailabilityController::class, 'store'])->name('availabilities.store');
     Route::get('/availabilities/history', [AvailabilityController::class, 'history'])->name('availabilities.history');
@@ -144,7 +168,6 @@ Route::middleware(['auth'])->group(function () {
     // =========================
     // การนัดหมาย (Appointments)
     // =========================
-
     Route::resource('appointments', AppointmentController::class)
         ->except(['edit', 'update']);
 
@@ -163,7 +186,6 @@ Route::middleware(['auth'])->group(function () {
     // =========================
     // ระบบแจ้งเตือน (Notifications)
     // =========================
-
     Route::get('/notifications', [NotificationController::class, 'index'])
         ->name('notifications.index');
 
@@ -176,7 +198,6 @@ Route::middleware(['auth'])->group(function () {
     // =========================
     // โปรไฟล์นักเรียน (Student Profile)
     // =========================
-
     Route::get('/student/profile', [StudentProfileController::class, 'profile'])
         ->middleware('role:student')
         ->name('student.profile');
@@ -185,7 +206,7 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('role:student')
         ->name('student.profile.edit');
 
-    Route::post('/student/profile', [StudentProfileController::class, 'updateProfile'])
+    Route::post('/student/profile/update', [StudentProfileController::class, 'updateProfile'])
         ->middleware('role:student')
         ->name('student.profile.update');
 
@@ -193,7 +214,6 @@ Route::middleware(['auth'])->group(function () {
     // =========================
     // ข้อมูลติดต่อของนักเรียน (Student Contacts)
     // =========================
-
     Route::get('/student-contacts/{studentId}/edit', [ContactController::class, 'edit'])
         ->name('student-contacts.edit');
 
@@ -204,7 +224,6 @@ Route::middleware(['auth'])->group(function () {
     // =========================
     // สลับบทบาทผู้ใช้ (Role Switching)
     // =========================
-
     Route::post('/switch-role', [RoleController::class, 'switchRole'])
         ->name('role.switch');
 
@@ -212,7 +231,6 @@ Route::middleware(['auth'])->group(function () {
     // =========================
     // รีวิว (Reviews)
     // =========================
-
     Route::get('/reviews', [ReviewController::class, 'index'])
         ->name('reviews.index');
 
@@ -235,7 +253,6 @@ Route::middleware(['auth'])->group(function () {
     // =========================
     // รายงาน (Reports)
     // =========================
-
     Route::get('/reports/create', [ReportController::class, 'create'])
         ->name('reports.create');
 

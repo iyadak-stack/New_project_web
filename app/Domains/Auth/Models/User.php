@@ -38,6 +38,7 @@ use Laravel\Fortify\PasskeyAuthenticatable;
  * @property Carbon|null $deleted_at
  * @property-read TutorProfile|null $tutorProfile
  * @property-read StudentProfile|null $studentProfile
+ * @property-read Contact|null $contact
  * @property-read \Illuminate\Database\Eloquent\Collection<int, Favorite> $favorites
  */
 class User extends Authenticatable implements PasskeyUser
@@ -127,6 +128,12 @@ class User extends Authenticatable implements PasskeyUser
     public function studentProfile(): HasOne
     {
         return $this->hasOne(StudentProfile::class, 'user_id', 'user_id');
+    }
+
+    // ความสัมพันธ์กับช่องทางติดต่อ (ตาราง contacts ใช้คอลัมน์ Users_user_id)
+    public function contact(): HasOne
+    {
+        return $this->hasOne(Contact::class, 'Users_user_id', 'user_id');
     }
 
     // รายการ Favorite ทั้งหมดที่ User คนนี้กดเซฟไว้

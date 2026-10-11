@@ -20,9 +20,11 @@
         </form>
 
         <nav class="menu">
-            <a href="{{ route('home') }}" class="menu-btn active">หน้าแรก</a>
-            <a href="{{ route('tutor.ranking') }}" class="menu-btn">จัดอันดับติวเตอร์</a>
-            <a href="javascript:void(0)" class="menu-btn" data-open-login>แจ้งเตือน</a>
+            <a href="{{ route('home') }}" class="menu-btn {{ request()->routeIs('home') ? 'active' : '' }}">หน้าแรก</a>
+            <a href="{{ route('subjects.index') }}" class="menu-btn {{ request()->routeIs('subjects.*') ? 'active' : '' }}">รายวิชาทั้งหมด</a>
+            <a href="{{ route('tutor.search') }}" class="menu-btn {{ request()->routeIs('tutor.search') ? 'active' : '' }}">ติวเตอร์ทั้งหมด</a>
+            <a href="{{ route('appointments.index') }}" class="menu-btn {{ request()->routeIs('appointments.*') ? 'active' : '' }}">ตารางนัดหมาย</a>
+            <a href="{{ route('notifications.index') }}" class="menu-btn {{ request()->routeIs('notifications.*') ? 'active' : '' }}">แจ้งเตือน</a>
 
             <a href="javascript:void(0)" class="menu-btn login" data-open-login>เข้าสู่ระบบ</a>
         </nav>

@@ -2,9 +2,8 @@
 
 namespace App\Domains\Auth\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Domains\TutorProfile\Models\StudentProfile;
-use App\Domains\TutorProfile\Models\TutorProfile;
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -19,25 +18,19 @@ class RoleController extends Controller
         $user = $request->user();
         $role = $validated['role'];
 
-        if ($role === 'tutor') {
-            // สร้าง TutorProfile อัตโนมัติหากยังไม่มีใน Database
-            TutorProfile::firstOrCreate(
-                ['Users_user_id' => $user->user_id],
-                [
-                    'tutor_id' => 'TUT-' . strtoupper(Str::random(8)),
-                    'bio' => '',
-                    'experience_years' => 0,
-                    'total_teaching_seconds' => 0,
-                    'average_rating' => 0,
-                    'teaching_mode' => 'online',
-                ]
-            );
-            $user->load('tutorProfile');
+        if ($role === 'tutor' && ! $user->tutorProfile?->isComplete()) {
+            return redirect()->route('tutor.onboarding')->with('info', 'กรุณากรอกข้อมูลติวเตอร์ก่อนเริ่มสอน');
+        }
+
+        if ($role === 'tutor' && $user->tutorProfile->approval_status !== 'approved') {
+            return redirect()->route('tutor.application.status');
         }
 
         if ($role === 'student') {
             StudentProfile::firstOrCreate([
                 'user_id' => $user->user_id,
+            ], [
+                'id' => strtoupper(Str::random(10)),
             ]);
             $user->load('studentProfile');
         }
@@ -46,9 +39,9 @@ class RoleController extends Controller
         $user->save();
         $user->refresh();
 
-        return back()->with(
+        return redirect()->route($role === 'tutor' ? 'tutor.profile' : 'home')->with(
             'success',
-            'Switched to ' . ucfirst($role) . ' mode.'
+            'Switched to '.ucfirst($role).' mode.'
         );
     }
 }

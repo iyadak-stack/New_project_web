@@ -2,15 +2,16 @@
 
 namespace App\Domains\TutorProfile\Http\Controllers;
 
-use App\Http\Controllers\Controller;
-use App\Domains\TutorProfile\Models\TutorProfile;
+use App\Domains\Auth\Models\Contact;
+use App\Domains\Booking\Models\Appointment;
 use App\Domains\Booking\Models\Subject;
+use App\Domains\Scheduling\Models\Availability;
 use App\Domains\TutorProfile\Models\Favorite;
+use App\Domains\TutorProfile\Models\TutorProfile;
+use App\Domains\TutorProfile\Services\TutorApplication;
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
-use App\Domains\Auth\Models\Contact;
-use Illuminate\Support\Str;
 
 class TutorController extends Controller
 {
@@ -22,11 +23,12 @@ class TutorController extends Controller
     public function home(Request $request)
     {
         // ดึงติวเตอร์ทั้งหมดมาแสดง
-        $tutors = TutorProfile::with(['user', 'subjects'])
+        $tutors = TutorProfile::approved()->with(['user', 'subjects'])
+            ->when(Auth::check(), fn ($query) => $query->where('Users_user_id', '!=', Auth::id())
+            )
             ->withCount('reviews')
             ->orderByDesc('average_rating')
             ->orderByDesc('experience_years')
-            ->take(3)
             ->get();
 
         $subjects = Subject::withCount('tutors')
@@ -43,163 +45,65 @@ class TutorController extends Controller
 
     public function profile()
     {
-        $user = Auth::user();
+        $profile = Auth::user()->tutorProfile;
+        if (! $profile || ! $profile->isComplete()) {
+            return redirect()->route('tutor.onboarding');
+        }
+        if ($profile->approval_status !== 'approved') {
+            return redirect()->route('tutor.application.status');
+        }
+        $appointments = $profile->appointments()
+            ->with(['subject', 'studentUser', 'studentProfile.user'])
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->orderBy('start_datetime')
+            ->get();
+        $reviews = $profile->reviews()->latest()->get();
+        $availabilities = Availability::where('user_id', Auth::id())
+            ->where('start_datetime', '>', now())
+            ->orderBy('start_datetime')
+            ->get();
 
-        // เช็กบทบาทปัจจุบันของผู้ใช้
-        if ($user->current_role === 'tutor') {
-            $tutorProfile = TutorProfile::where(
-                'Users_user_id',
-                $user->user_id
-            )->first();
+        return view('domains.tutor-profile.tutor.dashboard', compact('profile', 'appointments', 'reviews', 'availabilities'));
+    }
 
-            $contact = Contact::where('Users_user_id', $user->user_id)->first();
-
-            // ส่งไปยัง View Dashboard หน้าติวเตอร์
-            return view(
-                'domains.tutor-profile.tutor.tutor',
-                compact('tutorProfile', 'user', 'contact')
-            );
+    public function applicationStatus()
+    {
+        $profile = Auth::user()->tutorProfile;
+        if (! $profile) {
+            return redirect()->route('tutor.onboarding');
         }
 
-        // กรณีเป็นนักเรียน (student)
-        return view(
-            'domains.tutor-profile.student.profile',
-            compact('user')
-        );
+        return view('domains.tutor-profile.tutor.application-status', compact('profile'));
     }
 
     public function editProfile()
     {
         $tutorProfile = TutorProfile::firstOrNew(['Users_user_id' => Auth::id()]);
         $allSubjects = Subject::all();
+        $contact = Contact::where('Users_user_id', Auth::id())->first();
 
         return view(
             'domains.tutor-profile.tutor.edit-profile',
-            compact('tutorProfile', 'allSubjects')
+            compact('tutorProfile', 'allSubjects', 'contact')
         );
     }
 
     public function updateProfile(Request $request)
     {
-        // 1. ตรวจสอบข้อมูลที่ส่งเข้ามา
-        $request->validate([
-            'avatar'           => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
-            'bio'              => ['nullable', 'string'],
-            'experience_years' => ['nullable', 'integer', 'min:0'],
-            'teaching_mode'    => ['nullable', 'in:online,onsite,both'],
-            'line_id'          => ['nullable', 'string', 'max:255'],
-            'discord_id'       => ['nullable', 'string', 'max:255'],
-            'zoom_link'        => ['nullable', 'url', 'max:255'],
-        ]);
-
-        $userId = Auth::id();
-
-        // 2. ดึงโปรไฟล์ติวเตอร์เดิม หรือสร้างขึ้นใหม่หากยังไม่มีในฐานข้อมูล
-        $tutorProfile = TutorProfile::where('Users_user_id', $userId)->first();
-
-        if (! $tutorProfile) {
-            $tutorProfile = new TutorProfile();
-            $tutorProfile->Users_user_id = $userId;
-            $tutorProfile->tutor_id = 'TUT-' . strtoupper(Str::random(6));
+        $data = $request->validate(TutorApplication::rules());
+        $profile = TutorApplication::save($request->user(), $data);
+        if ($profile->approval_status !== 'approved') {
+            return redirect()->route('tutor.application.status')->with('success', 'ส่งข้อมูลแล้ว กรุณารอแอดมินตรวจสอบ');
         }
 
-        // กำหนดค่าข้อมูลการสอนลง TutorProfile
-        if ($request->has('bio')) {
-            $tutorProfile->bio = $request->bio;
-        }
-        if ($request->has('experience_years')) {
-            $tutorProfile->experience_years = $request->experience_years ?? 0;
-        }
-        if ($request->has('teaching_mode')) {
-            $tutorProfile->teaching_mode = $request->teaching_mode ?? 'online';
-        }
-
-        // บันทึก TutorProfile
-        $tutorProfile->save();
-
-        // 3. ดึงข้อมูลช่องทางติดต่อ (Contact) หรือสร้างใหม่ตาม ER Diagram
-        $contact = Contact::where('Users_user_id', $userId)->first();
-
-        if (! $contact) {
-            $contact = new Contact();
-            $contact->contact_id = 'CON-' . strtoupper(Str::random(6));
-            $contact->Users_user_id = $userId;
-        }
-
-        // กำหนดค่าลงตาราง contacts
-        $contact->line_id = $request->line_id;
-        $contact->discord_id = $request->discord_id;
-        $contact->zoom_link = $request->zoom_link;
-
-        // บันทึก Contact
-        $contact->save();
-
-        // 4. จัดการอัปโหลดรูปโปรไฟล์ (Users)
-        if ($request->hasFile('avatar')) {
-            $user = Auth::user();
-
-            if ($user->profile_picture && Storage::disk('public')->exists($user->profile_picture)) {
-                Storage::disk('public')->delete($user->profile_picture);
-            }
-
-            $path = $request->file('avatar')->store('avatars', 'public');
-            $user->forceFill(['profile_picture' => $path])->save();
-        }
-
-        // 5. Redirect กลับไปยังหน้าโปรไฟล์ติวเตอร์ พร้อมแจ้งข้อความสำเร็จ
-        return redirect()
-            ->route('tutor.profile')
-            ->with('success', 'บันทึกอัปเดตข้อมูลโปรไฟล์ติวเตอร์เรียบร้อยแล้ว');
-    }
-
-    /**
-     * ส่งใบสมัครเป็นติวเตอร์ (draft/rejected -> pending)
-     */
-    public function submitApplication()
-    {
-        $profile = TutorProfile::where('Users_user_id', Auth::id())->first();
-
-        if (! $profile) {
-            return redirect()
-                ->route('tutor.profile.edit')
-                ->with('error', 'กรุณากรอกข้อมูลโปรไฟล์ติวเตอร์ก่อน');
-        }
-
-        if (in_array($profile->approval_status, ['pending', 'approved'], true)) {
-            return back()->with('info', 'ใบสมัครนี้ส่งแล้วหรือได้รับอนุมัติแล้ว');
-        }
-
-        $missing = [];
-        if (blank($profile->bio)) {
-            $missing[] = 'แนะนำตัว';
-        }
-        if (blank($profile->teaching_mode)) {
-            $missing[] = 'รูปแบบการสอน';
-        }
-        if (! $profile->subjects()->exists()) {
-            $missing[] = 'วิชาที่สอนอย่างน้อย 1 วิชา';
-        }
-
-        if ($missing) {
-            return back()->with('error', 'ข้อมูลยังไม่ครบ: ' . implode(', ', $missing));
-        }
-
-        $profile->update([
-            'approval_status' => 'pending',
-            'submitted_at'    => now(),
-            'reject_reason'   => null,
-        ]);
-
-        return redirect()
-            ->route('tutor.profile.edit')
-            ->with('success', 'ส่งใบสมัครเรียบร้อยแล้ว กรุณารอการตรวจสอบ');
+        return redirect()->route('tutor.profile')->with('success', 'บันทึกข้อมูลแล้ว');
     }
 
     public function search(Request $request)
     {
         $search = trim($request->input('search', ''));
 
-        $tutors = TutorProfile::with(['user', 'subjects'])
+        $tutors = TutorProfile::approved()->with(['user', 'subjects'])
             ->withCount('reviews')
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($q) use ($search) {
@@ -207,9 +111,9 @@ class TutorController extends Controller
                         $userQuery->where('first_name', 'like', "%{$search}%")
                             ->orWhere('last_name', 'like', "%{$search}%");
                     })
-                    ->orWhereHas('subjects', function ($subjectQuery) use ($search) {
-                        $subjectQuery->where('subject_name', 'like', "%{$search}%");
-                    });
+                        ->orWhereHas('subjects', function ($subjectQuery) use ($search) {
+                            $subjectQuery->where('subject_name', 'like', "%{$search}%");
+                        });
                 });
             })
             ->orderByDesc('average_rating')
@@ -242,7 +146,7 @@ class TutorController extends Controller
 
     public function ranking()
     {
-        $tutors = TutorProfile::with(['user', 'subjects'])
+        $tutors = TutorProfile::approved()->with(['user', 'subjects'])
             ->withCount('reviews')
             ->orderByDesc('average_rating')
             ->orderByDesc('experience_years')
@@ -262,8 +166,8 @@ class TutorController extends Controller
                 ->firstOrFail();
         }
 
-        // ตรวจสอบอนุมัติ: อนุญาตให้ดูได้เลยหากมีข้อมูล หรือเป็นเจ้าของโปรไฟล์
-        $isApproved = ($tutorProfile->approval_status === 'approved' || ($tutorProfile->status ?? null) === 'approved' || empty($tutorProfile->approval_status));
+        // ผู้ใช้ทั่วไปดูได้เฉพาะติวเตอร์ที่อนุมัติแล้ว เจ้าของยังดูโปรไฟล์ตัวเองได้
+        $isApproved = $tutorProfile->approval_status === 'approved' && $tutorProfile->user?->is_active;
 
         abort_unless(
             $isApproved || $tutorProfile->Users_user_id == Auth::id(),
@@ -287,9 +191,39 @@ class TutorController extends Controller
         // 🟢 ดึงข้อมูลวิชาทั้งหมดจาก Seeder/DB สำรองไว้กรณีติวเตอร์ยังไม่ได้เลือกผูกวิชา
         $allSubjects = Subject::all();
 
+        $bookedAppointments = Appointment::query()
+            ->where('Tutor_profiles_tutor_id', $tutorProfile->tutor_id)
+            ->where('status', '!=', 'cancelled')
+            ->whereNotNull('start_datetime')
+            ->whereNotNull('end_datetime')
+            ->get(['start_datetime', 'end_datetime']);
+
+        $availableSlots = Availability::query()
+            ->where('user_id', $tutorProfile->Users_user_id)
+            ->where('start_datetime', '>', now())
+            ->orderBy('start_datetime')
+            ->get();
+
+        // แสดงเฉพาะเวลาว่างที่ไม่ทับกับนัดหมายที่มีคนจองไว้แล้ว
+        $availabilities = collect();
+        foreach ($availableSlots as $slot) {
+            $isBooked = false;
+            foreach ($bookedAppointments as $appointment) {
+                if ($appointment->start_datetime < $slot->end_datetime
+                    && $appointment->end_datetime > $slot->start_datetime) {
+                    $isBooked = true;
+                    break;
+                }
+            }
+
+            if (! $isBooked) {
+                $availabilities->push($slot);
+            }
+        }
+
         return view(
             'domains.tutor-profile.tutor.show',
-            compact('tutorProfile', 'isFavorite', 'allSubjects')
+            compact('tutorProfile', 'isFavorite', 'allSubjects', 'availabilities')
         );
     }
 }

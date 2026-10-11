@@ -1,28 +1,33 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Http\Request;
-
-use App\Domains\TutorProfile\Http\Controllers\TutorController;
-use App\Domains\TutorProfile\Http\Controllers\FavoriteController;
-use App\Domains\Booking\Http\Controllers\SubjectController;
+use App\Domains\Auth\Http\Controllers\ContactController;
+use App\Domains\Auth\Http\Controllers\RoleController;
+use App\Domains\Auth\Models\User;
 use App\Domains\Booking\Http\Controllers\AppointmentController;
+use App\Domains\Booking\Http\Controllers\NotificationController;
+use App\Domains\Booking\Http\Controllers\SubjectController;
+use App\Domains\Reportreview\Http\Controllers\Admin\ReportController;
+use App\Domains\Reportreview\Http\Controllers\ReviewController;
 use App\Domains\Scheduling\Http\Controllers\AvailabilityController;
 use App\Domains\Scheduling\Http\Controllers\CheckScheduleController;
-use App\Domains\Booking\Http\Controllers\NotificationController;
-use App\Domains\Auth\Http\Controllers\ContactController;
+use App\Domains\TutorProfile\Http\Controllers\AdminTutorController;
+use App\Domains\TutorProfile\Http\Controllers\FavoriteController;
 use App\Domains\TutorProfile\Http\Controllers\StudentProfileController;
-use App\Domains\Auth\Http\Controllers\RoleController;
-use App\Domains\Reportreview\Http\Controllers\ReviewController;
-use App\Domains\Reportreview\Http\Controllers\Admin\ReportController;
-use App\Domains\Auth\Models\User;
+use App\Domains\TutorProfile\Http\Controllers\TutorController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 
 // หน้าแรก (/): ตรวจสอบบทบาทผู้ใช้
 Route::get('/', function (Request $request) {
     if (auth()->check()) {
+        if (auth()->user()->current_role === 'admin') {
+            return redirect()->route('admin.dashboard');
+        }
+
         if (auth()->user()->current_role === 'tutor') {
-            return view('domains.tutor-profile.tutor.tutor');
+            return app(TutorController::class)->profile();
         }
 
         return app(TutorController::class)->home($request);
@@ -30,6 +35,13 @@ Route::get('/', function (Request $request) {
 
     return app(TutorController::class)->home($request);
 })->name('home');
+
+// อ่านรูปจากพื้นที่ public โดยตรง เพื่อรองรับเครื่อง Windows ที่สร้าง storage link ไม่ได้
+Route::get('/storage/{path}', function (string $path) {
+    abort_unless(Storage::disk('public')->exists($path), 404);
+
+    return Storage::disk('public')->response($path);
+})->where('path', '.*')->name('storage.public');
 
 // =========================
 // ลืมรหัสผ่านแบบข้ามการส่งอีเมล (Direct Reset Password)
@@ -64,8 +76,10 @@ Route::post('/reset-password', function (Request $request) {
     return redirect()->route('login')->with('status', 'เปลี่ยนรหัสผ่านสำเร็จแล้ว กรุณาเข้าสู่ระบบ');
 })->name('password.update');
 
-
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'active'])->group(function () {
+    Route::get('/tutor/application-status', [TutorController::class, 'applicationStatus'])->name('tutor.application.status');
+    Route::get('/tutor/onboarding', [TutorController::class, 'editProfile'])->name('tutor.onboarding');
+    Route::post('/tutor/onboarding', [TutorController::class, 'updateProfile'])->name('tutor.onboarding.store');
 
     // กันเข้า URL /dashboard ให้วิ่งกลับไปหน้าหลัก
     Route::get('/dashboard', function () {
@@ -88,7 +102,6 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('role:tutor')
         ->name('tutor.profile.update');
 
-
     // =========================
     // รายการโปรดติวเตอร์ (Tutor Favorite)
     // =========================
@@ -99,23 +112,12 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/tutor/{tutorProfile}/favorite/remove', [FavoriteController::class, 'destroyTutor'])
         ->name('tutor.favorite.destroy');
 
-
     // =========================
     // ค้นหา / จัดอันดับติวเตอร์ (Search / Ranking / Tutor)
     // =========================
 
-    Route::get('/tutors', [TutorController::class, 'search'])
-        ->name('tutor.search');
-
-    Route::get('/tutors/ranking', [TutorController::class, 'ranking'])
-        ->name('tutor.ranking');
-
     Route::get('/tutors/favorites', [FavoriteController::class, 'tutorFavorites'])
         ->name('tutor.favorites');
-
-    Route::get('/tutors/{tutorProfile}', [TutorController::class, 'show'])
-        ->name('tutor.show');
-
 
     // =========================
     // จัดการรายวิชา (Subjects)
@@ -123,23 +125,24 @@ Route::middleware(['auth'])->group(function () {
 
     Route::resource('subjects', SubjectController::class);
 
-
     // =========================
     // ตารางเวลาและความพร้อม (Availability & Schedule Check)
     // =========================
 
-    Route::get('/availabilities', [AvailabilityController::class, 'index'])->name('availabilities.index');
-    Route::post('/availabilities', [AvailabilityController::class, 'store'])->name('availabilities.store');
-    Route::get('/availabilities/history', [AvailabilityController::class, 'history'])->name('availabilities.history');
-    Route::get('/availabilities/{availability}/edit', [AvailabilityController::class, 'edit'])->name('availabilities.edit');
-    Route::put('/availabilities/{availability}', [AvailabilityController::class, 'update'])->name('availabilities.update');
-    Route::delete('/availabilities/{availability}', [AvailabilityController::class, 'destroy'])->name('availabilities.destroy');
+    Route::middleware('role:tutor')->group(function () {
+        Route::get('/availabilities', [AvailabilityController::class, 'index'])->name('availabilities.index');
+        Route::post('/availabilities', [AvailabilityController::class, 'store'])->name('availabilities.store');
+        Route::get('/availabilities/history', [AvailabilityController::class, 'history'])->name('availabilities.history');
+        Route::get('/availabilities/{availability}/edit', [AvailabilityController::class, 'edit'])->name('availabilities.edit');
+        Route::put('/availabilities/{availability}', [AvailabilityController::class, 'update'])->name('availabilities.update');
+        Route::delete('/availabilities/{availability}', [AvailabilityController::class, 'destroy'])->name('availabilities.destroy');
+
+    });
 
     Route::get('/schedule/check', [CheckScheduleController::class, 'index'])->name('schedule.check');
     Route::get('/schedule/history', [CheckScheduleController::class, 'history'])->name('schedule.history');
     Route::get('/schedule/booking', [CheckScheduleController::class, 'booking'])->name('schedule.booking');
     Route::post('/schedule/check', [CheckScheduleController::class, 'check'])->name('schedule.check.results');
-
 
     // =========================
     // การนัดหมาย (Appointments)
@@ -148,17 +151,16 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('appointments', AppointmentController::class)
         ->except(['edit', 'update']);
 
+    Route::patch('/appointments/{appointment}/lesson', [AppointmentController::class, 'updateLesson'])->middleware('role:tutor')->name('appointments.lesson');
     Route::post('/appointments/{id}/status', [AppointmentController::class, 'updateStatus']);
+    Route::post('/appointments/{appointment}/complete', [AppointmentController::class, 'complete'])->name('appointments.complete');
+    Route::post('/appointments/{appointment}/review', [AppointmentController::class, 'storeReview'])->name('appointments.review');
 
     Route::post('/appointments/{appointment}/confirm', [AppointmentController::class, 'confirm'])
         ->name('appointments.confirm');
 
-    Route::post('/appointments/{appointment}/reschedule', [AppointmentController::class, 'reschedule'])
-        ->name('appointments.reschedule');
-
     Route::post('/appointments/{appointment}/cancel', [AppointmentController::class, 'cancel'])
         ->name('appointments.cancel');
-
 
     // =========================
     // ระบบแจ้งเตือน (Notifications)
@@ -171,7 +173,6 @@ Route::middleware(['auth'])->group(function () {
 
     Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy'])
         ->name('notifications.destroy');
-
 
     // =========================
     // โปรไฟล์นักเรียน (Student Profile)
@@ -189,7 +190,6 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('role:student')
         ->name('student.profile.update');
 
-
     // =========================
     // ข้อมูลติดต่อของนักเรียน (Student Contacts)
     // =========================
@@ -200,14 +200,12 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/student-contacts/{studentId}', [ContactController::class, 'update'])
         ->name('student-contacts.update');
 
-
     // =========================
     // สลับบทบาทผู้ใช้ (Role Switching)
     // =========================
 
     Route::post('/switch-role', [RoleController::class, 'switchRole'])
         ->name('role.switch');
-
 
     // =========================
     // รีวิว (Reviews)
@@ -231,7 +229,6 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/reviews/{review}', [ReviewController::class, 'destroy'])
         ->name('reviews.destroy');
 
-
     // =========================
     // รายงาน (Reports)
     // =========================
@@ -241,6 +238,27 @@ Route::middleware(['auth'])->group(function () {
 
     Route::post('/reports', [ReportController::class, 'store'])
         ->name('reports.store');
+
+    Route::prefix('admin')->middleware('role:admin')->name('admin.')->group(function () {
+        Route::get('/tutors', [AdminTutorController::class, 'index'])->name('tutors.index');
+        Route::patch('/tutors/{tutorProfile}', [AdminTutorController::class, 'update'])->name('tutors.update');
+        Route::get('/', [ReportController::class, 'dashboard'])->name('dashboard');
+        Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+        Route::get('/reports/{report}', [ReportController::class, 'show'])->name('reports.show');
+        Route::patch('/reports/{report}', [ReportController::class, 'updateStatus'])->name('reports.update');
+        Route::get('/users', [ReportController::class, 'users'])->name('users.index');
+        Route::patch('/users/{user}/status', [ReportController::class, 'toggleUserStatus'])->name('users.toggle-status');
+    });
 });
+
+// ผู้เยี่ยมชมดูข้อมูลได้ ส่วนการจอง รายการโปรด และรายงานยังต้องเข้าสู่ระบบ
+Route::get('/tutors', [TutorController::class, 'search'])
+    ->name('tutor.search');
+
+Route::get('/tutors/ranking', [TutorController::class, 'ranking'])
+    ->name('tutor.ranking');
+
+Route::get('/tutors/{tutorProfile}', [TutorController::class, 'show'])
+    ->name('tutor.show');
 
 require __DIR__.'/settings.php';

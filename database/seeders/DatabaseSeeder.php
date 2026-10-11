@@ -2,30 +2,17 @@
 
 namespace Database\Seeders;
 
-use App\Domains\Auth\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'first_name' => 'Test',
-            'last_name' => 'User',
-            'email' => 'test@example.com',
-        ]);
-
-        // 🟢 เรียกใช้ SubjectSeeder ที่แยกไว้
+        // ข้อมูลพื้นฐานและตัวอย่างที่เชื่อมถึงกัน รันซ้ำได้โดยไม่ล้างฐานข้อมูล
         $this->call([
             SubjectSeeder::class,
+            ReportReasonSeeder::class,
+            DemoWebsiteSeeder::class,
         ]);
     }
 }

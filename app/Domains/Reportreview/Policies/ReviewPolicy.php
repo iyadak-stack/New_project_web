@@ -13,7 +13,7 @@ class ReviewPolicy
             return true;
         }
 
-        return $review->appointment?->studentProfile?->user_id === $user->id;
+        return (string) $review->appointment?->Student_profiles_student_id === (string) $user->user_id;
     }
 
     public function delete(User $user, Review $review): bool
@@ -22,6 +22,6 @@ class ReviewPolicy
             return true;
         }
 
-        return $review->appointment?->studentProfile?->user_id === $user->id;
+        return (string) $review->appointment?->Student_profiles_student_id === (string) $user->user_id;
     }
 }

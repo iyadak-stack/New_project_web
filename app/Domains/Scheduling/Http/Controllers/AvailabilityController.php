@@ -2,14 +2,17 @@
 
 namespace App\Domains\Scheduling\Http\Controllers;
 
-use App\Http\Controllers\Controller;
+use App\Domains\Booking\Models\Appointment;
 use App\Domains\Scheduling\Http\Requests\StoreAvailabilityRequest;
 use App\Domains\Scheduling\Http\Requests\UpdateAvailabilityRequest;
 use App\Domains\Scheduling\Models\Availability;
+use App\Http\Controllers\Controller;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class AvailabilityController extends Controller
 {
@@ -68,6 +71,7 @@ class AvailabilityController extends Controller
     public function update(UpdateAvailabilityRequest $request, Availability $availability): RedirectResponse
     {
         $this->ensureOwner($availability);
+        $this->ensureUnbooked($availability);
         $data = $request->validated();
 
         if ($this->hasOverlap((string) Auth::id(), $data['start_datetime'], $data['end_datetime'], $availability->availability_id)) {
@@ -87,19 +91,42 @@ class AvailabilityController extends Controller
     public function destroy(Availability $availability): RedirectResponse
     {
         $this->ensureOwner($availability);
+        $this->ensureUnbooked($availability);
         $availability->delete();
 
         return redirect()->route('availabilities.index')->with('success', 'ลบเวลาว่างแล้ว');
     }
 
+    // เวลาทับกันเมื่อเวลาเริ่มอยู่ก่อนเวลาจบของอีกช่วง และเวลาจบอยู่หลังเวลาเริ่ม
     private function hasOverlap(string $userId, string $start, string $end, ?string $exceptId = null): bool
     {
-        return Availability::query()
+        $start = Carbon::parse($start)->format('Y-m-d H:i:s');
+        $end = Carbon::parse($end)->format('Y-m-d H:i:s');
+        $bookingOverlap = Appointment::whereHas('tutorProfile', fn ($query) => $query->where('Users_user_id', $userId))
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->where('start_datetime', '<', $end)
+            ->where('end_datetime', '>', $start)
+            ->exists();
+
+        return $bookingOverlap || Availability::query()
             ->where('user_id', $userId)
             ->where('start_datetime', '<', $end)
             ->where('end_datetime', '>', $start)
             ->when($exceptId, fn ($query) => $query->where('availability_id', '!=', $exceptId))
             ->exists();
+    }
+
+    // ห้ามแก้หรือลบเวลาที่นักเรียนจองแล้ว เพราะนัดหมายยังใช้เวลานี้อยู่
+    private function ensureUnbooked(Availability $availability): void
+    {
+        $booked = Appointment::whereHas('tutorProfile', fn ($query) => $query->where('Users_user_id', $availability->user_id))
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->where('start_datetime', '<', $availability->end_datetime)
+            ->where('end_datetime', '>', $availability->start_datetime)
+            ->exists();
+        if ($booked) {
+            throw ValidationException::withMessages(['start_datetime' => 'ช่วงเวลานี้มีนัดหมายแล้ว กรุณาจัดการนัดหมายก่อนแก้ไขหรือลบ']);
+        }
     }
 
     private function ensureOwner(Availability $availability): void

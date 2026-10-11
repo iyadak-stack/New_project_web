@@ -2,10 +2,10 @@
 
 namespace App\Domains\Reportreview\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Domains\Booking\Models\Appointment;
 use App\Domains\TutorProfile\Models\TutorProfile;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Review extends Model
 {
@@ -27,7 +27,7 @@ class Review extends Model
         'Tutor_profiles_tutor_id',
     ];
 
-    const DELETED_AT = 'deletedAt';
+    const DELETED_AT = 'deleted_at';
 
     public function appointment()
     {
@@ -43,7 +43,7 @@ class Review extends Model
         return $this->belongsTo(
             TutorProfile::class,
             'Tutor_profiles_tutor_id',
-            'tutor_id' // หมายเหตุ: ตรวจสอบ Primary Key ของ TutorProfile ว่าใช้ 'tutor_id' หรือ 'id' ให้ตรงกันด้วยครับ
+            'tutor_id'
         );
     }
 }

@@ -1,5 +1,4 @@
 @props(['tutor'])
-
 @php
     $isArr = is_array($tutor);
 
@@ -29,24 +28,37 @@
     // เลือกสีอวาตาร์ (0-4) คงที่ตามชื่อ
     $colorIndex = abs(crc32($name)) % 5;
 @endphp
-
 <div class="card card-tutor">
     <div class="tutor-top">
         @if($photo)
             <img src="{{ asset('storage/' . $photo) }}" alt="{{ $name }}" class="avatar">
         @else
-            <div class="avatar avatar-initial avatar-c{{ $colorIndex }}">{{ $initials }}</div>
+            <div class="avatar avatar-initial avatar-c{{ $colorIndex }}">
+                {{ $initials }}
+            </div>
         @endif
-
         <div>
             <h3>{{ $name }}</h3>
-            <p class="small">สอนพิเศษ <b>{{ $hours }}</b> ชั่วโมง</p>
-            <p class="rating"><b>{{ $rating }}</b> จาก <b>{{ $reviews }}</b> รีวิว</p>
+            <p class="small">
+                สอนพิเศษ
+                <b>
+                    {{ $hours }}
+                </b>
+                ชั่วโมง
+            </p>
+            <p class="rating">
+                <b>
+                    {{ $rating }}
+                </b>
+                จาก
+                <b>
+                    {{ $reviews }}
+                </b>
+                รีวิว
+            </p>
         </div>
     </div>
-
     <p class="desc">{{ $description }}</p>
-
     @if(count($tags) > 0)
         <div class="tags">
             @foreach($tags as $tag)
@@ -54,8 +66,7 @@
             @endforeach
         </div>
     @endif
-
     <div class="card-actions">
-        <a href="{{ $url }}" class="btn">ดูโปรไฟล์</a>
+        <a href="{{ $url }}" class="home-card-button">ดูโปรไฟล์</a>
     </div>
 </div>

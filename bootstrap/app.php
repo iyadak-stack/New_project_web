@@ -1,5 +1,6 @@
 <?php
 
+use App\Domains\Auth\Http\Middleware\EnsureActiveAccount;
 use App\Domains\Auth\Http\Middleware\RoleMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -13,8 +14,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // ตรวจทุกหน้า รวมถึงหน้าแรก เมื่อบัญชีที่ล็อกอินอยู่ถูกปิดใช้งาน
+        $middleware->web(append: [EnsureActiveAccount::class]);
+
         $middleware->alias([
             'role' => RoleMiddleware::class,
+            'active' => EnsureActiveAccount::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

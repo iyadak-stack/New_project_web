@@ -2,50 +2,36 @@
 
 namespace App\Domains\Reportreview\Http\Controllers;
 
-use App\Http\Controllers\Controller;
+use App\Domains\Booking\Http\Controllers\AppointmentController;
+use App\Domains\Booking\Models\Appointment;
 use App\Domains\Reportreview\Models\Review;
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Gate;
 
 class ReviewController extends Controller
 {
     public function index()
     {
-        $reviews = Review::with([
-            'appointment.studentProfile.user',
-            'tutorProfile'
-        ])->get();
+        if (auth()->user()->current_role === 'tutor') {
+            return redirect()->to(route('tutor.profile').'#reviews');
+        }
 
-        // ส่งข้อมูลไปยัง View หน้าแสดงรายการรีวิว
-        return view('reviews.index', compact('reviews'));
+        return redirect()->route('appointments.index');
     }
 
     public function create()
     {
-        return view('reviews.create');
+        return redirect()->route('appointments.index')->with('success', 'เลือกนัดหมายที่เรียนเสร็จแล้วเพื่อเขียนรีวิว');
     }
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'rating' => ['required', 'integer', 'min:1', 'max:5'],
-            'Comment' => ['required', 'string'],
-            'Appointment_Appointment_id' => ['required', 'string', 'size:10'],
-            'Tutor_profiles_tutor_id' => ['required', 'string'],
-        ]);
+        $data = $request->validate(['Appointment_Appointment_id' => ['required', 'exists:appointments,Appointment_id']]);
+        $appointment = Appointment::findOrFail($data['Appointment_Appointment_id']);
 
-        Review::create([
-            'Review_id' => strtoupper(Str::random(10)),
-            'rating' => $validated['rating'],
-            'Comment' => $validated['Comment'],
-            'Appointment_Appointment_id' => $validated['Appointment_Appointment_id'],
-            'Tutor_profiles_tutor_id' => $validated['Tutor_profiles_tutor_id'],
-        ]);
-
-        return redirect()
-            ->route('reviews.index')
-            ->with('success', 'บันทึกรีวิวเรียบร้อยแล้ว');
+        // ใช้กฎบันทึกรีวิวชุดเดียวกับหน้านัดหมาย เพื่อไม่ให้ข้ามขั้นตอนยืนยันเรียนจบ
+        return app(AppointmentController::class)->storeReview($request, $appointment);
     }
 
     public function edit(Review $review)
@@ -53,7 +39,7 @@ class ReviewController extends Controller
         // ใช้ Gate เพื่อความปลอดภัยในการตรวจสอบสิทธิ์
         Gate::authorize('update', $review);
 
-        return view('reviews.edit', compact('review'));
+        return view('domains.reportreview.reviews.edit', compact('review'));
     }
 
     public function update(Request $request, Review $review)

@@ -2,10 +2,11 @@
 
 namespace App\Domains\Auth\Actions\Fortify;
 
-use App\Domains\Auth\Models\User;
-use App\Domains\TutorProfile\Models\TutorProfile;
-use App\Domains\TutorProfile\Models\StudentProfile;
 use App\Domains\Auth\Concerns\PasswordValidationRules;
+use App\Domains\Auth\Models\User;
+use App\Domains\TutorProfile\Models\StudentProfile;
+use App\Domains\TutorProfile\Services\TutorApplication;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -15,53 +16,42 @@ class CreateNewUser implements CreatesNewUsers
 {
     use PasswordValidationRules;
 
-    /**
-     * Validate and create a newly registered user.
-     *
-     * @param  array<string, string>  $input
-     */
     public function create(array $input): User
     {
-        // บันทึก Session เพื่อให้ Modal แสดงข้อผิดพลาดถูกฝั่ง
         session()->flash('is_register_error', true);
-
-        Validator::make($input, [
+        $rules = [
             'first_name' => ['required', 'string', 'max:255'],
-            'last_name'  => ['required', 'string', 'max:255'],
-            'email'      => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'password'   => $this->passwordRules(),
-            'role'       => ['nullable', 'string', 'in:student,tutor'],
-            'line_id'    => ['nullable', 'string', 'max:255'],
-            'discord_id' => ['nullable', 'string', 'max:255'],
-            'zoom_link'  => ['nullable', 'url', 'max:255'],
-        ])->validate();
-
-        $user = User::create([
-            'user_id'      => 'USR-' . strtoupper(Str::random(8)),
-            'first_name'   => $input['first_name'],
-            'last_name'    => $input['last_name'],
-            'email'        => $input['email'],
-            'role'         => $input['role'] ?? 'student',
-            'current_role' => $input['role'] ?? 'student',
-            'password'     => Hash::make($input['password']),
-            'is_active'    => true,
-        ]);
-
-        // สร้าง Profile ตามบทบาทที่เลือก
-        if ($user->role === 'tutor') {
-            TutorProfile::create([
-                'tutor_id' => $user->id,
-                'user_id'    => $user->user_id,
-                'line_id'    => $input['line_id'] ?? null,
-                'discord_id' => $input['discord_id'] ?? null,
-                'zoom_link'  => $input['zoom_link'] ?? null,
-            ]);
-        } else {
-            StudentProfile::create([
-                'user_id' => $user->user_id,
-            ]);
+            'last_name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'password' => $this->passwordRules(),
+            'role' => ['required', 'in:student,tutor'],
+        ];
+        // สมัครติวเตอร์ต้องกรอกข้อมูลชุดเดียวกับฟอร์มสลับบทบาท
+        if (($input['role'] ?? '') === 'tutor') {
+            $rules = array_merge($rules, TutorApplication::rules());
         }
+        $data = Validator::make($input, $rules)->validate();
 
-        return $user;
+        // สร้างบัญชีและโปรไฟล์พร้อมกัน เพื่อไม่ให้เหลือบัญชีที่ข้อมูลไม่ครบ
+        return DB::transaction(function () use ($data) {
+            $user = User::create([
+                'user_id' => 'USR'.Str::upper(Str::random(7)),
+                'first_name' => $data['first_name'],
+                'last_name' => $data['last_name'],
+                'email' => $data['email'],
+                'password' => Hash::make($data['password']),
+                'role' => $data['role'],
+                'current_role' => $data['role'],
+                'is_active' => true,
+            ]);
+            // ทุกบัญชีใช้บทบาทนักเรียนได้ แม้จะสมัครเป็นติวเตอร์
+            StudentProfile::create(['id' => 'STU'.Str::upper(Str::random(7)), 'user_id' => $user->user_id]);
+            if ($data['role'] === 'tutor') {
+                TutorApplication::save($user, $data);
+            }
+            session()->forget('is_register_error');
+
+            return $user;
+        });
     }
 }

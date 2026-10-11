@@ -7,6 +7,7 @@ use App\Domains\TutorProfile\Models\Favorite;
 use App\Domains\TutorProfile\Models\StudentProfile;
 use App\Domains\TutorProfile\Models\TutorProfile;
 use Database\Factories\UserFactory;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -38,16 +39,19 @@ use Laravel\Fortify\PasskeyAuthenticatable;
  * @property Carbon|null $deleted_at
  * @property-read TutorProfile|null $tutorProfile
  * @property-read StudentProfile|null $studentProfile
- * @property-read \Illuminate\Database\Eloquent\Collection<int, Favorite> $favorites
+ * @property-read Collection<int, Favorite> $favorites
  */
 class User extends Authenticatable implements PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, SoftDeletes, PasskeyAuthenticatable;
+    use HasFactory, Notifiable, PasskeyAuthenticatable, SoftDeletes;
 
     protected $table = 'Users';
+
     protected $primaryKey = 'user_id';
+
     public $incrementing = false;
+
     protected $keyType = 'string';
 
     protected $fillable = [
@@ -77,7 +81,7 @@ class User extends Authenticatable implements PasskeyUser
         static::creating(function (User $user) {
             if (empty($user->user_id)) {
                 // สร้าง user_id อัตโนมัติ (เช่น USR-8F9A2B1C)
-                $user->user_id = 'USR-' . strtoupper(Str::random(8));
+                $user->user_id = 'USR-'.strtoupper(Str::random(8));
             }
         });
     }
@@ -99,6 +103,7 @@ class User extends Authenticatable implements PasskeyUser
     protected function casts(): array
     {
         return [
+            'is_active' => 'boolean',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
             'deleted_at' => 'datetime',
@@ -117,6 +122,14 @@ class User extends Authenticatable implements PasskeyUser
             : $initials;
     }
 
+    // ใช้ข้อความเดียวกันทั้งตอนเข้าสู่ระบบและตอนบัญชีถูกปิดระหว่างใช้งาน
+    public function disabledMessage(): string
+    {
+        $reason = $this->disabled_reason ?: 'กรุณาติดต่อผู้ดูแลระบบเพื่อสอบถามเหตุผล';
+
+        return 'บัญชีนี้ถูกปิดใช้งานโดยผู้ดูแลระบบ เหตุผล: '.$reason;
+    }
+
     // ความสัมพันธ์กับโปรไฟล์ติวเตอร์ (ตาราง tutor_profiles ใช้คอลัมน์ Users_user_id)
     public function tutorProfile(): HasOne
     {
@@ -127,6 +140,11 @@ class User extends Authenticatable implements PasskeyUser
     public function studentProfile(): HasOne
     {
         return $this->hasOne(StudentProfile::class, 'user_id', 'user_id');
+    }
+
+    public function contact(): HasOne
+    {
+        return $this->hasOne(Contact::class, 'Users_user_id', 'user_id');
     }
 
     // รายการ Favorite ทั้งหมดที่ User คนนี้กดเซฟไว้

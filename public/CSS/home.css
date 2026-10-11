@@ -243,7 +243,7 @@ img.avatar {
     font-size: 11px;
 }
 
-.btn {
+.home-card-button {
     display: inline-block;
     background-color: #e07a5f;
     color: white;
@@ -672,3 +672,4 @@ dialog::backdrop {
     font-size: 13px;
     cursor: pointer;
 }
+.navbar .menu { flex-wrap: wrap; align-items: center; }

@@ -18,6 +18,10 @@ class RoleMiddleware
                 ->with('error', 'You do not have permission to access this page.');
         }
 
+        if ($role === 'tutor' && $user->tutorProfile?->approval_status !== 'approved') {
+            return redirect()->route('tutor.application.status');
+        }
+
         return $next($request);
     }
 }

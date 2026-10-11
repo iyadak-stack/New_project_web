@@ -2,9 +2,9 @@
 
 namespace App\Domains\TutorProfile\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Domains\TutorProfile\Models\Favorite;
 use App\Domains\TutorProfile\Models\TutorProfile;
+use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Str;
 
@@ -12,11 +12,13 @@ class FavoriteController extends Controller
 {
     public function storeTutor(TutorProfile $tutorProfile): RedirectResponse
     {
+        abort_unless($tutorProfile->approval_status === 'approved', 404);
         $favorite = Favorite::withTrashed()
             ->where('Users_user_id', auth()->id())
             ->where('Tutor_profiles_tutor_id', $tutorProfile->tutor_id)
             ->first();
 
+        // ถ้าเคยกดโปรดแล้วนำออก ให้คืนรายการเดิมแทนการสร้างซ้ำ
         if ($favorite) {
             $favorite->restore();
         } else {
@@ -44,6 +46,7 @@ class FavoriteController extends Controller
     {
         $favorites = Favorite::where('Users_user_id', auth()->id())
             ->whereNotNull('Tutor_profiles_tutor_id')
+            ->whereHas('tutorProfile', fn ($query) => $query->approved())
             ->with('tutorProfile.user')
             ->get();
 

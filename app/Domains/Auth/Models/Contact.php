@@ -4,16 +4,17 @@ namespace App\Domains\Auth\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Domains\Auth\Models\User; 
 
 class Contact extends Model
 {
     use HasFactory;
 
     protected $table = 'contacts';
-    
+
     protected $primaryKey = 'contact_id';
+
     public $incrementing = false;
+
     protected $keyType = 'string';
 
     protected $fillable = [
@@ -22,6 +23,7 @@ class Contact extends Model
         'discord_id',
         'google_meet_link',
         'zoom_link',
+        'meeting_location',
         'Users_user_id',
     ];
 

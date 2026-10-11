@@ -6,11 +6,14 @@ namespace App\Providers;
 use App\Domains\Auth\Actions\Fortify\CreateNewUser;
 /* @end-chisel-registration */
 use App\Domains\Auth\Actions\Fortify\ResetUserPassword;
+use App\Domains\Auth\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Contracts\LoginResponse;
 use Laravel\Fortify\Contracts\RegisterResponse;
 use Laravel\Fortify\Fortify;
@@ -30,6 +33,20 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // ตรวจรหัสผ่านก่อนแสดงเหตุผล เพื่อให้เห็นเฉพาะเจ้าของบัญชี
+        Fortify::authenticateUsing(function (Request $request) {
+            $user = User::where('email', $request->input('email'))->first();
+            if (! $user || ! Hash::check($request->input('password', ''), $user->password)) {
+                return null;
+            }
+
+            if (! $user->is_active) {
+                throw ValidationException::withMessages(['email' => $user->disabledMessage()]);
+            }
+
+            return $user;
+        });
+
         $this->configureActions();
         $this->configureViews();
         $this->configureRateLimiting();
@@ -42,7 +59,8 @@ class FortifyServiceProvider extends ServiceProvider
     private function configureResponses(): void
     {
         // เมื่อ Login สำเร็จ ให้ Redirect กลับหน้าหลัก (/)
-        $this->app->instance(LoginResponse::class, new class implements LoginResponse {
+        $this->app->instance(LoginResponse::class, new class implements LoginResponse
+        {
             public function toResponse($request)
             {
                 return redirect('/');
@@ -50,7 +68,8 @@ class FortifyServiceProvider extends ServiceProvider
         });
 
         // เมื่อ Register สำเร็จ ให้ Redirect กลับหน้าหลัก (/)
-        $this->app->instance(RegisterResponse::class, new class implements RegisterResponse {
+        $this->app->instance(RegisterResponse::class, new class implements RegisterResponse
+        {
             public function toResponse($request)
             {
                 return redirect('/');

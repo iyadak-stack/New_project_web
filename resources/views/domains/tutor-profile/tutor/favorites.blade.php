@@ -1,57 +1,105 @@
-<!DOCTYPE html>
-<html lang="th">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>รายการโปรด - PeerTutor</title>
-        <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-        <link rel="stylesheet" href="{{ asset('css/home.css') }}?v={{ time() }}">
-        <link rel="stylesheet" href="{{ asset('css/tutor-navbar.css') }}?v={{ time() }}">
-        <style>.favorites-page{max-width:1150px;margin:40px auto;padding:0 20px}.favorite-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:20px}.favorite-card{background:#fff;border:1px solid #eee;border-radius:18px;padding:22px;box-shadow:0 5px 18px #00000008}.favorite-card h2{margin:0 0 8px}.favorite-card p{color:#555;line-height:1.7}.favorite-actions{display:flex;gap:10px;align-items:center}.favorite-actions a,.favorite-actions button{border:0;border-radius:9px;padding:9px 13px;text-decoration:none;cursor:pointer}.favorite-actions a{background:#e07a5f;color:#fff}.favorite-actions button{background:#f1f5f9;color:#334155}</style>
-        <link rel="stylesheet" href="{{ asset('css/profile-card.css') }}">
-    </head>
-    <body>
-        <x-home-navbar />
-        <main class="favorites-page">
-            <h1>รายการโปรด</h1>
-            <p>ติวเตอร์ที่คุณบันทึกไว้</p>
-            @if(session('success'))
-                <div class="alert-success">
-                    {{ session('success') }}
-                </div>
-            @endif
-            @if($favorites->isNotEmpty())
-                <div class="favorite-grid">
-                    @foreach($favorites as $favorite)
-                        @php($tutor = $favorite->tutorProfile)
-                        @if($tutor)
-                            <article class="favorite-card">
-                                <h2>{{ $tutor->user?->first_name }} {{ $tutor->user?->last_name }}</h2>
-                                <p>
-                                    ⭐ {{ number_format($tutor->average_rating, 1) }} · ประสบการณ์ {{ $tutor->experience_years }} ปี
-                                    <br>
-                                    รูปแบบ: {{ ['online' => 'ออนไลน์', 'onsite' => 'พบกัน', 'both' => 'ออนไลน์/พบกัน'][$tutor->teaching_mode] ?? $tutor->teaching_mode }}
-                                    <br>
-                                    {{ $tutor->bio ?? 'ยังไม่มีข้อมูลแนะนำตัว' }}
-                                </p>
-                                <div class="favorite-actions">
-                                    <a href="{{ route('tutor.show', $tutor) }}">ดูโปรไฟล์ / จอง</a>
-                                    <form action="{{ route('tutor.favorite.destroy', $tutor) }}" method="POST">
-                                        @csrf
-                                        <button type="submit">ลบจากรายการโปรด</button>
-                                    </form>
+@extends('domains.tutor-profile.tutor.tutor')
+
+@section('title', 'รายการโปรด')
+
+@section('content')
+<div style="max-width: 1140px; margin: 24px auto; padding: 0 16px; font-family: 'Prompt', sans-serif;">
+
+    @if (session('success'))
+        <div style="background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; padding: 10px 14px; border-radius: 10px; font-size: 14px; margin-bottom: 16px;">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    <div style="margin-bottom: 24px;">
+        <h1 style="font-size: 24px; font-weight: 700; color: #1e293b; margin: 0 0 6px 0;">❤️ รายการโปรด</h1>
+        <p style="font-size: 14px; color: #64748b; margin: 0;">รายการติวเตอร์ที่คุณกดบันทึกไว้</p>
+    </div>
+
+    @if ($favorites && $favorites->count() > 0)
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px;">
+            @foreach ($favorites as $favorite)
+                @php
+                    $tutor = $favorite->tutorProfile;
+                @endphp
+
+                @if ($tutor)
+                    <div style="background: #ffffff; border-radius: 16px; border: 1px solid #f1f5f9; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); display: flex; flex-direction: column; justify-content: space-between;">
+                        <div>
+                            <!-- Tutor Header Profile -->
+                            <div style="display: flex; gap: 16px; align-items: center; margin-bottom: 16px;">
+                                <div style="width: 60px; height: 60px; border-radius: 50%; overflow: hidden; background: #fca5a5; flex-shrink: 0; border: 2px solid #e07a5f;">
+                                    @if ($tutor->user?->profile_picture)
+                                        <img src="{{ asset('storage/' . $tutor->user->profile_picture) }}" alt="Tutor" style="width: 100%; height: 100%; object-fit: cover;">
+                                    @else
+                                        <div style="width: 100%; height: 100%; color: #fff; font-size: 20px; font-weight: 700; display: flex; align-items: center; justify-content: center;">
+                                            {{ mb_substr($tutor->user?->first_name ?? 'T', 0, 1) }}
+                                        </div>
+                                    @endif
                                 </div>
-                            </article>
-                        @endif
-                    @endforeach
-                </div>
-            @else
-                <div class="favorite-card">
-                    <h2>ยังไม่มีติวเตอร์ในรายการโปรด</h2>
-                    <p>ไปที่โปรไฟล์ติวเตอร์แล้วกดหัวใจเพื่อบันทึกไว้ที่นี่</p>
-                    <a href="{{ route('tutor.search') }}">ค้นหาติวเตอร์</a>
-                </div>
-            @endif
-        </main>
-    </body>
-</html>
+                                <div>
+                                    <h2 style="font-size: 18px; font-weight: 700; color: #1e293b; margin: 0 0 4px 0;">
+                                        พี่{{ $tutor->user?->first_name }} {{ $tutor->user?->last_name }}
+                                    </h2>
+                                    <div style="font-size: 13px; color: #e07a5f; font-weight: 600;">
+                                        ⭐ {{ number_format($tutor->average_rating ?? 5.0, 1) }} / 5.0
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Details -->
+                            <div style="font-size: 13px; color: #475569; display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;">
+                                <div><strong>ประสบการณ์:</strong> {{ $tutor->experience_years ?? 0 }} ปี</div>
+                                <div>
+                                    <strong>รูปแบบการสอน:</strong>
+                                    @if ($tutor->teaching_mode === 'online')
+                                        💻 ออนไลน์
+                                    @elseif ($tutor->teaching_mode === 'onsite')
+                                        📍 นัดเจอ (Onsite)
+                                    @else
+                                        🔄 ออนไลน์ & Onsite
+                                    @endif
+                                </div>
+                                <div style="color: #64748b; font-size: 13px; line-height: 1.5; background: #f8fafc; padding: 10px; border-radius: 8px;">
+                                    {{ \Illuminate\Support\Str::limit($tutor->bio ?? 'ยังไม่มีข้อมูลแนะนำตัว', 90) }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Actions Buttons -->
+                        <div style="display: flex; gap: 10px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #f1f5f9;">
+                            <a href="{{ route('tutor.show', $tutor->tutor_id) }}"
+                               style="flex: 1; text-align: center; background: #e07a5f; color: #ffffff; padding: 10px; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 600;">
+                                ดูโปรไฟล์
+                            </a>
+
+                            <form action="{{ route('tutor.favorite.destroy', $tutor->tutor_id) }}" method="POST" style="margin: 0;">
+                                @csrf
+                                <button type="submit"
+                                        style="background: #fef2f2; color: #ef4444; border: 1px solid #fecaca; padding: 10px 14px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer;"
+                                        onclick="return confirm('ยืนยันลบออกจากรายการโปรด?')"
+                                        title="ลบออกจากรายการโปรด">
+                                    🗑️ ลบ
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                @endif
+            @endforeach
+        </div>
+    @else
+        <!-- Empty State -->
+        <div style="background: #ffffff; border: 1px dashed #cbd5e1; border-radius: 16px; padding: 48px 20px; text-align: center; margin-top: 20px;">
+            <div style="font-size: 40px; margin-bottom: 12px;">🤍</div>
+            <h2 style="font-size: 18px; font-weight: 700; color: #1e293b; margin: 0 0 6px 0;">ยังไม่มีติวเตอร์ในรายการโปรด</h2>
+            <p style="font-size: 14px; color: #64748b; margin: 0 0 20px 0;">ลองค้นหาและเพิ่มติวเตอร์ที่สนใจเข้ามาไว้ในรายการโปรดได้ง่ายๆ</p>
+
+            <a href="{{ route('tutor.search') }}"
+               style="display: inline-block; background: #e07a5f; color: #ffffff; padding: 10px 24px; border-radius: 10px; text-decoration: none; font-size: 14px; font-weight: 600;">
+                🔍 ค้นหาติวเตอร์
+            </a>
+        </div>
+    @endif
+
+</div>
+@endsection

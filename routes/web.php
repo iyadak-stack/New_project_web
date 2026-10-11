@@ -12,6 +12,7 @@ use App\Domains\Scheduling\Http\Controllers\AvailabilityController;
 use App\Domains\Scheduling\Http\Controllers\CheckScheduleController;
 use App\Domains\TutorProfile\Http\Controllers\AdminTutorController;
 use App\Domains\TutorProfile\Http\Controllers\FavoriteController;
+use App\Domains\TutorProfile\Http\Controllers\StudentHomeController;
 use App\Domains\TutorProfile\Http\Controllers\StudentProfileController;
 use App\Domains\TutorProfile\Http\Controllers\TutorController;
 use Illuminate\Http\Request;
@@ -30,10 +31,10 @@ Route::get('/', function (Request $request) {
             return app(TutorController::class)->profile();
         }
 
-        return app(TutorController::class)->home($request);
+        return app(StudentHomeController::class)->index($request);
     }
 
-    return app(TutorController::class)->home($request);
+    return app(StudentHomeController::class)->index($request);
 })->name('home');
 
 // อ่านรูปจากพื้นที่ public โดยตรง เพื่อรองรับเครื่อง Windows ที่สร้าง storage link ไม่ได้
@@ -123,7 +124,10 @@ Route::middleware(['auth', 'active'])->group(function () {
     // จัดการรายวิชา (Subjects)
     // =========================
 
-    Route::resource('subjects', SubjectController::class);
+    // หน้าแสดงรายการใช้แบบใหม่ ส่วนการจัดการวิชายังคง Route เดิม
+    Route::get('/subjects', [StudentHomeController::class, 'allSubjects'])->name('subjects.index');
+    Route::get('/student/tutors', [StudentHomeController::class, 'allTutors'])->name('student.tutors.index');
+    Route::resource('subjects', SubjectController::class)->except(['index']);
 
     // =========================
     // ตารางเวลาและความพร้อม (Availability & Schedule Check)

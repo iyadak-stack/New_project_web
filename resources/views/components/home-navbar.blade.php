@@ -13,6 +13,10 @@
                 <a class="menu-btn" href="{{ route('tutor.application.status') }}">สถานะใบสมัคร</a>
             @endif
         @else
+            @auth
+                <a href="{{ route('subjects.index') }}" class="menu-btn">รายวิชาทั้งหมด</a>
+                <a href="{{ route('student.tutors.index') }}" class="menu-btn">ติวเตอร์ทั้งหมด</a>
+            @endauth
             <a href="{{ route('tutor.search') }}" class="menu-btn">ค้นหาติวเตอร์</a>
             <a href="{{ route('tutor.ranking') }}" class="menu-btn">จัดอันดับติวเตอร์</a>
             <x-nav-user-links />

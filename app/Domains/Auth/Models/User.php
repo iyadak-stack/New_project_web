@@ -142,6 +142,7 @@ class User extends Authenticatable implements PasskeyUser
         return $this->hasOne(StudentProfile::class, 'user_id', 'user_id');
     }
 
+    // ความสัมพันธ์กับช่องทางติดต่อ (ตาราง contacts ใช้คอลัมน์ Users_user_id)
     public function contact(): HasOne
     {
         return $this->hasOne(Contact::class, 'Users_user_id', 'user_id');

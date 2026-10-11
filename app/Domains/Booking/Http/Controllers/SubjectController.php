@@ -15,6 +15,18 @@ class SubjectController extends Controller
         return view('domains.booking.subjects.index', compact('subjects'));
     }
 
+    // แสดงรายละเอียดวิชาพร้อมรายชื่อติวเตอร์ที่สอนวิชานี้
+    public function show($id)
+    {
+        $subject = Subject::with([
+            'tutors' => function ($query) {
+                // แสดงเฉพาะติวเตอร์ที่อนุมัติแล้วและบัญชียังใช้งานได้
+                $query->approved()->with('user')->withCount('reviews');
+            },
+        ])->findOrFail($id);
+        return view('domains.booking.subjects.show', compact('subject'));
+    }
+
     // บันทึกวิชาใหม่
     public function store(Request $request)
     {

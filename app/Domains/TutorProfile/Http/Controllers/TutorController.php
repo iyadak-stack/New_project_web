@@ -15,34 +15,6 @@ use Illuminate\Support\Facades\Auth;
 
 class TutorController extends Controller
 {
-    /**
-     * ชื่อ view หน้าแรกของนักเรียนที่ล็อกอินแล้ว (ไฟล์ student.blade.php)
-     */
-    private const STUDENT_HOME_VIEW = 'domains.tutor-profile.student.student';
-
-    public function home(Request $request)
-    {
-        // ดึงติวเตอร์ทั้งหมดมาแสดง
-        $tutors = TutorProfile::approved()->with(['user', 'subjects'])
-            ->when(Auth::check(), fn ($query) => $query->where('Users_user_id', '!=', Auth::id())
-            )
-            ->withCount('reviews')
-            ->orderByDesc('average_rating')
-            ->orderByDesc('experience_years')
-            ->get();
-
-        $subjects = Subject::withCount('tutors')
-            ->orderByDesc('tutors_count')
-            ->take(3)
-            ->get();
-
-        if (Auth::check()) {
-            return view(self::STUDENT_HOME_VIEW, compact('tutors', 'subjects'));
-        }
-
-        return view('welcome', compact('tutors', 'subjects'));
-    }
-
     public function profile()
     {
         $profile = Auth::user()->tutorProfile;
@@ -90,8 +62,15 @@ class TutorController extends Controller
 
     public function updateProfile(Request $request)
     {
-        $data = $request->validate(TutorApplication::rules());
+        $rules = TutorApplication::rules();
+        $rules['first_name'] = ['required', 'string', 'max:50'];
+        $rules['last_name'] = ['required', 'string', 'max:50'];
+        $data = $request->validate($rules);
         $profile = TutorApplication::save($request->user(), $data);
+        $request->user()->update([
+            'first_name' => $data['first_name'],
+            'last_name' => $data['last_name'],
+        ]);
         if ($profile->approval_status !== 'approved') {
             return redirect()->route('tutor.application.status')->with('success', 'ส่งข้อมูลแล้ว กรุณารอแอดมินตรวจสอบ');
         }

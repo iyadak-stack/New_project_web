@@ -5,10 +5,12 @@ namespace App\Domains\TutorProfile\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Domains\Auth\Models\User;
 use App\Domains\Booking\Models\Subject;
 use App\Domains\Booking\Models\Appointment;
 use App\Domains\Reportreview\Models\Review;
+use App\Domains\Scheduling\Models\Availability;
 
 class TutorProfile extends Model
 {
@@ -58,7 +60,7 @@ class TutorProfile extends Model
         );
     }
 
-    public function appointments()
+    public function appointments(): HasMany
     {
         return $this->hasMany(
             Appointment::class,
@@ -67,7 +69,7 @@ class TutorProfile extends Model
         );
     }
 
-    public function reviews()
+    public function reviews(): HasMany
     {
         return $this->hasMany(
             Review::class,
@@ -76,5 +78,17 @@ class TutorProfile extends Model
         )
         ->withTrashed()
         ->whereNull('reviews.deleted_at');
+    }
+
+    /**
+     * 📅 ความสัมพันธ์ตารางตารางเวลา/ความพร้อมสอน (Scheduling Domain)
+     */
+    public function availabilities(): HasMany
+    {
+        return $this->hasMany(
+            Availability::class,
+            'Tutor_profiles_tutor_id',
+            'tutor_id'
+        );
     }
 }

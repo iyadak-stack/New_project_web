@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="{{ asset('css/home.css') }}?v={{ time() }}">
     <link rel="stylesheet" href="{{ asset('css/tutor-profile-edit.css') }}?v={{ time() }}">
     <link rel="stylesheet" href="{{ asset('css/edit-profile.css') }}?v={{ time() }}">
+    <link rel="stylesheet" href="{{ asset('css/profile-card.css') }}?v={{ time() }}">
+    <link rel="stylesheet" href="{{ asset('css/tutor-navbar.css') }}?v={{ time() }}">
 </head>
 <body>
 
@@ -35,15 +37,8 @@
     ])->values()->all();
 @endphp
 
-    <header class="navbar">
-        <a href="{{ route('home') }}" class="logo">PeerTutor</a>
-
-        <nav class="menu">
-            <a href="{{ route('home') }}" class="menu-btn">หน้าแรก</a>
-            <a href="{{ route('tutor.ranking') }}" class="menu-btn {{ request()->routeIs('tutor.ranking') ? 'active' : '' }}">จัดอันดับติวเตอร์</a>
-            <a href="{{ route('notifications.index') }}" class="menu-btn">แจ้งเตือน</a>
-        </nav>
-    </header>
+    <!-- เรียกใช้งาน Dynamic Navbar ตาม Session Role -->
+    <x-navbar />
 
     <main class="pe-page">
         <div class="pe-card">
@@ -120,15 +115,12 @@
                     <h2>วิชาที่เปิดสอน</h2>
                     <p class="pe-select-hint">เลือกรายวิชาที่คุณสะดวกสอนจากรายการด้านล่าง</p>
 
-                    <!-- ข้อมูลจาก PHP ส่งให้ JS ผ่าน data-attribute -->
                     <div id="subject-data" hidden
                          data-initial="{{ json_encode($selectedSubjectIds) }}"
                          data-all="{{ json_encode($allSubjectsList) }}"></div>
 
-                    <!-- ช่องแสดง Tag วิชาที่เลือกไว้แล้ว -->
                     <div id="selected-tags-container" class="pe-tags-box"></div>
 
-                    <!-- Dropdown สำหรับกดเลือกวิชาเพิ่ม -->
                     <div class="pe-field" style="margin-top: 8px;">
                         <select id="subject-picker" class="pe-custom-select" onchange="addSubjectTag(this)">
                             <option value="">+ กดเพื่อเลือกวิชาที่สอน...</option>
@@ -140,7 +132,6 @@
                         </select>
                     </div>
 
-                    <!-- Hidden Input Container (ส่งค่าเข้า Form DB) -->
                     <div id="hidden-inputs-container"></div>
                 </div>
 
@@ -200,12 +191,7 @@
             reader.readAsDataURL(file);
         }
 
-        // ==========================================
-        // ระบบจัดการการเลือกวิชาแบบ Tag / Badge
-        // ==========================================
         const selectedSubjects = new Map();
-
-        // อ่านข้อมูลที่ PHP เตรียมไว้ใน data-attribute
         const dataEl = document.getElementById('subject-data');
         const initialSubjects = JSON.parse(dataEl.dataset.initial || '[]');
         const allSubjects = JSON.parse(dataEl.dataset.all || '[]');
@@ -226,6 +212,23 @@
                 });
             }
             renderSubjectTags();
+
+            // Script เปิด/ปิด Profile Card Dropdown
+            const toggleBtn = document.getElementById('toggleProfileBtn');
+            const dropdown = document.getElementById('profileDropdown');
+
+            if (toggleBtn && dropdown) {
+                toggleBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    dropdown.classList.toggle('show');
+                });
+
+                document.addEventListener('click', (e) => {
+                    if (!dropdown.contains(e.target) && !toggleBtn.contains(e.target)) {
+                        dropdown.classList.remove('show');
+                    }
+                });
+            }
         });
 
         function addSubjectTag(selectEl) {
@@ -240,7 +243,7 @@
                 renderSubjectTags();
             }
 
-            selectEl.value = ''; // รีเซ็ต Dropdown กลับเป็นค่าเริ่มต้น
+            selectEl.value = '';
         }
 
         function removeSubjectTag(id) {
@@ -265,7 +268,6 @@
             }
 
             selectedSubjects.forEach((name, id) => {
-                // สร้าง Tag แสดงผล (ใช้ textContent ป้องกัน XSS)
                 const tag = document.createElement('div');
                 tag.className = 'pe-tag';
 
@@ -281,7 +283,6 @@
                 tag.appendChild(removeBtn);
                 tagsContainer.appendChild(tag);
 
-                // สร้าง Hidden Input ส่งค่าเข้า Controller (subjects[])
                 const input = document.createElement('input');
                 input.type = 'hidden';
                 input.name = 'subjects[]';
@@ -290,6 +291,5 @@
             });
         }
     </script>
-
 </body>
 </html>

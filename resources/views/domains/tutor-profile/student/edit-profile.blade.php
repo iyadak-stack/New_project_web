@@ -7,6 +7,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/home.css') }}?v={{ time() }}">
     <link rel="stylesheet" href="{{ asset('css/edit-profile.css') }}?v={{ time() }}">
+    <link rel="stylesheet" href="{{ asset('css/profile-card.css') }}?v={{ time() }}">
+    <link rel="stylesheet" href="{{ asset('css/tutor-navbar.css') }}?v={{ time() }}">
 </head>
 <body>
 
@@ -37,15 +39,8 @@
     ])->values()->all();
 @endphp
 
-    <header class="navbar">
-        <a href="{{ route('home') }}" class="logo">PeerTutor</a>
-
-        <nav class="menu">
-            <a href="{{ route('home') }}" class="menu-btn">หน้าแรก</a>
-            <a href="{{ route('tutor.ranking') }}" class="menu-btn {{ request()->routeIs('tutor.ranking') ? 'active' : '' }}">จัดอันดับติวเตอร์</a>
-            <a href="{{ route('notifications.index') }}" class="menu-btn">แจ้งเตือน</a>
-        </nav>
-    </header>
+    <!-- เรียกใช้งาน Dynamic Navbar ตาม Session Role -->
+    <x-navbar />
 
     <main class="pe-page">
         <div class="pe-card">
@@ -76,7 +71,7 @@
                     <input type="file" id="avatar" name="avatar" style="display: none;" accept="image/*" onchange="previewImage(event)">
                 </div>
 
-                <!-- ข้อมูลส่วนตัว (Users & Student_profiles Table) -->
+                <!-- ข้อมูลส่วนตัว -->
                 <div class="pe-section">
                     <h2>ข้อมูลส่วนตัว</h2>
 
@@ -100,7 +95,7 @@
                     </div>
                 </div>
 
-                <!-- วิชาที่สนใจเรียน (Student_profiles_has_Subject Table) -->
+                <!-- วิชาที่สนใจเรียน -->
                 <div class="pe-section">
                     <h2>วิชาที่สนใจอยากเรียน</h2>
                     <p class="pe-select-hint">เลือกรายวิชาที่คุณสนใจอยากเรียนรู้เพิ่มเติม</p>
@@ -109,7 +104,6 @@
                          data-initial="{{ json_encode($selectedSubjectIds) }}"
                          data-all="{{ json_encode($allSubjectsList) }}"></div>
 
-                    <!-- กล่องเส้นประครอบ Tag วิชาสไตล์เดียวกับฝั่งติวเตอร์ -->
                     <div id="selected-tags-container" class="pe-tags-box"></div>
 
                     <div class="pe-field" style="margin-top: 8px;">
@@ -128,7 +122,7 @@
                     <div id="hidden-inputs-container"></div>
                 </div>
 
-                <!-- ช่องทางการติดต่อ (Contact Table) -->
+                <!-- ช่องทางการติดต่อ -->
                 <div class="pe-section">
                     <h2>ช่องทางการติดต่อ</h2>
 
@@ -166,11 +160,7 @@
             reader.readAsDataURL(file);
         }
 
-        // ==========================================
-        // ระบบจัดการการเลือกวิชาแบบ Tag / Badge
-        // ==========================================
         const selectedSubjects = new Map();
-
         const dataEl = document.getElementById('subject-data');
         const initialSubjects = JSON.parse(dataEl.dataset.initial || '[]');
         const allSubjects = JSON.parse(dataEl.dataset.all || '[]');
@@ -191,6 +181,21 @@
                 });
             }
             renderSubjectTags();
+
+            // Script ควบคุม Dropdown ของ Profile Card
+            const toggleBtn = document.getElementById('toggleProfileBtn');
+            const dropdown = document.getElementById('profileDropdown');
+            if (toggleBtn && dropdown) {
+                toggleBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    dropdown.classList.toggle('show');
+                });
+                document.addEventListener('click', (e) => {
+                    if (!dropdown.contains(e.target) && !toggleBtn.contains(e.target)) {
+                        dropdown.classList.remove('show');
+                    }
+                });
+            }
         });
 
         function addSubjectTag(selectEl) {
@@ -254,6 +259,5 @@
             });
         }
     </script>
-
 </body>
 </html>

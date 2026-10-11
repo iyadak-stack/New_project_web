@@ -20,14 +20,46 @@ use App\Domains\Auth\Http\Controllers\RoleController;
 use App\Domains\Reportreview\Http\Controllers\ReviewController;
 use App\Domains\Reportreview\Http\Controllers\Admin\ReportController;
 use App\Domains\Auth\Models\User;
+use App\Domains\Booking\Models\Appointment;
 
 // =========================
-// หน้าแรก (/): ตรวจสอบบทบาทผู้ใช้
+// หน้าแรก (/): ตรวจสอบบทบาทผู้ใช้ และดึงข้อมูลจริงจาก DB สำหรับ Dashboard ติวเตอร์
 // =========================
 Route::get('/', function (Request $request) {
     if (auth()->check()) {
         if (auth()->user()->current_role === 'tutor') {
-            return view('domains.tutor-profile.tutor.tutor');
+            $user = auth()->user();
+            $tutorId = $user->tutorProfile->tutor_id ?? null;
+
+            // ดึงข้อมูลการนัดหมายทั้งหมดของติวเตอร์คนนี้พร้อม Relationship
+            $appointmentsQuery = Appointment::with(['subject', 'studentProfile.user'])
+                ->where('Tutor_profiles_tutor_id', $tutorId);
+
+            // คำนวณยอดนับแต่ละสถานะ
+            $pendingCount = (clone $appointmentsQuery)->where('status', 'pending')->count();
+            $confirmedCount = (clone $appointmentsQuery)->where('status', 'confirmed')->count();
+            $cancelledCount = (clone $appointmentsQuery)->where('status', 'cancelled')->count();
+
+            // ดึงคำขอจองที่รอการตรวจสอบ (Pending)
+            $pendingAppointments = (clone $appointmentsQuery)
+                ->where('status', 'pending')
+                ->orderBy('start_datetime', 'asc')
+                ->get();
+
+            // ดึงตารางสอนล่าสุด (Confirmed / Pending)
+            $todaySchedules = (clone $appointmentsQuery)
+                ->whereIn('status', ['confirmed', 'pending'])
+                ->orderBy('start_datetime', 'asc')
+                ->take(5)
+                ->get();
+
+            return view('domains.tutor-profile.tutor.tutor', compact(
+                'pendingCount',
+                'confirmedCount',
+                'cancelledCount',
+                'pendingAppointments',
+                'todaySchedules'
+            ));
         }
 
         return app(StudentHomeController::class)->index($request);
@@ -39,7 +71,6 @@ Route::get('/', function (Request $request) {
 
 // =========================
 // ลืมรหัสผ่านแบบข้ามการส่งอีเมล (Direct Reset Password)
-// หมายเหตุ: ใช้เฉพาะตอนพัฒนา ห้ามใช้บนระบบจริง (ไม่มีการตรวจ token)
 // =========================
 Route::post('/forgot-password', function (Request $request) {
     $request->validate([
@@ -72,8 +103,7 @@ Route::post('/reset-password', function (Request $request) {
 
 
 // =========================
-// ค้นหา / ดูโปรไฟล์ติวเตอร์ (Public Views Access)
-// สำคัญ: route ที่เป็นคำตายตัว (ranking, favorites) ต้องอยู่ก่อน /tutors/{id}
+// ค้นหา / ดูโปรไฟล์ติวเตอร์ (Public Views Access - ทั้งติวเตอร์และนักเรียนเข้าดูได้)
 // =========================
 Route::get('/tutors', [TutorSearchController::class, 'search'])
     ->name('tutor.search');
@@ -81,12 +111,16 @@ Route::get('/tutors', [TutorSearchController::class, 'search'])
 Route::get('/tutors/ranking', [TutorSearchController::class, 'ranking'])
     ->name('tutor.ranking');
 
-// รายการโปรดของฉัน (ต้องล็อกอิน) — ย้ายมาไว้ก่อน /tutors/{id} เพื่อไม่ให้ถูกบัง
+// 🟢 รายการโปรดของฉัน (ต้องล็อกอิน) — กำหนดทั้ง /tutors/favorites และ /favorites ให้รองรับการกดจาก Navbar ทุกจุด
 Route::get('/tutors/favorites', [FavoriteController::class, 'tutorFavorites'])
     ->middleware('auth')
     ->name('tutor.favorites');
 
-// หน้าโปรไฟล์ติวเตอร์รายบุคคล
+Route::get('/favorites', [FavoriteController::class, 'tutorFavorites'])
+    ->middleware('auth')
+    ->name('favorites.index');
+
+// 🔴 หน้าโปรไฟล์ติวเตอร์รายบุคคล (ต้องวางไว้ใต้ Route แบบเจาะจงเสมอ เพื่อป้องกัน /tutors/favorites วิ่งมาตกที่นี่)
 Route::get('/tutors/{id}', [TutorProfileController::class, 'show'])
     ->name('tutor.show');
 
@@ -103,18 +137,22 @@ Route::middleware(['auth'])->group(function () {
 
 
     // =========================
-    // หน้ารวมวิชาทั้งหมดโดยเฉพาะ (Dedicated All Subjects Page)
+    // หน้ารวมวิชาทั้งหมด & ติวเตอร์ทั้งหมด (เข้าได้ทุก Role ทั้ง Student / Tutor)
     // =========================
     Route::get('/subjects', [StudentHomeController::class, 'allSubjects'])
         ->name('subjects.index');
 
-    // หน้าติวเตอร์ทั้งหมดสำหรับนักเรียน
+    // หน้ารายชื่อติวเตอร์ทั้งหมด
     Route::get('/student/tutors', [StudentHomeController::class, 'allTutors'])
         ->name('student.tutors.index');
 
+    // รองรับ Alias ชื่อ route tutor.tutors เผื่อถูกเรียกใช้ใน Navbar
+    Route::get('/all-tutors', [StudentHomeController::class, 'allTutors'])
+        ->name('tutor.tutors');
+
 
     // =========================
-    // โปรไฟล์ติวเตอร์ (Tutor Profile - Private/Management)
+    // โปรไฟล์ติวเตอร์ส่วนตัว (Tutor Profile - Private/Management)
     // =========================
     Route::get('/tutor/profile', [TutorProfileController::class, 'profile'])
         ->middleware('role:tutor')
@@ -134,7 +172,7 @@ Route::middleware(['auth'])->group(function () {
 
 
     // =========================
-    // รายการโปรดติวเตอร์ (Tutor Favorite) — POST เท่านั้น
+    // รายการโปรดติวเตอร์ (Tutor Favorite) — POST/DELETE เพิ่ม-ลบรายการโปรด
     // =========================
     Route::post('/tutor/{id}/favorite', [FavoriteController::class, 'storeTutor'])
         ->name('tutor.favorite.store');
@@ -172,6 +210,12 @@ Route::middleware(['auth'])->group(function () {
         ->except(['edit', 'update']);
 
     Route::post('/appointments/{id}/status', [AppointmentController::class, 'updateStatus']);
+
+    Route::post('/appointments/{id}/accept', [AppointmentController::class, 'accept'])
+        ->name('appointments.accept');
+
+    Route::post('/appointments/{id}/reject', [AppointmentController::class, 'reject'])
+        ->name('appointments.reject');
 
     Route::post('/appointments/{appointment}/confirm', [AppointmentController::class, 'confirm'])
         ->name('appointments.confirm');

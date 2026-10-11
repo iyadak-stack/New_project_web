@@ -7,6 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/home.css') }}?v={{ time() }}">
     <link rel="stylesheet" href="{{ asset('css/profile-card.css') }}?v={{ time() }}">
+    <link rel="stylesheet" href="{{ asset('css/tutor-navbar.css') }}?v={{ time() }}">
 </head>
 <body>
 
@@ -21,16 +22,8 @@
     $contact = $user?->contact;
 @endphp
 
-    <!-- Navbar -->
-    <header class="navbar">
-        <a href="{{ route('home') }}" class="logo">PeerTutor</a>
-        <nav class="menu">
-            <a href="{{ route('home') }}" class="menu-btn">หน้าแรก</a>
-            <a href="{{ route('appointments.index') }}" class="menu-btn">ตารางนัดหมาย</a>
-            <a href="{{ route('tutor.ranking') }}" class="menu-btn">จัดอันดับติวเตอร์</a>
-            <a href="{{ route('notifications.index') }}" class="menu-btn">แจ้งเตือน</a>
-        </nav>
-    </header>
+    <!-- เรียกใช้งาน Dynamic Navbar ตาม Session Role -->
+    <x-navbar />
 
     <main class="pe-page" style="max-width: 680px; margin: 40px auto; padding: 0 16px;">
         <div class="pe-card" style="background: #ffffff; border-radius: 16px; padding: 32px; box-shadow: 0 4px 20px rgba(0,0,0,0.06);">
@@ -41,7 +34,7 @@
                 </div>
             @endif
 
-            <!-- 1. ส่วนหัวโปรไฟล์ (User) -->
+            <!-- 1. ส่วนหัวโปรไฟล์ -->
             <div style="text-align: center; padding-bottom: 24px; border-bottom: 1px solid #f1f5f9;">
                 <div style="width: 110px; height: 110px; margin: 0 auto 16px; border-radius: 50%; overflow: hidden; border: 3px solid #e07a5f; box-shadow: 0 4px 10px rgba(224,122,95,0.2);">
                     <img src="{{ $avatarUrl }}" alt="Profile Image" style="width: 100%; height: 100%; object-fit: cover;">
@@ -54,7 +47,7 @@
                 </span>
             </div>
 
-            <!-- 2. ประวัติส่วนตัว / Bio (StudentProfile) -->
+            <!-- 2. ประวัติส่วนตัว -->
             <div style="margin-top: 24px;">
                 <h2 style="font-size: 15px; font-weight: 600; color: #64748b; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
                     📝 ประวัติส่วนตัว (Bio)
@@ -64,7 +57,7 @@
                 </div>
             </div>
 
-            <!-- 3. วิชาที่สนใจ (Student_profiles_has_Subject Pivot) -->
+            <!-- 3. วิชาที่สนใจ -->
             <div style="margin-top: 24px;">
                 <h2 style="font-size: 15px; font-weight: 600; color: #64748b; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
                     📘 วิชาที่สนใจอยากเรียน
@@ -82,7 +75,7 @@
                 </div>
             </div>
 
-            <!-- 4. ช่องทางการติดต่อ (Contact) -->
+            <!-- 4. ช่องทางการติดต่อ -->
             <div style="margin-top: 24px;">
                 <h2 style="font-size: 15px; font-weight: 600; color: #64748b; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
                     📞 ช่องทางการติดต่อ
@@ -112,5 +105,24 @@
         </div>
     </main>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggleBtn = document.getElementById('toggleProfileBtn');
+            const dropdown = document.getElementById('profileDropdown');
+
+            if (toggleBtn && dropdown) {
+                toggleBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    dropdown.classList.toggle('show');
+                });
+
+                document.addEventListener('click', (e) => {
+                    if (!dropdown.contains(e.target) && !toggleBtn.contains(e.target)) {
+                        dropdown.classList.remove('show');
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 </html>

@@ -42,9 +42,13 @@ class RoleController extends Controller
             $user->load('studentProfile');
         }
 
+        // บันทึกลง Database
         $user->current_role = $role;
         $user->save();
         $user->refresh();
+
+        // บันทึก Role ปัจจุบันลง Session เพื่อให้ Navbar เช็กค่าได้ตลอดทุกหน้า
+        session(['active_role' => $role]);
 
         return back()->with(
             'success',

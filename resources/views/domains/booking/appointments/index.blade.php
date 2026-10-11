@@ -2,59 +2,178 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <title>รายการนัดหมายทั้งหมด</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-</head>
-<body class="p-4">
-    <div class="container">
-        <h2>รายการนัดหมายทั้งหมด</h2>
-        <a href="{{ route('appointments.create') }}" class="btn btn-success mb-3">+ สร้างนัดหมายใหม่</a>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ตารางนัดหมาย - PeerTutor</title>
 
-        @if(session('success'))
-            <div class="alert alert-success">{{ session('success') }}</div>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('css/home.css') }}?v={{ time() }}">
+    <link rel="stylesheet" href="{{ asset('css/tutor-navbar.css') }}?v={{ time() }}">
+    <link rel="stylesheet" href="{{ asset('css/profile-card.css') }}?v={{ time() }}">
+    <!-- ดึงไฟล์ CSS ตารางนัดหมายที่แยกไว้ -->
+    <link rel="stylesheet" href="{{ asset('css/appointments.css') }}?v={{ time() }}">
+</head>
+<body>
+
+    <!-- Dynamic Navbar สลับตาม Role ใน Session -->
+    <x-navbar />
+
+    <main class="appt-page">
+
+        <!-- ข้อความแจ้งเตือน Flash Message -->
+        @if (session('success'))
+            <div style="background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; padding: 12px 16px; border-radius: 10px; font-size: 14px; margin-bottom: 20px;">
+                ✅ {{ session('success') }}
+            </div>
         @endif
 
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>รหัสนัดหมาย</th>
-                    <th>วิชา</th>
-                    <th>เริ่มเวลา</th>
-                    <th>สิ้นสุดเวลา</th>
-                    <th>สถานะ</th>
-                    <th>ปุ่มจัดการ</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($appointments as $app)
-                <tr>
-                    <td>{{ $app->Appointment_id }}</td>
-                    <td>{{ $app->subject->subject_name ?? '-' }}</td>
-                    <td>{{ $app->start_datetime }}</td>
-                    <td>{{ $app->end_datetime }}</td>
-                    <td>
-                        <span class="badge bg-info">{{ $app->status }}</span>
-                    </td>
-                    <td>
-                        <a href="{{ route('appointments.show', $app->Appointment_id) }}" class="btn btn-info btn-sm">ดูรายละเอียด</a>
-                        
-                        <!-- ฟอร์มอัปเดตสถานะ -->
-                        <form action="{{ url('/appointments/'.$app->Appointment_id.'/status') }}" method="POST" style="display:inline;">
-                            @csrf
-                            <input type="hidden" name="status" value="confirmed">
-                            <button class="btn btn-success btn-sm">ยืนยัน</button>
-                        </form>
+        <!-- หัวข้อหน้า -->
+        <div class="appt-header">
+            <div class="appt-title">
+                <h1>📅 ตารางนัดหมายและการสอน</h1>
+                <p>ตรวจสอบ ตอบรับคำขอจองเรียน และจัดการตารางสอนของคุณได้ในที่เดียว</p>
+            </div>
+        </div>
 
-                        <form action="{{ url('/appointments/'.$app->Appointment_id.'/status') }}" method="POST" style="display:inline;">
-                            @csrf
-                            <input type="hidden" name="status" value="cancelled">
-                            <button class="btn btn-warning btn-sm">ยกเลิก</button>
-                        </form>
-                    </td>
-                </tr>
+        <!-- แท็บสลับสถานะ (Filters) -->
+        <div class="appt-tabs">
+            <a href="{{ route('appointments.index', ['status' => 'all']) }}" 
+               class="tab-btn {{ ($status ?? 'all') === 'all' ? 'active' : '' }}">
+                ทั้งหมด
+            </a>
+            <a href="{{ route('appointments.index', ['status' => 'pending']) }}" 
+               class="tab-btn {{ ($status ?? '') === 'pending' ? 'active' : '' }}">
+                ⏳ รอการยืนยัน
+            </a>
+            <a href="{{ route('appointments.index', ['status' => 'confirmed']) }}" 
+               class="tab-btn {{ ($status ?? '') === 'confirmed' ? 'active' : '' }}">
+                ✅ ยืนยันแล้ว
+            </a>
+            <a href="{{ route('appointments.index', ['status' => 'cancelled']) }}" 
+               class="tab-btn {{ ($status ?? '') === 'cancelled' ? 'active' : '' }}">
+                ❌ ยกเลิกแล้ว
+            </a>
+        </div>
+
+        <!-- การ์ดรายการนัดหมาย -->
+        <div class="appt-grid">
+            @if (isset($appointments) && $appointments->count() > 0)
+                @foreach ($appointments as $appt)
+                    @php
+                        $startDate = \Carbon\Carbon::parse($appt->start_datetime ?? $appt->appointment_date)->format('d/m/Y');
+                        $startTime = \Carbon\Carbon::parse($appt->start_datetime ?? $appt->appointment_time)->format('H:i');
+                        $endTime = $appt->end_datetime ? \Carbon\Carbon::parse($appt->end_datetime)->format('H:i น.') : '';
+                        
+                        $isTutor = auth()->user()->current_role === 'tutor';
+                        $otherUser = $isTutor 
+                            ? ($appt->studentProfile?->user ?? $appt->student)
+                            : ($appt->tutorProfile?->user ?? $appt->tutor);
+                        $roleLabel = $isTutor ? '🎓 นักเรียน' : '👨‍🏫 ติวเตอร์';
+                    @endphp
+
+                    <div class="appt-card">
+                        <div>
+                            <!-- หัวการ์ด: ชื่อวิชา & Badge สถานะ -->
+                            <div class="appt-card-head">
+                                <div class="subject-badge">
+                                    📘 {{ $appt->subject->subject_name ?? 'วิชาทั่วไป' }}
+                                </div>
+                                <div>
+                                    @if ($appt->status === 'confirmed')
+                                        <span class="status-pill status-confirmed">✓ ยืนยันแล้ว</span>
+                                    @elseif ($appt->status === 'cancelled')
+                                        <span class="status-pill status-cancelled">✕ ยกเลิก</span>
+                                    @else
+                                        <span class="status-pill status-pending">⏳ รอตรวจสอบ</span>
+                                    @endif
+                                </div>
+                            </div>
+
+                            <!-- ข้อมูลคู่เรียน/ติวเตอร์ -->
+                            <div class="student-info">
+                                @if ($otherUser?->profile_picture)
+                                    <img src="{{ asset('storage/' . $otherUser->profile_picture) }}" class="student-avatar" alt="Avatar">
+                                @else
+                                    <div class="student-placeholder">
+                                        {{ mb_substr($otherUser?->first_name ?? 'U', 0, 1) }}
+                                    </div>
+                                @endif
+                                <div>
+                                    <h4 class="student-name">คุณ{{ $otherUser?->first_name ?? 'ผู้ใช้' }} {{ $otherUser?->last_name ?? '' }}</h4>
+                                    <p class="student-role">{{ $roleLabel }}</p>
+                                </div>
+                            </div>
+
+                            <!-- วัน เวลา และรูปแบบการเรียน -->
+                            <div class="appt-details">
+                                <div class="detail-item">
+                                    📆 <strong>วันที่:</strong> {{ $startDate }}
+                                </div>
+                                <div class="detail-item">
+                                    ⏰ <strong>เวลา:</strong> {{ $startTime }} {{ $endTime ? '- ' . $endTime : '' }}
+                                </div>
+                                <div class="detail-item">
+                                    💻 <strong>รูปแบบ:</strong> 
+                                    {{ $appt->teaching_mode === 'onsite' ? '📍 นัดเจอ (Onsite)' : 'ออนไลน์ (Online)' }}
+                                </div>
+                                @if (!empty($appt->note))
+                                    <div style="background: #f8fafc; padding: 8px 10px; border-radius: 8px; font-size: 12px; color: #64748b; margin-top: 4px;">
+                                        💬 <i>"{{ $appt->note }}"</i>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+
+                        <!-- ปุ่มจัดการคำขอ / ดูรายละเอียด -->
+                        <div class="appt-actions">
+                            @if ($appt->status === 'pending' && $isTutor)
+                                <form action="{{ route('appointments.accept', $appt->Appointment_id ?? $appt->id) }}" method="POST" style="margin:0; flex:1;">
+                                    @csrf
+                                    <button type="submit" class="btn-accept" style="width:100%;">ตอบรับคำขอ</button>
+                                </form>
+
+                                <form action="{{ route('appointments.reject', $appt->Appointment_id ?? $appt->id) }}" method="POST" style="margin:0;">
+                                    @csrf
+                                    <button type="submit" class="btn-reject" onclick="return confirm('ยืนยันปฏิเสธคำขอนี้?')">ปฏิเสธ</button>
+                                </form>
+                            @else
+                                <a href="{{ route('appointments.show', $appt->Appointment_id ?? $appt->id) }}" class="btn-outline">
+                                    🔎 ดูรายละเอียดนัดหมาย
+                                </a>
+                            @endif
+                        </div>
+                    </div>
                 @endforeach
-            </tbody>
-        </table>
-    </div>
+            @else
+                <!-- กรณีไม่มีข้อมูล -->
+                <div class="empty-box">
+                    <div style="font-size: 40px; margin-bottom: 12px;">📅</div>
+                    <h2 style="font-size: 18px; font-weight: 700; color: #1e293b; margin: 0 0 6px 0;">ยังไม่มีรายการนัดหมายในหมวดนี้</h2>
+                    <p style="font-size: 14px; color: #64748b; margin: 0;">เมื่อมีรายการนัดหมายเข้ามาจะแสดงผลในหน้านี้ทันที</p>
+                </div>
+            @endif
+        </div>
+
+    </main>
+
+    <!-- JS สำหรับ Pop-over Card Profile บน Navbar -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggleBtn = document.getElementById('toggleProfileBtn');
+            const dropdown = document.getElementById('profileDropdown');
+
+            if (toggleBtn && dropdown) {
+                toggleBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    dropdown.classList.toggle('show');
+                });
+
+                document.addEventListener('click', (e) => {
+                    if (!dropdown.contains(e.target) && !toggleBtn.contains(e.target)) {
+                        dropdown.classList.remove('show');
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 </html>

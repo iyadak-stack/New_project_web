@@ -7,6 +7,7 @@ use App\Domains\TutorProfile\Models\TutorProfile;
 use App\Domains\TutorProfile\Models\Favorite;
 use App\Domains\Booking\Models\Subject;
 use App\Domains\Auth\Models\Contact;
+use App\Domains\Scheduling\Models\Availability;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -15,39 +16,48 @@ use Illuminate\Support\Str;
 class TutorProfileController extends Controller
 {
     /**
-     * แสดงรายละเอียดโปรไฟล์ติวเตอร์รายบุคคล (สำหรับ Public View / Route: /tutors/{id})
+     * แสดงรายละเอียดโปรไฟล์ติวเตอร์รายบุคคล (Public View / Route: /tutors/{id})
      */
     public function show($id)
     {
-        // ดึงข้อมูล TutorProfile พร้อมความสัมพันธ์ subjects และ user
-        $tutorProfile = TutorProfile::with(['subjects', 'user'])
-            ->where('tutor_id', $id)
-            ->firstOrFail();
+        $tutorProfile = TutorProfile::with([
+            'subjects', 
+            'user',
+            'reviews.studentProfile.user'
+        ])
+        ->where('tutor_id', $id)
+        ->firstOrFail();
 
-        // ติวเตอร์ที่ยังไม่อนุมัติ ให้เห็นได้เฉพาะเจ้าของโปรไฟล์
         $isApproved = $tutorProfile->approval_status === 'approved'
             || empty($tutorProfile->approval_status);
 
         abort_unless($isApproved || $tutorProfile->Users_user_id == Auth::id(), 404);
 
-        // เช็กว่าผู้ใช้ปัจจุบันกดรายการโปรดไว้แล้วหรือยัง
         $isFavorite = Auth::check() && Favorite::where('Users_user_id', Auth::id())
             ->where('Tutor_profiles_tutor_id', $tutorProfile->tutor_id)
             ->exists();
 
-        // ดึงวิชาแรกของติวเตอร์มาเป็น $subject (เพื่อรองรับไฟล์ Blade ที่เรียกใช้ $subject ใน <title>)
         $subject = $tutorProfile->subjects->first();
 
-        // ดึงข้อมูลการติดต่อ Contact
         $contact = Contact::where('Users_user_id', $tutorProfile->Users_user_id)
             ->orWhere('user_id', $tutorProfile->Users_user_id)
             ->first();
 
-        return view('domains.tutor-profile.tutor.show', compact('tutorProfile', 'subject', 'contact', 'isFavorite'));
+        $availabilities = Availability::where('Tutor_profiles_tutor_id', $tutorProfile->tutor_id)
+            ->where('is_available', true)
+            ->get();
+
+        return view('domains.tutor-profile.tutor.show', compact(
+            'tutorProfile', 
+            'subject', 
+            'contact', 
+            'isFavorite', 
+            'availabilities'
+        ));
     }
 
     /**
-     * แสดงหน้าโปรไฟล์ตนเองของติวเตอร์ (Dashboard/Profile)
+     * 🟢 แสดงหน้าโปรไฟล์ตนเองของติวเตอร์ (Route: /tutor/profile)
      */
     public function profile()
     {
@@ -65,7 +75,7 @@ class TutorProfileController extends Controller
     }
 
     /**
-     * แสดงฟอร์มแก้ไขโปรไฟล์ติวเตอร์
+     * แสดงฟอร์มแก้ไขโปรไฟล์ติวเตอร์ (Route: /tutor/profile/edit)
      */
     public function editProfile()
     {

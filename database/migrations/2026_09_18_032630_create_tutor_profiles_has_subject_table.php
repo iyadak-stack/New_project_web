@@ -15,10 +15,12 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
+            // ปกป้องแก้ให้: กำหนดชื่อ index สั้น เพราะชื่ออัตโนมัติยาวเกินที่ MySQL รับได้
+            // โค้ดเดิม: $table->unique(['Tutor_profiles_tutor_id', 'Subject_subject_id']);
             $table->unique([
                 'Tutor_profiles_tutor_id',
                 'Subject_subject_id',
-            ]);
+            ], 'tutor_subject_unique');
         });
     }
 

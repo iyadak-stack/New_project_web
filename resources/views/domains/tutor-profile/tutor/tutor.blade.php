@@ -5,11 +5,16 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>หน้าหลักติวเตอร์ - PeerTutor</title>
         <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-        <link rel="stylesheet" href="{{ asset('css/tutor-dashboard.css') }}?v={{ time() }}">
-        <link rel="stylesheet" href="{{ asset('css/tutor-navbar.css') }}?v={{ time() }}">
-        <link rel="stylesheet" href="{{ asset('css/profile-card.css') }}?v={{ time() }}">
-        <link rel="stylesheet" href="{{ asset('css/tutor-ranking.css') }}?v={{ time() }}">
-        <link rel="stylesheet" href="{{ asset('css/home.css') }}">
+        {{-- ปกป้องแก้ให้: path เดิม css/tutor-dashboard.css ต้องเป็น CSS/tutor-dashboard.css ให้ตรงกับโฟลเดอร์บน Linux --}}
+        <link rel="stylesheet" href="{{ asset('CSS/tutor-dashboard.css') }}?v={{ time() }}">
+        {{-- ปกป้องแก้ให้: path เดิม css/tutor-navbar.css ต้องเป็น CSS/tutor-navbar.css ให้ตรงกับโฟลเดอร์บน Linux --}}
+        <link rel="stylesheet" href="{{ asset('CSS/tutor-navbar.css') }}?v={{ time() }}">
+        {{-- ปกป้องแก้ให้: path เดิม css/profile-card.css ต้องเป็น CSS/profile-card.css ให้ตรงกับโฟลเดอร์บน Linux --}}
+        <link rel="stylesheet" href="{{ asset('CSS/profile-card.css') }}?v={{ time() }}">
+        {{-- ปกป้องแก้ให้: path เดิม css/tutor-ranking.css ต้องเป็น CSS/tutor-ranking.css ให้ตรงกับโฟลเดอร์บน Linux --}}
+        <link rel="stylesheet" href="{{ asset('CSS/tutor-ranking.css') }}?v={{ time() }}">
+        {{-- ปกป้องแก้ให้: path เดิม css/home.css ต้องเป็น CSS/home.css ให้ตรงกับโฟลเดอร์บน Linux --}}
+        <link rel="stylesheet" href="{{ asset('CSS/home.css') }}">
     </head>
     <body>
         <!-- Navbar --><x-home-navbar />

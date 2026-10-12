@@ -5,9 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>แก้ไขโปรไฟล์นักเรียน - PeerTutor</title>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ asset('css/home.css') }}?v={{ time() }}">
-    <link rel="stylesheet" href="{{ asset('css/edit-profile.css') }}?v={{ time() }}">
-    <link rel="stylesheet" href="{{ asset('css/profile-card.css') }}">
+    {{-- ปกป้องแก้ให้: path เดิม css/home.css ต้องเป็น CSS/home.css ให้ตรงกับโฟลเดอร์บน Linux --}}
+    <link rel="stylesheet" href="{{ asset('CSS/home.css') }}?v={{ time() }}">
+    {{-- ปกป้องแก้ให้: path เดิม css/edit-profile.css ต้องเป็น CSS/edit-profile.css ให้ตรงกับโฟลเดอร์บน Linux --}}
+    <link rel="stylesheet" href="{{ asset('CSS/edit-profile.css') }}?v={{ time() }}">
+    {{-- ปกป้องแก้ให้: path เดิม css/profile-card.css ต้องเป็น CSS/profile-card.css ให้ตรงกับโฟลเดอร์บน Linux --}}
+    <link rel="stylesheet" href="{{ asset('CSS/profile-card.css') }}">
 </head>
 <body>
 

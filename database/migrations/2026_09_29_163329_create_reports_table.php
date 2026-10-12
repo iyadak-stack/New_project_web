@@ -30,7 +30,9 @@ return new class extends Migration
 
             $table->foreign('Users_user_id')
                 ->references('user_id')
-                ->on('Users');
+                // ปกป้องแก้ให้: FK ต้องอ้างตาราง users ให้ตรงกับ migration
+                // โค้ดเดิม: ->on('Users');
+                ->on('users');
         });
     }
 

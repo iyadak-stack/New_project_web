@@ -2,7 +2,8 @@
 
 @section('title', 'จัดอันดับติวเตอร์ยอดนิยม - PeerTutor')
 
-<link rel="stylesheet" href="{{ asset('css/tutor-ranking.css') }}?v={{ time() }}">
+{{-- ปกป้องแก้ให้: path เดิม css/tutor-ranking.css ต้องเป็น CSS/tutor-ranking.css ให้ตรงกับโฟลเดอร์บน Linux --}}
+<link rel="stylesheet" href="{{ asset('CSS/tutor-ranking.css') }}?v={{ time() }}">
 
 @section('content')
 <div class="ranking-container">

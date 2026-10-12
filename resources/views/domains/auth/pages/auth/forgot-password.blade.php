@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ลืมรหัสผ่าน - PeerTutor</title>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ asset('css/auth.css') }}?v={{ time() }}">
+    {{-- ปกป้องแก้ให้: path เดิม css/auth.css ต้องเป็น CSS/auth.css ให้ตรงกับโฟลเดอร์บน Linux --}}
+    <link rel="stylesheet" href="{{ asset('CSS/auth.css') }}?v={{ time() }}">
 </head>
 <body class="auth-page">
 

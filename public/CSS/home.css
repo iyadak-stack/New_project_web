@@ -1,4 +1,5 @@
-@import "tailwindcss";
+/* ปกป้องแก้ให้: import เดิมโหลดไม่ได้เมื่อใช้ CSS นี้โดยตรง และทำให้เกิด 404 */
+/* @import "tailwindcss"; */
 
 * {
     box-sizing: border-box;

@@ -46,7 +46,9 @@ class User extends Authenticatable implements PasskeyUser
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, PasskeyAuthenticatable, SoftDeletes;
 
-    protected $table = 'Users';
+    // ปกป้องแก้ให้: ใช้ชื่อ users ให้ตรงกับ migration บน MySQL
+    // โค้ดเดิม: protected $table = 'Users';
+    protected $table = 'users';
 
     protected $primaryKey = 'user_id';
 
@@ -80,8 +82,9 @@ class User extends Authenticatable implements PasskeyUser
     {
         static::creating(function (User $user) {
             if (empty($user->user_id)) {
-                // สร้าง user_id อัตโนมัติ (เช่น USR-8F9A2B1C)
-                $user->user_id = 'USR-'.strtoupper(Str::random(8));
+                // ปกป้องแก้ให้: รหัสอัตโนมัติต้องยาว 10 ตัวตามคอลัมน์ user_id
+                // โค้ดเดิม: $user->user_id = 'USR-'.strtoupper(Str::random(8));
+                $user->user_id = 'USR'.strtoupper(Str::random(7));
             }
         });
     }

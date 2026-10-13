@@ -158,6 +158,15 @@
 
             {{-- ปุ่มกดการกระทำต่างๆ --}}
             <div class="d-flex flex-wrap align-items-center justify-content-end gap-2 mt-3">
+                {{-- นักเรียนยกเลิกได้เฉพาะนัดของตัวเองที่ยังรอหรือยืนยันแล้ว --}}
+                @if ($isStudentBooking && auth()->user()->current_role === 'student' && in_array($appointment->status, ['pending', 'confirmed'], true))
+                    <form method="POST" action="{{ route('appointments.cancel', $appointment) }}"
+                          onsubmit="return confirm('คุณต้องการยกเลิกนัดหมายนี้ใช่ไหม?')">
+                        @csrf
+                        <button type="submit" class="btn-reject-action">ยกเลิกนัดหมาย</button>
+                    </form>
+                @endif
+
                 @if($isTutorBooking && $appointment->status === 'pending' && auth()->user()->current_role === 'tutor' && $appointment->tutorProfile->approval_status === 'approved')
                     <form method="POST" action="{{ url('/appointments/'.$appointment->Appointment_id.'/status') }}">
                         @csrf
@@ -167,6 +176,10 @@
                     <form method="POST" action="{{ url('/appointments/'.$appointment->Appointment_id.'/status') }}">
                         @csrf
                         <input type="hidden" name="status" value="cancelled">
+                        {{-- ต้องส่งเหตุผลพร้อมการปฏิเสธ ให้ตรงกับ validation เดิม --}}
+                        <label for="rejection_reason" class="form-label small">เหตุผลที่ปฏิเสธคำขอ</label>
+                        <textarea id="rejection_reason" name="rejection_reason" class="form-control form-control-sm mb-2"
+                                  rows="2" maxlength="2000" placeholder="ระบุเหตุผลให้นักเรียนทราบ" required>{{ old('rejection_reason') }}</textarea>
                         <button class="btn-reject-action">ปฏิเสธคำขอ</button>
                     </form>
                 @endif

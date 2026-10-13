@@ -222,10 +222,25 @@
                             <label style="font-size: 13px; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">วันที่ติวเตอร์ว่างสอน</label>
                             <select name="appointment_date" id="appointment_date"
                                     data-availabilities="{{ json_encode($availabilities ?? []) }}"
+                                    data-tutor-has-times="{{ count($availableTimes ?? []) > 0 ? '1' : '0' }}"
                                     onchange="updateAvailableTimes()"
                                     style="width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid #cbd5e1; font-size: 14px; color: #1e293b;" required>
                                 <option value="">-- เลือกวันที่ --</option>
                             </select>
+                            <div id="no-shared-time-hint" style="display: none; margin-top: 8px; font-size: 13px; color: #64748b;">
+                                <p style="margin-bottom: 8px;">ติวเตอร์มีเวลาว่าง แต่ยังไม่ตรงกับเวลาว่างของคุณ</p>
+                                {{-- แสดงเวลาของติวเตอร์จาก backend เพื่อให้นักเรียนเลือกจัดเวลาของตัวเอง --}}
+                                <p style="margin-bottom: 4px;">ช่วงที่ติวเตอร์ว่าง:</p>
+                                <ul style="padding-left: 20px; margin-bottom: 8px;">
+                                    @foreach ($availableTimes ?? [] as $time)
+                                        <li>
+                                            {{ \Illuminate\Support\Carbon::parse($time['start'])->format('d/m/Y H:i') }}
+                                            – {{ \Illuminate\Support\Carbon::parse($time['end'])->format('d/m/Y H:i') }}
+                                        </li>
+                                    @endforeach
+                                </ul>
+                                <a href="{{ route('availabilities.index') }}">เพิ่มหรือปรับเวลาว่างของฉัน →</a>
+                            </div>
                         </div>
 
                         <!-- เลือกเวลา -->
@@ -316,7 +331,7 @@
         var dateSelect = document.getElementById('appointment_date');
         var timeSelect = document.getElementById('appointment_time');
 
-        // ดึงตารางว่างของติวเตอร์จาก data-availabilities
+        // รายการนี้เป็นเวลาที่ตรงกัน ส่วนเวลาของติวเตอร์ตรวจจาก flag แยกกัน
         var availabilities = JSON.parse(dateSelect.dataset.availabilities || '[]');
 
         window.onload = function () {
@@ -348,7 +363,13 @@
 
             // ---------- ใส่วันที่ว่างลงใน select ----------
             if (availabilities.length === 0) {
-                dateSelect.innerHTML = '<option value="">-- ติวเตอร์ยังไม่ได้ลงตารางว่าง --</option>';
+                if (dateSelect.dataset.tutorHasTimes === '1') {
+                    dateSelect.innerHTML = '<option value="">-- ไม่มีเวลาที่คุณว่างตรงกับติวเตอร์ --</option>';
+                    document.getElementById('no-shared-time-hint').style.display = 'block';
+                } else {
+                    // อาจยังไม่ลงเวลา หรือเวลาที่มีถูกจองหมดแล้ว
+                    dateSelect.innerHTML = '<option value="">-- ติวเตอร์ยังไม่มีช่วงเวลาที่จองได้ --</option>';
+                }
                 return;
             }
 

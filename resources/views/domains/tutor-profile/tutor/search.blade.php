@@ -76,9 +76,22 @@
                         </div>
 
                         <div>
+                            @if ($tutor->approval_status === 'approved' && $tutor->user->is_active)
                             <a href="{{ route('tutor.show', $tutor->tutor_id) }}" style="display: inline-block; background: #e07a5f; color: #ffffff; padding: 8px 24px; border-radius: 20px; text-decoration: none; font-size: 14px; font-weight: 500;">
                                 ดูโปรไฟล์ / จองเรียน
                             </a>
+                            @else
+                                {{-- แสดงได้ในหน้ารวม แต่ยังไม่เปิดโปรไฟล์สำหรับจองเรียน --}}
+                                <span style="color: #64748b; font-size: 13px;">
+                                    @if (!$tutor->user->is_active)
+                                        บัญชีถูกระงับ
+                                    @elseif ($tutor->approval_status === 'rejected')
+                                        ยังไม่ผ่านอนุมัติ
+                                    @else
+                                        รอแอดมินอนุมัติ
+                                    @endif
+                                </span>
+                            @endif
                         </div>
 
                     </div>
@@ -93,9 +106,7 @@
         @endif
 
         <div style="margin-top: 16px;">
-            <button type="button" onclick="window.history.back()" style="background: #e07a5f; color: #ffffff; padding: 10px 24px; border-radius: 10px; border: none; font-size: 14px; font-weight: 600; cursor: pointer;">
-                ← ย้อนกลับ
-            </button>
+            <x-text-arrow-link :href="route('home')" label="กลับไปหน้าหลัก" direction="left" />
         </div>
 
     </main>

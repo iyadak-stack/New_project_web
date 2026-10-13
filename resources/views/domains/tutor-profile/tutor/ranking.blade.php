@@ -1,8 +1,10 @@
-@extends('domains.tutor-profile.tutor.tutor')
+@extends('layouts.public')
 
 @section('title', 'จัดอันดับติวเตอร์ยอดนิยม - PeerTutor')
 
-<link rel="stylesheet" href="{{ asset('css/tutor-ranking.css') }}?v={{ time() }}">
+@section('styles')
+    <link rel="stylesheet" href="{{ asset('CSS/tutor-ranking.css') }}">
+@endsection
 
 @section('content')
 <div class="ranking-container">

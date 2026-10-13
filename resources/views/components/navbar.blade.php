@@ -1,23 +1,11 @@
+<x-logout-confirm />
 @php
     // เช็กบทบาทจาก Session ก่อน ถ้าไม่มีให้เช็กจากคอลัมน์ current_role ของผู้ใช้ หรือ default เป็น 'student'
     $currentRole = session('active_role', Auth::user()?->current_role ?? 'student');
 @endphp
 
 @if (Auth::guest())
-    {{-- ยังไม่ล็อกอิน: ไม่มีข้อมูลผู้ใช้ จึงไม่แสดงรูปหรือเมนูโปรไฟล์ส่วนตัว --}}
-    <header class="navbar">
-        <a href="{{ route('home') }}" class="logo">PeerTutor</a>
-        <form action="{{ route('tutor.search') }}" method="GET" class="search-box">
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="ค้นหาวิชา ติวเตอร์" aria-label="ค้นหาวิชา ติวเตอร์">
-            <button type="submit">ค้นหา</button>
-        </form>
-        <nav class="menu" aria-label="เมนูผู้เยี่ยมชม">
-            <a href="{{ route('home') }}" class="menu-btn">หน้าแรก</a>
-            <a href="{{ route('tutor.search') }}" class="menu-btn">ค้นหาติวเตอร์</a>
-            <a href="{{ route('login') }}" class="menu-btn">เข้าสู่ระบบ</a>
-            <a href="{{ route('register') }}" class="menu-btn">สมัครสมาชิก</a>
-        </nav>
-    </header>
+    <x-guest-navbar />
 @elseif (Auth::user()->role === 'admin' || Auth::user()->current_role === 'admin')
     {{-- แอดมินมีทางเข้ากล่องรับรายงาน โดยตรวจบทบาทซ้ำใน Controller --}}
     <header class="navbar">
@@ -46,7 +34,7 @@
             <a href="{{ route('home') }}" class="menu-btn {{ request()->routeIs('home') ? 'active' : '' }}">หน้าแรก</a>
             <a href="{{ route('tutor.subjects.index') }}" class="menu-btn {{ request()->routeIs('tutor.subjects.*') ? 'active' : '' }}">วิชาของฉัน</a>
             {{-- จัดเวลามีหน้าและสถานะ active ของตัวเอง --}}
-            <a href="{{ route('tutor.schedule.index') }}" class="menu-btn {{ request()->routeIs('tutor.schedule.*') ? 'active' : '' }}">จัดเวลา</a>
+            <a href="{{ route('availabilities.index') }}" class="menu-btn {{ request()->routeIs('availabilities.*') ? 'active' : '' }}">จัดเวลา</a>
             <a href="{{ route('appointments.index') }}" class="menu-btn {{ request()->routeIs('appointments.*') ? 'active' : '' }}">ตารางนัดหมาย</a>
             <x-notification-bell />
 

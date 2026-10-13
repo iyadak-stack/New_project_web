@@ -227,7 +227,7 @@ class AdminController extends Controller
         ]);
 
         // withTrashed ทำให้แอดมินดูและเปิดคืนรีวิวที่ซ่อนไว้ได้
-        $query = Review::withTrashed()->with(['tutorProfile.user', 'appointment.studentProfile.user']);
+        $query = Review::withTrashed()->with(['tutorProfile.user', 'appointment.studentProfile.user', 'appointment.studentUser.studentProfile']);
         if ($request->filled('rating')) {
             $query->where('rating', $request->input('rating'));
         }
@@ -244,6 +244,9 @@ class AdminController extends Controller
             });
         }
         $reviews = $query->latest()->paginate(12)->withQueryString();
+        foreach ($reviews as $review) {
+            $review->appointment?->loadStudentProfile();
+        }
 
         return view('admin.reviews', compact('reviews'));
     }
@@ -276,7 +279,7 @@ class AdminController extends Controller
             'status' => ['nullable', 'in:pending,confirmed,cancelled,completed'],
             'date' => ['nullable', 'date_format:Y-m-d'],
         ]);
-        $query = Appointment::with(['subject', 'studentProfile.user', 'tutorProfile.user']);
+        $query = Appointment::with(['subject', 'studentProfile.user', 'studentUser.studentProfile', 'tutorProfile.user']);
         if ($request->filled('status')) {
             $query->where('status', $data['status']);
         }
@@ -290,6 +293,9 @@ class AdminController extends Controller
                 $query->whereHas('studentProfile.user', function ($query) use ($search) {
                     $query->where('first_name', 'like', "%{$search}%")
                         ->orWhere('last_name', 'like', "%{$search}%");
+                })->orWhereHas('studentUser', function ($query) use ($search) {
+                    $query->where('first_name', 'like', "%{$search}%")
+                        ->orWhere('last_name', 'like', "%{$search}%");
                 })->orWhereHas('tutorProfile.user', function ($query) use ($search) {
                     $query->where('first_name', 'like', "%{$search}%")
                         ->orWhere('last_name', 'like', "%{$search}%");
@@ -299,6 +305,9 @@ class AdminController extends Controller
             });
         }
         $appointments = $query->orderByDesc('start_datetime')->paginate(12)->withQueryString();
+        foreach ($appointments as $appointment) {
+            $appointment->loadStudentProfile();
+        }
 
         return view('admin.appointments', compact('appointments'));
     }

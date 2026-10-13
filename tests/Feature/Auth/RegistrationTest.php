@@ -21,20 +21,21 @@ class RegistrationTest extends TestCase
     {
         $response = $this->get(route('register'));
 
-        $response->assertOk();
+        $response->assertRedirect(route('home'));
     }
 
     public function test_new_users_can_register(): void
     {
         $response = $this->post(route('register.store'), [
-            'name' => 'John Doe',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
             'email' => 'test@example.com',
             'password' => 'password',
             'password_confirmation' => 'password',
         ]);
 
         $response->assertSessionHasNoErrors()
-            ->assertRedirect(route('dashboard', absolute: false));
+            ->assertRedirect(route('home', absolute: false));
 
         $this->assertAuthenticated();
     }

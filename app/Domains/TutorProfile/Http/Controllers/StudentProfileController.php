@@ -2,10 +2,10 @@
 
 namespace App\Domains\TutorProfile\Http\Controllers;
 
-use App\Http\Controllers\Controller;
-use App\Domains\TutorProfile\Models\StudentProfile;
-use App\Domains\Booking\Models\Subject;
 use App\Domains\Auth\Models\Contact;
+use App\Domains\Booking\Models\Subject;
+use App\Domains\TutorProfile\Models\StudentProfile;
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -29,7 +29,7 @@ class StudentProfileController extends Controller
         // แก้คีย์ตรงนี้ให้ตรงกับ Database จริงคือ user_id
         $studentProfile = StudentProfile::with('subjects')->firstOrCreate(
             ['user_id' => $user->user_id],
-            ['student_id' => 'STD-' . strtoupper(Str::random(6))]
+            ['id' => strtoupper(Str::random(10))]
         );
 
         $allSubjects = Subject::all();
@@ -41,19 +41,19 @@ class StudentProfileController extends Controller
     {
         $request->validate([
             'first_name' => ['required', 'string', 'max:50'],
-            'last_name'  => ['required', 'string', 'max:50'],
-            'bio'        => ['nullable', 'string'],
-            'line_id'    => ['nullable', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:50'],
+            'bio' => ['nullable', 'string'],
+            'line_id' => ['nullable', 'string', 'max:45'],
             'discord_id' => ['nullable', 'string', 'max:255'],
-            'avatar'     => ['nullable', 'image', 'max:2048'],
-            'subjects'   => ['nullable', 'array'],
-            'subjects.*' => ['string'],
+            'avatar' => ['nullable', 'image', 'max:2048'],
+            'subjects' => ['nullable', 'array'],
+            'subjects.*' => ['string', 'distinct', 'exists:subjects,subject_id'],
         ], [
             'first_name.required' => 'กรุณากรอกชื่อ',
-            'last_name.required'  => 'กรุณากรอกนามสกุล',
-            'avatar.image'        => 'ไฟล์ที่เลือกต้องเป็นรูปภาพ',
-            'avatar.max'          => 'รูปโปรไฟล์ต้องมีขนาดไม่เกิน 2 MB',
-            'avatar.uploaded'     => 'อัปโหลดรูปไม่สำเร็จ ไฟล์อาจใหญ่เกินไป',
+            'last_name.required' => 'กรุณากรอกนามสกุล',
+            'avatar.image' => 'ไฟล์ที่เลือกต้องเป็นรูปภาพ',
+            'avatar.max' => 'รูปโปรไฟล์ต้องมีขนาดไม่เกิน 2 MB',
+            'avatar.uploaded' => 'อัปโหลดรูปไม่สำเร็จ ไฟล์อาจใหญ่เกินไป',
         ]);
 
         $user = Auth::user();
@@ -75,7 +75,7 @@ class StudentProfileController extends Controller
         // 2. บันทึกข้อมูลลงตาราง Student_profiles (ใช้ user_id)
         $studentProfile = StudentProfile::firstOrCreate(
             ['user_id' => $userId],
-            ['student_id' => 'STD-' . strtoupper(Str::random(6))]
+            ['id' => strtoupper(Str::random(10))]
         );
 
         $studentProfile->bio = $request->bio;
@@ -92,8 +92,8 @@ class StudentProfileController extends Controller
         $contact = Contact::where('Users_user_id', $userId)->first();
 
         if (! $contact) {
-            $contact = new Contact();
-            $contact->contact_id = 'CON-' . strtoupper(Str::random(6));
+            $contact = new Contact;
+            $contact->contact_id = 'CON-'.strtoupper(Str::random(6));
             $contact->Users_user_id = $userId;
         }
 

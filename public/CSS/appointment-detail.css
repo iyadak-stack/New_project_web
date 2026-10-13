@@ -1,0 +1,140 @@
+/* ตกแต่งเฉพาะหน้ารายละเอียดนัดหมาย ไม่กระทบ schedule/availability */
+.appointment-back {
+    margin-bottom: 20px;
+}
+
+.appointment-detail-card {
+    padding: 26px;
+}
+
+.appointment-detail-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding-bottom: 22px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #e2eaf2;
+}
+
+.appointment-detail-header > .booking-icon {
+    width: 56px;
+    height: 56px;
+    color: #16639a;
+}
+
+.appointment-detail-title {
+    flex: 1;
+}
+
+.appointment-detail-title h1 {
+    margin: 0 0 6px;
+    font-size: 22px;
+    font-weight: 700;
+    color: #18375c;
+}
+
+.appointment-detail-title p {
+    margin: 0;
+    font-size: 13px;
+    color: #7b8da6;
+}
+
+.appointment-header-status.confirmed {
+    background: #4cba7b;
+    color: #ffffff;
+}
+
+/* dl แสดงเป็นสองคอลัมน์: ชื่อข้อมูลและรายละเอียด */
+.appointment-detail-rows {
+    display: grid;
+    grid-template-columns: 40% 60%;
+    gap: 18px 0;
+    margin: 0 0 24px;
+}
+
+.appointment-detail-rows dt {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    color: #7b96b9;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.appointment-detail-rows dd {
+    align-self: center;
+    margin: 0;
+    font-size: 14px;
+    color: #18375c;
+    overflow-wrap: anywhere;
+}
+
+.appointment-detail-rows .booking-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.appointment-detail-card .booking-lesson {
+    margin-bottom: 20px;
+}
+
+.appointment-profile-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    /* ให้ปุ่มอยู่ขวาสุดของแถวปุ่มจัดการนัดหมาย */
+    margin-left: auto;
+    padding: 9px 16px;
+    border: 1px solid transparent;
+    border-radius: 24px;
+    background-color: #ed805b;
+    color: #ffffff;
+    font-size: 13px;
+    text-decoration: none;
+}
+
+.appointment-profile-link:hover {
+    background-color: #d96b49;
+    color: #ffffff;
+}
+
+.appointment-edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 18px;
+    margin-bottom: 20px;
+    border: 1px solid #dbe7f0;
+    border-radius: 14px;
+}
+
+.appointment-edit-form h2 {
+    font-size: 16px;
+}
+
+.appointment-edit-form p {
+    margin: 0;
+    font-size: 13px;
+    color: #64748b;
+}
+
+/* จอเล็กยังอ่านเป็นคู่ชื่อกับค่าได้ และสถานะขึ้นบรรทัดใหม่ได้ */
+@media (max-width: 600px) {
+    .appointment-detail-card {
+        padding: 16px;
+    }
+
+    .appointment-detail-header {
+        flex-wrap: wrap;
+    }
+
+    .appointment-detail-rows {
+        grid-template-columns: 36% 64%;
+    }
+
+    .appointment-detail-rows dt {
+        gap: 8px;
+        font-size: 13px;
+    }
+}

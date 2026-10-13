@@ -31,6 +31,8 @@ class DatabaseSeeder extends Seeder
             SubjectSeeder::class,
             ReportReasonSeeder::class,
             AccountSeeder::class,
+            TutorProfilePhotoSeeder::class,
+            TutorSeeder::class,
         ]);
     }
 }

@@ -10,25 +10,7 @@
 </head>
 <body>
 
-    <!-- Navbar -->
-    <header class="navbar">
-        <a href="{{ route('home') }}" class="logo">PeerTutor</a>
-
-        <form action="{{ route('tutor.search') }}" method="GET" class="search-box">
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="ค้นหาวิชา ติวเตอร์">
-            <button type="submit">ค้นหา</button>
-        </form>
-
-        <nav class="menu">
-            <a href="{{ route('home') }}" class="menu-btn {{ request()->routeIs('home') ? 'active' : '' }}">หน้าแรก</a>
-            <a href="{{ route('subjects.index') }}" class="menu-btn {{ request()->routeIs('subjects.*') ? 'active' : '' }}">รายวิชาทั้งหมด</a>
-            <a href="{{ route('tutor.search') }}" class="menu-btn {{ request()->routeIs('tutor.search') ? 'active' : '' }}">ติวเตอร์ทั้งหมด</a>
-            <a href="{{ route('appointments.index') }}" class="menu-btn {{ request()->routeIs('appointments.*') ? 'active' : '' }}">ตารางนัดหมาย</a>
-            <x-notification-bell />
-
-            <a href="javascript:void(0)" class="menu-btn login" data-open-login>เข้าสู่ระบบ</a>
-        </nav>
-    </header>
+    <x-navbar />
 
     <main class="page">
         <!-- Welcome -->
@@ -45,6 +27,10 @@
             @foreach($tutors as $tutor)
                 <x-tutor-card :tutor="$tutor" />
             @endforeach
+        </div>
+
+        <div style="text-align: right; margin-top: 16px;">
+            <x-text-arrow-link :href="route('tutor.search')" label="ดูติวเตอร์ทั้งหมด" />
         </div>
 
         <!-- Top Subjects -->
@@ -81,8 +67,6 @@
         </div>
     </main>
 
-    <x-login-modal />
-    <x-register-modal />
 
 </body>
 </html>

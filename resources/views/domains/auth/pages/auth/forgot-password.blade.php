@@ -7,7 +7,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/auth.css') }}?v={{ time() }}">
 </head>
-<body class="auth-page">
+<body class="auth-page guest-auth-page">
+    <x-guest-navbar />
+    <main class="guest-auth-content">
 
     <!-- Top Logo -->
     <a href="{{ route('home') }}" class="app-logo">PeerTutor</a>
@@ -46,5 +48,6 @@
         </div>
     </div>
 
+    </main>
 </body>
 </html>

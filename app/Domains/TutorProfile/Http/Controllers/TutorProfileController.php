@@ -2,20 +2,21 @@
 
 namespace App\Domains\TutorProfile\Http\Controllers;
 
-use App\Http\Controllers\Controller;
-use App\Domains\TutorProfile\Models\TutorProfile;
-use App\Domains\TutorProfile\Models\Favorite;
-use App\Domains\Booking\Models\Subject;
 use App\Domains\Auth\Models\Contact;
 use App\Domains\Auth\Models\User;
-use App\Domains\Scheduling\Models\Availability;
+use App\Domains\Booking\Models\Subject;
 use App\Domains\Reportreview\Models\ReportReason;
+use App\Domains\Scheduling\Services\AvailabilityService;
+use App\Domains\TutorProfile\Models\Favorite;
+use App\Domains\TutorProfile\Models\TutorProfile;
+use App\Domains\TutorProfile\Services\TutorApplicationNotification;
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\DB;
-use App\Domains\TutorProfile\Services\TutorApplicationNotification;
 use Illuminate\Validation\ValidationException;
 
 class TutorProfileController extends Controller
@@ -26,12 +27,17 @@ class TutorProfileController extends Controller
     public function show($id)
     {
         $tutorProfile = TutorProfile::with([
-            'subjects', 
+            'subjects',
             'user',
-            'reviews.appointment.studentProfile.user'
+            'reviews.appointment.studentProfile.user',
+            'reviews.appointment.studentUser.studentProfile',
         ])
-        ->where('tutor_id', $id)
-        ->firstOrFail();
+            ->where('tutor_id', $id)
+            ->firstOrFail();
+
+        foreach ($tutorProfile->reviews as $review) {
+            $review->appointment?->loadStudentProfile();
+        }
 
         $isApproved = $tutorProfile->approval_status === 'approved';
 
@@ -45,29 +51,33 @@ class TutorProfileController extends Controller
 
         $contact = Contact::where('Users_user_id', $tutorProfile->Users_user_id)->first();
 
-        // แปลงวันเวลาในตารางเดิมให้ช่องเลือกวัน/เวลาในฟอร์มจองอ่านได้
-        $slots = Availability::where('user_id', $tutorProfile->Users_user_id)
-            ->where('start_datetime', '>', now('Asia/Bangkok')->format('Y-m-d H:i:s'))
-            ->orderBy('start_datetime')->get();
+        // ให้ Service ของเพื่อนคำนวณเวลาที่เหลือ แล้วแปลงข้อมูลให้ฟอร์ม final
+        $availabilityService = app(AvailabilityService::class);
+        $availableTimes = $availabilityService->findTutorAvailableTimes($tutorProfile->Users_user_id);
+        $bookableTimes = $availableTimes;
+
+        // นักเรียนเลือกได้เฉพาะเวลาที่ว่างตรงกัน ใช้ Service เดิมโดยไม่แก้การคำนวณ
+        $user = Auth::user();
+        if ($user && $user->current_role === 'student' && count($availableTimes) > 0) {
+            $lastTime = $availableTimes[count($availableTimes) - 1];
+            $bookableTimes = $availabilityService->findSharedTimes(
+                $user->user_id,
+                $tutorProfile->Users_user_id,
+                Carbon::now(),
+                Carbon::parse($lastTime['end'])
+            );
+        }
+
         $availabilities = [];
-        $confirmedLessons = $tutorProfile->appointments()->where('status', 'confirmed')->get();
-        foreach ($slots as $slot) {
-            // ไม่ให้เลือกช่วงที่มีนัดหมายยืนยันแล้ว ส่วนคำขอ pending รอให้ติวเตอร์ตัดสิน
-            $isBusy = false;
-            foreach ($confirmedLessons as $lesson) {
-                if ($slot->start_datetime->format('Y-m-d H:i:s') < $lesson->end_datetime
-                    && $slot->end_datetime->format('Y-m-d H:i:s') > $lesson->start_datetime) {
-                    $isBusy = true;
-                    break;
-                }
-            }
-            if ($isBusy) {
-                continue;
-            }
+        foreach ($bookableTimes as $time) {
+            $start = Carbon::parse($time['start']);
+            $end = Carbon::parse($time['end']);
             $availabilities[] = [
-                'available_date' => $slot->start_datetime->format('Y-m-d'),
-                'start_time' => $slot->start_datetime->format('H:i'),
-                'end_time' => $slot->end_datetime->format('H:i'),
+                'available_date' => $start->format('Y-m-d'),
+                'start_time' => $start->format('H:i'),
+                'end_time' => $end->format('H:i'),
+                'start_datetime' => $start->format('Y-m-d H:i:s'),
+                'end_datetime' => $end->format('Y-m-d H:i:s'),
             ];
         }
 
@@ -75,10 +85,12 @@ class TutorProfileController extends Controller
         $reportReasons = ReportReason::orderBy('Reason_id')->get();
 
         return view('domains.tutor-profile.tutor.show', compact(
-            'tutorProfile', 
-            'subject', 
-            'contact', 
-            'isFavorite', 
+            'tutorProfile',
+            'subject',
+            'contact',
+            'isFavorite',
+            'availableTimes',
+            'bookableTimes',
             'availabilities',
             'reportReasons'
         ));
@@ -130,18 +142,18 @@ class TutorProfileController extends Controller
         }
 
         $request->validate([
-            'first_name'       => ['required', 'string', 'max:255'],
-            'last_name'        => ['required', 'string', 'max:255'],
-            'avatar'           => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
-            'bio'              => [$isApplication ? 'required' : 'nullable', 'string', 'max:3000'],
+            'first_name' => ['required', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:255'],
+            'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
+            'bio' => [$isApplication ? 'required' : 'nullable', 'string', 'max:3000'],
             'experience_years' => ['nullable', 'integer', 'min:0'],
-            'teaching_mode'    => [$isApplication ? 'required' : 'nullable', 'in:online,onsite,both'],
-            'line_id'          => ['nullable', 'string', 'max:45'],
-            'discord_id'       => ['nullable', 'string', 'max:255'],
-            'zoom_link'        => ['nullable', 'url', 'max:255'],
+            'teaching_mode' => [$isApplication ? 'required' : 'nullable', 'in:online,onsite,both'],
+            'line_id' => ['nullable', 'string', 'max:45'],
+            'discord_id' => ['nullable', 'string', 'max:255'],
+            'zoom_link' => ['nullable', 'url', 'max:255'],
             'google_meet_link' => ['nullable', 'url', 'max:255'],
-            'subjects'         => [$isApplication ? 'required' : 'nullable', 'array', 'min:1'],
-            'subjects.*'       => ['string', 'distinct', 'exists:subjects,subject_id'],
+            'subjects' => [$isApplication ? 'required' : 'nullable', 'array', 'min:1'],
+            'subjects.*' => ['string', 'distinct', 'exists:subjects,subject_id'],
         ]);
 
         // บันทึกโปรไฟล์และคำขอพร้อมกัน หากผิดพลาดให้ยกเลิกชุดนี้
@@ -171,10 +183,10 @@ class TutorProfileController extends Controller
 
             $tutorProfile = TutorProfile::where('Users_user_id', $userId)->first();
 
-            if (!$tutorProfile) {
-                $tutorProfile = new TutorProfile();
+            if (! $tutorProfile) {
+                $tutorProfile = new TutorProfile;
                 $tutorProfile->Users_user_id = $userId;
-                $tutorProfile->tutor_id = 'TUT-' . strtoupper(Str::random(6));
+                $tutorProfile->tutor_id = 'TUT-'.strtoupper(Str::random(6));
             }
 
             $tutorProfile->bio = $request->input('bio');
@@ -190,9 +202,9 @@ class TutorProfileController extends Controller
 
             $contact = Contact::where('Users_user_id', $userId)->first();
 
-            if (!$contact) {
-                $contact = new Contact();
-                $contact->contact_id = 'CON-' . strtoupper(Str::random(6));
+            if (! $contact) {
+                $contact = new Contact;
+                $contact->contact_id = 'CON-'.strtoupper(Str::random(6));
                 $contact->Users_user_id = $userId;
             }
 
@@ -212,6 +224,7 @@ class TutorProfileController extends Controller
         if ($isApplication) {
             return redirect()->route('tutor.application.index')->with('success', 'ส่งคำขอแล้ว กรุณารอแอดมินอนุมัติ');
         }
+
         return redirect()->route('tutor.profile')->with('success', 'บันทึกอัปเดตข้อมูลโปรไฟล์ติวเตอร์เรียบร้อยแล้ว');
     }
 

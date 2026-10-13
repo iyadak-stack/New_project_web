@@ -2,10 +2,10 @@
 
 namespace App\Domains\Booking\Models;
 
+use App\Domains\TutorProfile\Models\TutorProfile;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use App\Domains\TutorProfile\Models\TutorProfile;
 
 class Subject extends Model
 {

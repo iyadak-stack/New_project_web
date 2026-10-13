@@ -46,7 +46,7 @@
             </div>
         @endif
 
-        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+        <div style="display: grid; grid-template-columns: {{ Auth::check() ? '2fr 1fr' : '1fr' }}; gap: 24px;">
 
             <!-- ฝั่งซ้าย: ข้อมูลติวเตอร์ -->
             <div>
@@ -88,6 +88,7 @@
                         </div>
                     </div>
 
+                    @auth
                     <!-- ปุ่มหัวใจ กับปุ่มรายงาน -->
                     <div style="position: absolute; top: 20px; right: 20px; display: flex; gap: 8px; align-items: center;">
                         @if (!empty($isFavorite))
@@ -106,6 +107,7 @@
                             🚩
                         </button>
                     </div>
+                    @endauth
                 </div>
 
                 <!-- รู้จักติวเตอร์ -->
@@ -176,6 +178,7 @@
                 </div>
             </div>
 
+            @auth
             <!-- ฝั่งขวา: ฟอร์มจองเรียน -->
             <div>
                 <div style="background: #ffffff; padding: 24px; border-radius: 20px; border: 1px solid #f1f5f9; box-shadow: 0 2px 10px rgba(0,0,0,0.02); position: sticky; top: 90px;">
@@ -184,6 +187,9 @@
                     <form action="{{ route('appointments.store') }}" method="POST">
                         @csrf
                         <input type="hidden" name="tutor_id" value="{{ $tutorProfile->tutor_id }}">
+                        {{-- ส่งชื่อช่องวันเวลาให้ตรงกับ Controller ของ branch เพื่อน --}}
+                        <input type="hidden" name="start_datetime" id="booking_start">
+                        <input type="hidden" name="end_datetime" id="booking_end">
 
                         <!-- เลือกวิชา -->
                         <div style="margin-bottom: 16px;">
@@ -221,7 +227,7 @@
                         <!-- เลือกเวลา -->
                         <div style="margin-bottom: 20px;">
                             <label style="font-size: 13px; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">เวลาที่ติวเตอร์ว่างสอน</label>
-                            <select name="appointment_time" id="appointment_time" style="width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid #cbd5e1; font-size: 14px; color: #1e293b;" required disabled>
+                            <select name="appointment_time" id="appointment_time" onchange="updateBookingTimes()" style="width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid #cbd5e1; font-size: 14px; color: #1e293b;" required disabled>
                                 <option value="">-- โปรดเลือกวันที่ก่อน --</option>
                             </select>
                         </div>
@@ -233,10 +239,12 @@
                 </div>
             </div>
 
+            @endauth
         </div>
 
     </main>
 
+    @auth
     <!-- Modal รายงานติวเตอร์ -->
     <div id="reportModal" role="dialog" aria-modal="true" aria-labelledby="reportTitle" style="display: {{ $errors->hasAny(['reason_type', 'description', 'reported_tutor_id']) ? 'flex' : 'none' }}; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 9999; align-items: center; justify-content: center; overflow-y: auto;">
         <div style="background: #ffffff; border-radius: 16px; padding: 24px; max-width: 480px; width: 90%; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
@@ -345,8 +353,17 @@
         };
 
         // พอเลือกวันที่ ให้โชว์เวลาว่างของวันนั้น
+        // เลือกเวลาแล้วส่งวันเวลาเต็มให้ระบบจองตรวจซ้ำฝั่ง Server
+        function updateBookingTimes() {
+            var option = timeSelect.options[timeSelect.selectedIndex];
+            document.getElementById('booking_start').value = option.dataset.start || '';
+            document.getElementById('booking_end').value = option.dataset.end || '';
+        }
+
         function updateAvailableTimes() {
             var selectedDate = dateSelect.value;
+            document.getElementById('booking_start').value = '';
+            document.getElementById('booking_end').value = '';
 
             if (selectedDate === '') {
                 timeSelect.disabled = true;
@@ -369,6 +386,8 @@
 
                     var option = document.createElement('option');
                     option.value = text;
+                    option.dataset.start = slot.start_datetime;
+                    option.dataset.end = slot.end_datetime;
                     option.textContent = text;
                     timeSelect.appendChild(option);
                 }
@@ -403,5 +422,6 @@
             return true;
         }
     </script>
+    @endauth
 </body>
 </html>

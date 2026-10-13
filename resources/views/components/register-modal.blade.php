@@ -38,13 +38,13 @@
             <!-- สมัครเป็น -->
             <div class="form-group">
                 <label>สมัครเป็น</label>
-                <div class="role-options" style="display: flex; gap: 16px; margin-top: 6px; margin-bottom: 6px;">
-                    <label class="role-radio" style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px; color: #374151;">
-                        <input type="radio" name="role" value="student" {{ old('role', 'student') == 'student' ? 'checked' : '' }} style="accent-color: #007bff;">
+                <div class="role-options">
+                    <label class="role-radio">
+                        <input type="radio" name="role" value="student" {{ old('role', 'student') == 'student' ? 'checked' : '' }}>
                         <span>นักเรียน</span>
                     </label>
-                    <label class="role-radio" style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px; color: #374151;">
-                        <input type="radio" name="role" value="tutor" {{ old('role') == 'tutor' ? 'checked' : '' }} style="accent-color: #007bff;">
+                    <label class="role-radio">
+                        <input type="radio" name="role" value="tutor" {{ old('role') == 'tutor' ? 'checked' : '' }}>
                         <span>ติวเตอร์</span>
                     </label>
                 </div>
@@ -61,7 +61,8 @@
             <!-- ข้อมูลเพิ่มเติมสำหรับติวเตอร์ (ซ่อน/แสดงตามบทบาท) -->
             <div id="modal-tutor-fields" style="display: none;">
                 {{-- สมัครติวเตอร์ต้องมีข้อมูลให้แอดมินตรวจ ไม่เปิดสิทธิ์ทันที --}}
-                <p>คำขอจะส่งให้แอดมินตรวจสอบ ก่อนใช้งานบทบาทติวเตอร์</p>
+                <p class="tutor-register-note">สมัครเป็นติวเตอร์<br>กรอกข้อมูลการสอน แล้วรอแอดมินอนุมัติก่อนเริ่มใช้งาน</p>
+                <h3 class="register-section-title">ข้อมูลการสอน</h3>
                 <div class="form-group">
                     <label>แนะนำตัวและแนวทางการสอน</label>
                     <textarea name="bio" rows="3" maxlength="3000">{{ old('bio') }}</textarea>
@@ -80,11 +81,14 @@
                 </div>
                 <div class="form-group">
                     <label>วิชาที่สอน (เลือกอย่างน้อย 1 วิชา)</label>
+                    <div class="register-subjects">
                     @foreach (\App\Domains\Booking\Models\Subject::orderBy('subject_name')->get() as $subject)
                         <label><input type="checkbox" name="subjects[]" value="{{ $subject->subject_id }}" @checked(in_array($subject->subject_id, old('subjects', [])))> {{ $subject->subject_name }}</label>
                     @endforeach
+                    </div>
                 </div>
                 <!-- LINE ID -->
+                <h3 class="register-section-title">ช่องทางติดต่อ (ไม่บังคับ)</h3>
                 <div class="form-group">
                     <label>LINE ID <span style="font-weight: normal; color: #9ca3af; font-size: 12px;">(ไม่บังคับ)</span></label>
                     <input type="text" name="line_id" value="{{ old('line_id') }}" placeholder="ไอดีไลน์สำหรับให้นักเรียนติดต่อ">
@@ -167,6 +171,7 @@
             var tutorRadio = registerModal.querySelector('input[name="role"][value="tutor"]');
             var tutorFields = document.getElementById('modal-tutor-fields');
             if (tutorRadio && tutorFields) {
+                registerModal.classList.toggle('tutor-register', tutorRadio.checked);
                 tutorFields.style.display = tutorRadio.checked ? 'block' : 'none';
             }
         }

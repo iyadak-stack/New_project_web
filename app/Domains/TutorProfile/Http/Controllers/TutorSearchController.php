@@ -2,10 +2,10 @@
 
 namespace App\Domains\TutorProfile\Http\Controllers;
 
-use App\Http\Controllers\Controller;
-use App\Domains\TutorProfile\Models\TutorProfile;
 use App\Domains\Booking\Models\Subject;
 use App\Domains\TutorProfile\Models\Favorite;
+use App\Domains\TutorProfile\Models\TutorProfile;
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -15,40 +15,47 @@ class TutorSearchController extends Controller
     {
         $search = trim($request->input('search', ''));
 
-        $tutors = TutorProfile::approved()->with(['user', 'subjects'])
-            ->withCount('reviews')
-            ->when($search !== '', function ($query) use ($search) {
-                $query->where(function ($q) use ($search) {
-                    $q->whereHas('user', function ($userQuery) use ($search) {
-                        $userQuery->where('username', 'like', "%{$search}%")
-                            ->orWhere('first_name', 'like', "%{$search}%")
-                            ->orWhere('last_name', 'like', "%{$search}%");
-                    })
+        // หน้ารวมแสดงเฉพาะผู้ที่อนุมัติและบัญชียังเปิดใช้งาน
+        $tutorQuery = TutorProfile::approved()->forStudentList()
+            ->with(['user', 'subjects'])
+            ->withCount('reviews');
+
+        // ค้นหาจากชื่อผู้สอนหรือชื่อวิชา โดยรวมเงื่อนไขไว้ในกลุ่มเดียวกัน
+        if ($search !== '') {
+            $tutorQuery->where(function ($query) use ($search) {
+                $query->whereHas('user', function ($userQuery) use ($search) {
+                    // users เก็บชื่อและนามสกุล ไม่มีคอลัมน์ username
+                    $userQuery->where('first_name', 'like', "%{$search}%")
+                        ->orWhere('last_name', 'like', "%{$search}%");
+                })
                     ->orWhereHas('subjects', function ($subjectQuery) use ($search) {
                         $subjectQuery->where('subject_id', 'like', "%{$search}%")
                             ->orWhere('subject_name', 'like', "%{$search}%");
                     });
-                });
-            })
-            ->orderByDesc('average_rating')
+            });
+        }
+
+        $tutors = $tutorQuery->orderByDesc('average_rating')
             ->orderByDesc('experience_years')
             ->get();
 
-        $subjects = Subject::with(['tutors' => function ($query) {
-            $query->approved()->with('user');
-        }])
-            ->when($search !== '', function ($query) use ($search) {
-                $query->where('subject_id', 'like', "%{$search}%")
-                    ->orWhere('subject_name', 'like', "%{$search}%");
-            })
-            ->get();
+        $subjectQuery = Subject::with(['tutors' => function ($query) {
+            $query->approved()->forStudentList()->with('user');
+        }]);
+
+        if ($search !== '') {
+            $subjectQuery->where('subject_id', 'like', "%{$search}%")
+                ->orWhere('subject_name', 'like', "%{$search}%");
+        }
+
+        $subjects = $subjectQuery->get();
 
         return view('domains.tutor-profile.tutor.search', compact('tutors', 'subjects', 'search'));
     }
 
     public function ranking()
     {
-        $tutors = TutorProfile::approved()->with(['user', 'subjects'])
+        $tutors = TutorProfile::approved()->forStudentList()->with(['user', 'subjects'])
             ->withCount('reviews')
             ->orderByDesc('average_rating')
             ->orderByDesc('experience_years')

@@ -49,7 +49,6 @@
     <div class="admin-workspace">
         <header class="admin-topbar">
             <span>พื้นที่ผู้ดูแลระบบ</span>
-            <x-notification-bell />
             <span class="admin-account">
                 <span
                     class="admin-avatar">{{ mb_substr(auth()->user()->first_name, 0, 1) }}</span>{{ auth()->user()->first_name }}</span>
@@ -77,6 +76,7 @@
             @yield('content')
         </main>
     </div>
+    <x-logout-confirm />
 </body>
 
 </html>

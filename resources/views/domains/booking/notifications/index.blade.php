@@ -48,7 +48,7 @@
                         @if (auth()->user()->role === 'admin' || auth()->user()->current_role === 'admin')
                             <a class="btn-notif-action notif-details" href="{{ route('admin.reports.index') }}">ดูรายงาน</a>
                         @endif
-                    @elseif (in_array($notification->NotificationType_notification_type_id, ['BOOKREQ001', 'BOOKANS001']))
+                    @elseif (in_array($notification->NotificationType_notification_type_id, ['BOOKREQ001', 'BOOKANS001', 'TYPE01', 'TYPE02']))
                         <a class="btn-notif-action notif-details" href="{{ route('appointments.index') }}">ดูนัดหมาย</a>
                     @endif
                     @if (! $notification->is_read)

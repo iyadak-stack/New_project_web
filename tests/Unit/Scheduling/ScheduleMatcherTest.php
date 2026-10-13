@@ -80,6 +80,42 @@ class ScheduleMatcherTest extends TestCase
         ], $times);
     }
 
+    public function test_adjacent_availability_is_one_continuous_period(): void
+    {
+        $times = (new ScheduleMatcher)->match(
+            [
+                $this->availability('2026-10-14 16:00', '2026-10-14 17:00'),
+                $this->availability('2026-10-14 15:00', '2026-10-14 16:00'),
+            ],
+            [$this->availability('2026-10-14 15:00', '2026-10-14 17:00')],
+            [],
+            Carbon::parse('2026-10-14 15:00'), Carbon::parse('2026-10-14 17:00'),
+        );
+        $this->assertSame([['start' => '2026-10-14 15:00', 'end' => '2026-10-14 17:00']], $times);
+    }
+
+    public function test_matching_keeps_exact_minutes_and_allows_touching_boundaries(): void
+    {
+        $matcher = new ScheduleMatcher;
+        $times = $matcher->match(
+            [$this->availability('2026-10-14 16:01', '2026-10-14 16:37')],
+            [$this->availability('2026-10-14 15:00', '2026-10-14 17:00')],
+            [$this->appointment('2026-10-14 15:00', '2026-10-14 16:01')],
+            Carbon::parse('2026-10-14 15:00'), Carbon::parse('2026-10-14 17:00'),
+        );
+        $this->assertSame([['start' => '2026-10-14 16:01', 'end' => '2026-10-14 16:37']], $times);
+        $times = $matcher->match(
+            [$this->availability('2026-10-14 16:01', '2026-10-14 16:37')],
+            [$this->availability('2026-10-14 15:00', '2026-10-14 17:00')],
+            [$this->appointment('2026-10-14 16:07', '2026-10-14 16:19')],
+            Carbon::parse('2026-10-14 15:00'), Carbon::parse('2026-10-14 17:00'),
+        );
+        $this->assertSame([
+            ['start' => '2026-10-14 16:01', 'end' => '2026-10-14 16:07'],
+            ['start' => '2026-10-14 16:19', 'end' => '2026-10-14 16:37'],
+        ], $times);
+    }
+
     private function availability(string $start, string $end): object
     {
         return (object) [

@@ -40,10 +40,6 @@
                 <h2 class="section-title" style="margin: 0;">ติวเตอร์ยอดนิยม</h2>
                 <p class="section-sub" style="margin: 4px 0 0 0;">สำรวจติวเตอร์ที่มีคะแนนสูงสุด</p>
             </div>
-            <!-- ปุ่มดูติวเตอร์ทั้งหมด -->
-            <a href="{{ route('student.tutors.index') }}" style="color: #e07a5f; font-weight: 600; font-size: 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
-                ดูติวเตอร์ทั้งหมด ➔
-            </a>
         </div>
 
         <div class="grid">
@@ -54,6 +50,10 @@
             @else
                 <p style="color: #94a3b8; font-size: 14px; grid-column: 1 / -1;">ยังไม่มีข้อมูลติวเตอร์ในระบบ</p>
             @endif
+        </div>
+
+        <div style="text-align: right; margin-top: 16px;">
+            <x-text-arrow-link :href="route('student.tutors.index')" label="ดูติวเตอร์ทั้งหมด" />
         </div>
 
         <!-- Top Subjects Section -->

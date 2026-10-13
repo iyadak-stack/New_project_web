@@ -10,8 +10,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Report extends Model
 {
     protected $table = 'reports';
+
     protected $primaryKey = 'Report_id';
+
     public $incrementing = false;
+
     protected $keyType = 'string';
 
     protected $fillable = [

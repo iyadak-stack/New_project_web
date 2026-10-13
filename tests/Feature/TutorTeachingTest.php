@@ -35,6 +35,11 @@ class TutorTeachingTest extends TestCase
 
     private function openSlot(): Availability
     {
+        // ระบบของเพื่อนต้องมีเวลาว่างทั้งผู้เรียนและติวเตอร์
+        Availability::create([
+            'availability_id' => 'STUSLOT001', 'user_id' => $this->student->user_id,
+            'start_datetime' => $this->date.' 10:00:00', 'end_datetime' => $this->date.' 11:00:00',
+        ]);
         return Availability::create([
             'availability_id' => 'SLOT000001', 'user_id' => $this->tutor->user_id,
             'start_datetime' => $this->date.' 10:00:00', 'end_datetime' => $this->date.' 11:00:00',
@@ -46,14 +51,14 @@ class TutorTeachingTest extends TestCase
         return [
             'tutor_id' => $this->tutor->tutorProfile->tutor_id,
             'subject_id' => $this->tutor->tutorProfile->subjects->first()->subject_id,
-            'appointment_date' => $this->date, 'appointment_time' => '10:00 - 11:00 น.',
+            'start_datetime' => $this->date.' 10:00:00', 'end_datetime' => $this->date.' 11:00:00',
         ];
     }
 
     private function book(): Appointment
     {
         $this->actingAs($this->student)->post(route('appointments.store'), $this->requestData())
-            ->assertSessionHasNoErrors()->assertRedirect(route('appointments.index'));
+            ->assertSessionHasNoErrors()->assertRedirect(route('tutor.show', $this->tutor->tutorProfile->tutor_id));
 
         return Appointment::firstOrFail();
     }
@@ -64,9 +69,7 @@ class TutorTeachingTest extends TestCase
             ->assertSee('menu-btn active', false)->assertSee('วิชาของฉัน')
             ->assertDontSee('รายวิชาทั้งหมด')->assertDontSee('ติวเตอร์ทั้งหมด')
             ->assertDontSee('name="start_time"', false);
-        $this->get(route('tutor.schedule.index'))->assertOk()
-            ->assertSee('class="menu-btn active">จัดเวลา', false)
-            ->assertSee('name="start_time"', false)->assertDontSee('name="subjects[]"', false);
+        $this->get(route('tutor.schedule.index'))->assertRedirect(route('availabilities.index'));
         $this->actingAs($this->student)->get(route('tutor.subjects.index'))->assertRedirect(route('home'));
         $this->get(route('tutor.schedule.index'))->assertRedirect(route('home'));
         $this->put(route('tutor.subjects.update'), ['teaching_mode' => 'online'])->assertRedirect(route('home'));
@@ -91,18 +94,18 @@ class TutorTeachingTest extends TestCase
 
     public function test_availability_uses_user_id_blocks_overlap_and_protects_other_tutors_slots(): void
     {
-        $this->actingAs($this->tutor)->post(route('tutor.schedule.store'), [
-            'date' => $this->date, 'start_time' => '10:00', 'end_time' => '11:00',
+        $this->actingAs($this->tutor)->post(route('availabilities.store'), [
+            'start_datetime' => $this->date.' 10:00:00', 'end_datetime' => $this->date.' 11:00:00',
         ])->assertSessionHasNoErrors()->assertRedirect();
         $slot = Availability::firstOrFail();
         $this->assertSame($this->tutor->user_id, $slot->user_id);
-        $this->post(route('tutor.schedule.store'), [
-            'date' => $this->date, 'start_time' => '10:30', 'end_time' => '11:30',
-        ])->assertSessionHasErrors('start_time');
+        $this->post(route('availabilities.store'), [
+            'start_datetime' => $this->date.' 10:30:00', 'end_datetime' => $this->date.' 11:30:00',
+        ])->assertSessionHasErrors('start_datetime');
         $this->assertDatabaseCount('availabilities', 1);
         $other = User::where('email', 'tutor2.demo@example.com')->firstOrFail();
-        $this->actingAs($other)->delete(route('tutor.schedule.destroy', $slot->availability_id))->assertForbidden();
-        $this->actingAs($this->tutor)->delete(route('tutor.schedule.destroy', $slot->availability_id))->assertRedirect();
+        $this->actingAs($other)->delete(route('availabilities.destroy', $slot->availability_id))->assertForbidden();
+        $this->actingAs($this->tutor)->delete(route('availabilities.destroy', $slot->availability_id))->assertRedirect();
         $this->assertDatabaseCount('availabilities', 0);
     }
 
@@ -113,21 +116,21 @@ class TutorTeachingTest extends TestCase
         $this->get(route('tutor.show', $this->tutor->tutorProfile->tutor_id))->assertOk()
             ->assertViewHas('availabilities', fn ($slots) => count($slots) === 1 && $slots[0]['available_date'] === $this->date);
         $appointment = $this->book();
-        $this->assertSame($this->student->studentProfile->id, $appointment->Student_profiles_student_id);
-        $this->assertDatabaseHas('notifications', ['Users_user_id' => $this->tutor->user_id, 'NotificationType_notification_type_id' => 'BOOKREQ001']);
+        $this->assertSame($this->student->user_id, $appointment->Student_profiles_student_id);
+        $this->assertDatabaseHas('notifications', ['Users_user_id' => $this->tutor->user_id, 'NotificationType_notification_type_id' => 'TYPE01']);
         $this->get(route('appointments.show', $appointment->Appointment_id))->assertOk()->assertDontSee('https://meet.google.com/demo-room');
-        $this->actingAs($this->tutor)->get(route('appointments.index'))->assertSee('ยืนยันคำขอ');
-        $this->post(route('appointments.accept', $appointment->Appointment_id))->assertSessionHasNoErrors()->assertRedirect();
+        $this->actingAs($this->tutor)->get(route('appointments.index'))->assertSee('รับคำขอ');
+        $this->post(route('appointments.confirm', $appointment->Appointment_id))->assertSessionHasNoErrors()->assertRedirect();
         $this->assertSame('confirmed', $appointment->fresh()->status);
-        $this->assertDatabaseHas('notifications', ['Users_user_id' => $this->student->user_id, 'NotificationType_notification_type_id' => 'BOOKANS001']);
+        $this->assertDatabaseHas('notifications', ['Users_user_id' => $this->student->user_id, 'NotificationType_notification_type_id' => 'TYPE02']);
         $this->actingAs($this->student)->get(route('appointments.index', ['status' => 'confirmed']))->assertOk()->assertSee(route('appointments.show', $appointment->Appointment_id), false);
         $this->get(route('appointments.show', $appointment->Appointment_id))->assertOk()->assertSee('https://meet.google.com/demo-room')->assertSee('lesson-line');
         $this->get('/')->assertOk()->assertSee('การเรียนที่ติวเตอร์ยืนยันแล้ว')->assertSee(route('appointments.show', $appointment->Appointment_id), false);
-        $this->get(route('notifications.index'))->assertSee('ติวเตอร์ยืนยันคำขอเรียนแล้ว');
+        $this->get(route('notifications.index'))->assertSee('ยืนยันแล้ว');
         $this->get(route('tutor.show', $this->tutor->tutorProfile->tutor_id))->assertViewHas('availabilities', fn ($slots) => count($slots) === 0);
-        $this->actingAs($this->tutor)->post(route('appointments.accept', $appointment->Appointment_id))->assertSessionHasErrors('status');
+        $this->actingAs($this->tutor)->post(route('appointments.confirm', $appointment->Appointment_id))->assertUnprocessable();
         $this->assertDatabaseCount('notifications', 2);
-        $this->delete(route('tutor.schedule.destroy', 'SLOT000001'))->assertRedirect();
+        $this->delete(route('availabilities.destroy', 'SLOT000001'))->assertSessionHasErrors('start_datetime');
         $this->assertSame('confirmed', $appointment->fresh()->status);
     }
 
@@ -149,38 +152,41 @@ class TutorTeachingTest extends TestCase
         $this->openSlot();
         $appointment = $this->book();
         $otherStudent = User::where('email', 'student2.demo@example.com')->firstOrFail();
-        $this->actingAs($otherStudent)->get(route('appointments.show', $appointment->Appointment_id))->assertForbidden();
+        $this->actingAs($otherStudent)->get(route('appointments.show', $appointment->Appointment_id))->assertNotFound();
         $this->get(route('appointments.index'))->assertDontSee(route('appointments.show', $appointment->Appointment_id), false);
-        $this->post(route('appointments.accept', $appointment->Appointment_id))->assertForbidden();
+        $this->post(route('appointments.confirm', $appointment->Appointment_id))->assertForbidden();
         $otherTutor = User::where('email', 'tutor2.demo@example.com')->firstOrFail();
-        $this->actingAs($otherTutor)->post(route('appointments.reject', $appointment->Appointment_id))->assertForbidden();
+        $this->actingAs($otherTutor)->post(route('appointments.cancel', $appointment->Appointment_id))->assertForbidden();
         $this->assertSame('pending', $appointment->fresh()->status);
     }
 
     public function test_booking_checks_subject_availability_and_student_identity(): void
     {
         $this->openSlot();
-        $this->actingAs($this->student)->post(route('appointments.store'), array_replace($this->requestData(), ['subject_id' => 'SUB-007']))->assertSessionHasErrors('subject_id');
-        $this->post(route('appointments.store'), array_replace($this->requestData(), ['appointment_time' => '12:00 - 13:00']))->assertSessionHasErrors('appointment_time');
+        $this->actingAs($this->student)->post(route('appointments.store'), array_replace($this->requestData(), ['subject_id' => 'SUB-007']))->assertUnprocessable();
+        $this->post(route('appointments.store'), array_replace($this->requestData(), ['start_datetime' => $this->date.' 12:00:00', 'end_datetime' => $this->date.' 13:00:00']))->assertSessionHasErrors('start_datetime');
         $this->assertDatabaseCount('appointments', 0);
         $this->post(route('appointments.store'), $this->requestData() + ['student_id' => 'FAKEUSER01'])->assertSessionHasNoErrors();
-        $this->assertSame($this->student->studentProfile->id, Appointment::firstOrFail()->Student_profiles_student_id);
-        $this->post(route('appointments.store'), $this->requestData())->assertSessionHasErrors('appointment_time');
+        $this->assertSame($this->student->user_id, Appointment::firstOrFail()->Student_profiles_student_id);
+        $this->post(route('appointments.store'), $this->requestData())->assertSessionHasErrors('start_datetime');
         $this->assertDatabaseCount('appointments', 1);
     }
 
-    public function test_only_one_overlapping_request_can_be_confirmed(): void
+    public function test_pending_booking_reserves_time_and_repeated_decision_is_rejected(): void
     {
         $this->openSlot();
         $first = $this->book();
         $other = User::where('email', 'student2.demo@example.com')->firstOrFail();
-        $this->actingAs($other)->post(route('appointments.store'), $this->requestData())->assertSessionHasNoErrors();
-        $second = Appointment::where('Appointment_id', '!=', $first->Appointment_id)->firstOrFail();
-        $this->actingAs($this->tutor)->post(route('appointments.accept', $first->Appointment_id))->assertSessionHasNoErrors();
-        $this->post(route('appointments.accept', $second->Appointment_id))->assertSessionHasErrors('status');
-        $this->assertSame('pending', $second->fresh()->status);
-        $this->post(route('appointments.reject', $second->Appointment_id))->assertSessionHasNoErrors();
-        $this->assertSame('cancelled', $second->fresh()->status);
-        $this->assertDatabaseHas('notifications', ['Users_user_id' => $other->user_id, 'NotificationType_notification_type_id' => 'BOOKANS001']);
+        Availability::create([
+            'availability_id' => 'OTHERSLOT1', 'user_id' => $other->user_id,
+            'start_datetime' => $this->date.' 10:00:00', 'end_datetime' => $this->date.' 11:00:00',
+        ]);
+        // pending จองเวลาไว้แล้วตามกฎของ branch เพื่อน
+        $this->actingAs($other)->post(route('appointments.store'), $this->requestData())->assertSessionHasErrors('start_datetime');
+        $this->assertDatabaseCount('appointments', 1);
+        $this->actingAs($this->tutor)->post(route('appointments.confirm', $first->Appointment_id))->assertSessionHasNoErrors();
+        $this->post(route('appointments.confirm', $first->Appointment_id))->assertUnprocessable();
+        $this->assertSame('confirmed', $first->fresh()->status);
+        $this->assertDatabaseCount('notifications', 2);
     }
 }

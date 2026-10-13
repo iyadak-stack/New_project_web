@@ -2,9 +2,9 @@
 
 namespace App\Domains\TutorProfile\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Domains\TutorProfile\Models\Favorite;
 use App\Domains\TutorProfile\Models\TutorProfile;
+use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Str;
 
@@ -15,6 +15,9 @@ class FavoriteController extends Controller
         // ค้นหา TutorProfile จากคีย์จริง (tutor_id)
         $tutorProfile = TutorProfile::where('tutor_id', $id)->firstOrFail();
 
+        // ผู้ใช้ไม่ควรเพิ่มตัวเองเป็นผู้สอนที่ชื่นชอบ
+        abort_if($tutorProfile->Users_user_id === auth()->id(), 422);
+
         $favorite = Favorite::withTrashed()
             ->where('Users_user_id', auth()->id())
             ->where('Tutor_profiles_tutor_id', $tutorProfile->tutor_id)
@@ -24,10 +27,10 @@ class FavoriteController extends Controller
             $favorite->restore();
         } else {
             Favorite::create([
-                'favorite_id'             => strtoupper(Str::random(10)),
-                'Users_user_id'           => auth()->id(),
+                'favorite_id' => strtoupper(Str::random(10)),
+                'Users_user_id' => auth()->id(),
                 'Tutor_profiles_tutor_id' => $tutorProfile->tutor_id,
-                'Subject_subject_id'      => null,
+                'Subject_subject_id' => null,
             ]);
         }
 
@@ -53,6 +56,9 @@ class FavoriteController extends Controller
         $favorites = Favorite::where('Users_user_id', auth()->id())
             ->whereNotNull('Tutor_profiles_tutor_id')
             ->whereHas('tutorProfile.user')
+            ->whereHas('tutorProfile', function ($query) {
+                $query->forStudentList();
+            })
             ->with(['tutorProfile.user', 'tutorProfile.subjects'])
             ->orderByDesc('created_at')
             ->get();

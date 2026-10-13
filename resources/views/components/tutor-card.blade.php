@@ -56,6 +56,19 @@
     @endif
 
     <div class="card-actions">
+        @if ($isArr || ($tutor->approval_status === 'approved' && $tutor->user->is_active))
         <a href="{{ $url }}" class="btn">ดูโปรไฟล์</a>
+        @else
+            {{-- รายการรวมแสดงทุกคน แต่ผู้ที่ยังไม่อนุมัติยังจองเรียนไม่ได้ --}}
+            <span class="small">
+                @if (!$tutor->user->is_active)
+                    บัญชีถูกระงับ
+                @elseif ($tutor->approval_status === 'rejected')
+                    ยังไม่ผ่านอนุมัติ
+                @else
+                    รอแอดมินอนุมัติ
+                @endif
+            </span>
+        @endif
     </div>
 </div>

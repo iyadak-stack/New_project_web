@@ -1,0 +1,111 @@
+/* เปลี่ยนเฉพาะปุ่มสมัครสมาชิกตามที่กำหนด ปุ่มอื่นใช้ home.css เดิม */
+.navbar .menu-btn.guest-register {
+    background-color: #ffffff;
+    color: #e07a5f;
+    border-color: #f0d9d0;
+}
+
+/* หน้า password มี navbar ด้านบน ส่วนฟอร์มยังจัดไว้กลางหน้า */
+body.auth-page.guest-auth-page {
+    display: block;
+    padding: 0;
+}
+
+.guest-auth-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 100px);
+    padding: 32px 20px;
+    box-sizing: border-box;
+}
+
+/* ฟอร์มติวเตอร์มีข้อมูลมาก จึงแบ่งเป็นกลุ่มและขยายเฉพาะ popup นี้ */
+dialog.register-modal.tutor-register {
+    max-width: 640px;
+}
+
+.register-modal .modal-header {
+    display: block;
+    padding: 0;
+    border: none;
+}
+
+.register-modal .register-section-title {
+    margin: 18px 0 12px;
+    font-size: 14px;
+    color: #374151;
+}
+
+.register-modal .role-options {
+    display: flex;
+    gap: 12px;
+}
+
+.register-modal .role-radio {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    gap: 8px;
+    padding: 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    cursor: pointer;
+}
+
+.register-modal .role-radio:has(input:checked) {
+    background: #fdeee8;
+    border-color: #f6cfc2;
+    color: #c96043;
+}
+
+.register-modal input[type="radio"] {
+    accent-color: #e07a5f;
+}
+
+#modal-tutor-fields {
+    padding: 16px;
+    margin: 16px 0;
+    background: #fffaf7;
+    border: 1px solid #f0d9d0;
+    border-radius: 16px;
+}
+
+#modal-tutor-fields .tutor-register-note {
+    margin: 0 0 16px;
+    padding: 12px;
+    background: #fff3d6;
+    border-radius: 10px;
+    color: #8a5b12;
+}
+
+#modal-tutor-fields input[type="number"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    box-sizing: border-box;
+    font: inherit;
+}
+
+.register-subjects {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.register-subjects label {
+    padding: 10px;
+    margin: 0;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+@media (max-width: 480px) {
+    .register-subjects {
+        grid-template-columns: 1fr;
+    }
+}

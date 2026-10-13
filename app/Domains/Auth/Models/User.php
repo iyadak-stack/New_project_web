@@ -7,6 +7,7 @@ use App\Domains\TutorProfile\Models\Favorite;
 use App\Domains\TutorProfile\Models\StudentProfile;
 use App\Domains\TutorProfile\Models\TutorProfile;
 use Database\Factories\UserFactory;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -17,6 +18,8 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Laravel\Fortify\Contracts\PasskeyUser;
 use Laravel\Fortify\PasskeyAuthenticatable;
+use Laravel\Fortify\TwoFactorAuthenticatable;
+use Laravel\Passkeys\Passkeys;
 
 /**
  * @property string $user_id
@@ -39,22 +42,28 @@ use Laravel\Fortify\PasskeyAuthenticatable;
  * @property-read TutorProfile|null $tutorProfile
  * @property-read StudentProfile|null $studentProfile
  * @property-read Contact|null $contact
- * @property-read \Illuminate\Database\Eloquent\Collection<int, Favorite> $favorites
+ * @property-read Collection<int, Favorite> $favorites
  */
 class User extends Authenticatable implements PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, SoftDeletes, PasskeyAuthenticatable;
+    // Fortify ใช้ trait นี้ตรวจรหัส 2FA และรหัสกู้คืนของบัญชี
+    use HasFactory, Notifiable, PasskeyAuthenticatable, SoftDeletes, TwoFactorAuthenticatable;
 
     protected $table = 'Users';
+
     protected $primaryKey = 'user_id';
+
     public $incrementing = false;
+
     protected $keyType = 'string';
 
     protected $fillable = [
         'user_id',
         'email',
         'password',
+        // name เป็นชื่อรวมของหน้า Settings ไม่ใช่คอลัมน์ใหม่
+        'name',
         'first_name',
         'last_name',
         'role',
@@ -70,6 +79,19 @@ class User extends Authenticatable implements PasskeyUser
         'two_factor_recovery_codes',
     ];
 
+    // รองรับฟอร์ม Settings เดิม โดยยังเก็บชื่อในสองคอลัมน์เดิม
+    public function getNameAttribute(): string
+    {
+        return trim($this->first_name.' '.$this->last_name);
+    }
+
+    public function setNameAttribute(string $name): void
+    {
+        $parts = explode(' ', trim($name), 2);
+        $this->attributes['first_name'] = $parts[0];
+        $this->attributes['last_name'] = $parts[1] ?? '';
+    }
+
     /**
      * ทำงานอัตโนมัติก่อนที่จะบันทึกข้อมูลใหม่ลง Database
      */
@@ -78,7 +100,7 @@ class User extends Authenticatable implements PasskeyUser
         static::creating(function (User $user) {
             if (empty($user->user_id)) {
                 // สร้าง user_id อัตโนมัติ (เช่น USR-8F9A2B1C)
-                $user->user_id = 'USR-' . strtoupper(Str::random(8));
+                $user->user_id = 'USR-'.strtoupper(Str::random(8));
             }
         });
     }
@@ -100,6 +122,8 @@ class User extends Authenticatable implements PasskeyUser
     protected function casts(): array
     {
         return [
+            'password' => 'hashed',
+            'two_factor_confirmed_at' => 'datetime',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
             'deleted_at' => 'datetime',
@@ -141,5 +165,11 @@ class User extends Authenticatable implements PasskeyUser
     {
         // favorites เก็บรหัสผู้ใช้ใน Users_user_id ไม่ใช่ user_id
         return $this->hasMany(Favorite::class, 'Users_user_id', 'user_id');
+    }
+
+    public function passkeys(): HasMany
+    {
+        // ระบุคีย์จริง เพราะ primary key ของผู้ใช้ชื่อ user_id ไม่ใช่ id
+        return $this->hasMany(Passkeys::passkeyModel(), 'user_id', 'user_id');
     }
 }

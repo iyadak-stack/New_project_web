@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 
 use App\Domains\TutorProfile\Http\Controllers\StudentHomeController;
@@ -39,7 +39,11 @@ Route::get('/', function (Request $request) {
             $tutorId = $user->tutorProfile->tutor_id ?? null;
 
             // ดึงข้อมูลการนัดหมายทั้งหมดของติวเตอร์คนนี้พร้อม Relationship
-            $appointmentsQuery = Appointment::with(['subject', 'studentProfile.user'])
+            $appointmentsQuery = Appointment::with([
+                'subject',
+                'studentProfile.user',
+                'studentUser.studentProfile',
+            ])
                 ->where('Tutor_profiles_tutor_id', $tutorId);
 
             // คำนวณยอดนับแต่ละสถานะ
@@ -60,6 +64,14 @@ Route::get('/', function (Request $request) {
                 ->take(5)
                 ->get();
 
+            // นัดหมายเก่าใช้รหัสโปรไฟล์ แต่นัดหมายใหม่ใช้รหัสผู้ใช้
+            foreach ($pendingAppointments as $appointment) {
+                $appointment->loadStudentProfile();
+            }
+            foreach ($todaySchedules as $appointment) {
+                $appointment->loadStudentProfile();
+            }
+
             return view('domains.tutor-profile.tutor.tutor', compact(
                 'pendingCount',
                 'confirmedCount',
@@ -75,39 +87,17 @@ Route::get('/', function (Request $request) {
     return app(StudentHomeController::class)->index($request);
 })->name('home');
 
+// รองรับเครื่อง Windows ที่ไม่มี storage link อ่านเฉพาะไฟล์ใน public disk
+Route::get('/storage/{path}', function (string $path) {
+    $segments = explode('/', str_replace('\\', '/', $path));
+    abort_if(in_array('..', $segments, true), 404);
+    abort_unless(Storage::disk('public')->exists($path), 404);
 
-// =========================
-// ลืมรหัสผ่านแบบข้ามการส่งอีเมล (Direct Reset Password)
-// =========================
-Route::post('/forgot-password', function (Request $request) {
-    $request->validate([
-        'email' => ['required', 'email', 'exists:users,email'],
-    ], [
-        'email.exists' => 'ไม่พบอีเมลนี้ในระบบ',
-    ]);
+    return Storage::disk('public')->response($path);
+})->where('path', '.*')->name('storage.public');
 
-    return redirect()->route('password.reset', [
-        'token' => 'direct-reset',
-        'email' => $request->email,
-    ]);
-})->name('password.email');
 
-Route::post('/reset-password', function (Request $request) {
-    $request->validate([
-        'email' => ['required', 'email', 'exists:users,email'],
-        'password' => ['required', 'string', 'min:8', 'confirmed'],
-    ]);
-
-    $user = User::where('email', $request->email)->first();
-    if ($user) {
-        $user->forceFill([
-            'password' => Hash::make($request->password),
-        ])->save();
-    }
-
-    return redirect()->route('login')->with('status', 'เปลี่ยนรหัสผ่านสำเร็จแล้ว กรุณาเข้าสู่ระบบ');
-})->name('password.update');
-
+// ลืมรหัสผ่านใช้ route ของ Fortify เพื่อให้ตรวจ token ก่อนเปลี่ยนรหัสผ่าน
 
 // =========================
 // ค้นหา / ดูโปรไฟล์ติวเตอร์ (Public Views Access - ทั้งติวเตอร์และนักเรียนเข้าดูได้)
@@ -117,6 +107,12 @@ Route::get('/tutors', [TutorSearchController::class, 'search'])
 
 Route::get('/tutors/ranking', [TutorSearchController::class, 'ranking'])
     ->name('tutor.ranking');
+
+// ผู้เยี่ยมชมดูรายการและรายละเอียดได้ แต่การจัดการยังต้องเข้าสู่ระบบ
+Route::get('/subjects', [StudentHomeController::class, 'allSubjects'])->name('subjects.index');
+Route::get('/subjects/{subject}', [SubjectController::class, 'show'])->name('subjects.show');
+Route::get('/student/tutors', [StudentHomeController::class, 'allTutors'])->name('student.tutors.index');
+Route::get('/all-tutors', [StudentHomeController::class, 'allTutors'])->name('tutor.tutors');
 
 // 🟢 รายการโปรดของฉัน (ต้องล็อกอิน) — กำหนดทั้ง /tutors/favorites และ /favorites ให้รองรับการกดจาก Navbar ทุกจุด
 Route::get('/tutors/favorites', [FavoriteController::class, 'tutorFavorites'])
@@ -141,10 +137,10 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware('role:tutor')->group(function () {
         Route::get('/tutor/subjects', [TutorTeachingController::class, 'index'])->name('tutor.subjects.index');
         Route::put('/tutor/subjects', [TutorTeachingController::class, 'update'])->name('tutor.subjects.update');
-        // จัดเวลาแยกจากหน้าวิชา แต่ใช้ข้อมูลเวลาว่างในตารางเดิม
-        Route::get('/tutor/schedule', [TutorTeachingController::class, 'schedule'])->name('tutor.schedule.index');
-        Route::post('/tutor/schedule', [TutorTeachingController::class, 'addAvailability'])->name('tutor.schedule.store');
-        Route::delete('/tutor/schedule/{id}', [TutorTeachingController::class, 'deleteAvailability'])->name('tutor.schedule.destroy');
+        // ลิงก์จัดเวลาเดิมให้เปิดตัวจัดเวลาของ branch เพื่อน
+        Route::get('/tutor/schedule', function () {
+            return redirect()->route('availabilities.index');
+        })->name('tutor.schedule.index');
     });
 
     // กันเข้า URL /dashboard ให้วิ่งกลับไปหน้าหลัก
@@ -156,16 +152,10 @@ Route::middleware(['auth'])->group(function () {
     // =========================
     // หน้ารวมวิชาทั้งหมด & ติวเตอร์ทั้งหมด (เข้าได้ทุก Role ทั้ง Student / Tutor)
     // =========================
-    Route::get('/subjects', [StudentHomeController::class, 'allSubjects'])
-        ->name('subjects.index');
 
     // หน้ารายชื่อติวเตอร์ทั้งหมด
-    Route::get('/student/tutors', [StudentHomeController::class, 'allTutors'])
-        ->name('student.tutors.index');
 
     // รองรับ Alias ชื่อ route tutor.tutors เผื่อถูกเรียกใช้ใน Navbar
-    Route::get('/all-tutors', [StudentHomeController::class, 'allTutors'])
-        ->name('tutor.tutors');
 
 
     // =========================
@@ -200,13 +190,13 @@ Route::middleware(['auth'])->group(function () {
     // =========================
     // จัดการรายวิชา (Subjects Resource)
     // =========================
-    Route::resource('subjects', SubjectController::class)->only(['show']);
     Route::resource('subjects', SubjectController::class)->except(['index', 'show'])->middleware('admin');
 
 
     // =========================
     // ตารางเวลาและความพร้อม (Availability & Schedule Check)
     // =========================
+
     Route::get('/availabilities', [AvailabilityController::class, 'index'])->name('availabilities.index');
     Route::post('/availabilities', [AvailabilityController::class, 'store'])->name('availabilities.store');
     Route::get('/availabilities/history', [AvailabilityController::class, 'history'])->name('availabilities.history');
@@ -217,32 +207,26 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/schedule/check', [CheckScheduleController::class, 'index'])->name('schedule.check');
     Route::get('/schedule/history', [CheckScheduleController::class, 'history'])->name('schedule.history');
     Route::get('/schedule/booking', [CheckScheduleController::class, 'booking'])->name('schedule.booking');
+    Route::get('/schedule/availability', [CheckScheduleController::class, 'availability'])->name('schedule.availability');
     Route::post('/schedule/check', [CheckScheduleController::class, 'check'])->name('schedule.check.results');
-
 
     // =========================
     // การนัดหมาย (Appointments)
     // =========================
+
     Route::resource('appointments', AppointmentController::class)
-        ->except(['edit', 'update']);
+        ->except(['edit', 'update', 'destroy']);
 
-    Route::post('/appointments/{id}/status', [AppointmentController::class, 'updateStatus']);
-
-    Route::post('/appointments/{id}/accept', [AppointmentController::class, 'accept'])
-        ->name('appointments.accept');
-
-    Route::post('/appointments/{id}/reject', [AppointmentController::class, 'reject'])
-        ->name('appointments.reject');
+    Route::patch('/appointments/{appointment}/lesson', [AppointmentController::class, 'updateLesson'])->middleware('role:tutor')->name('appointments.lesson');
+    Route::post('/appointments/{id}/status', [AppointmentController::class, 'updateStatus'])->name('appointments.status');
+    Route::post('/appointments/{appointment}/complete', [AppointmentController::class, 'complete'])->name('appointments.complete');
+    Route::post('/appointments/{appointment}/review', [AppointmentController::class, 'storeReview'])->name('appointments.review');
 
     Route::post('/appointments/{appointment}/confirm', [AppointmentController::class, 'confirm'])
         ->name('appointments.confirm');
 
-    Route::post('/appointments/{appointment}/reschedule', [AppointmentController::class, 'reschedule'])
-        ->name('appointments.reschedule');
-
     Route::post('/appointments/{appointment}/cancel', [AppointmentController::class, 'cancel'])
         ->name('appointments.cancel');
-
 
     // =========================
     // ระบบแจ้งเตือน (Notifications)

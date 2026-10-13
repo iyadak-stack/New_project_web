@@ -2,8 +2,9 @@
 
 namespace App\Domains\Booking\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Domains\Booking\Models\Subject;
+use App\Http\Controllers\AdminController;
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
 class SubjectController extends Controller
@@ -12,6 +13,7 @@ class SubjectController extends Controller
     public function index()
     {
         $subjects = Subject::all();
+
         return view('domains.booking.subjects.index', compact('subjects'));
     }
 
@@ -20,17 +22,19 @@ class SubjectController extends Controller
     {
         // หน้าแสดงวิชาให้เห็นเฉพาะติวเตอร์ที่ผ่านการอนุมัติแล้ว
         $subject = Subject::with(['tutors' => function ($query) {
-            $query->approved()->with('user');
+            $query->approved()->forStudentList()->with('user');
         }])->findOrFail($id);
+
         return view('domains.booking.subjects.show', compact('subject'));
     }
 
     // บันทึกวิชาใหม่
     public function store(Request $request)
     {
+        $this->checkAdmin($request);
         $request->validate([
-            'subject_id' => 'required|unique:subjects,subject_id',
-            'subject_name' => 'required|string|max:45',
+            'subject_id' => 'required|string|max:10|unique:subjects,subject_id',
+            'subject_name' => 'required|string|max:45|unique:subjects,subject_name',
         ]);
 
         Subject::create([
@@ -44,6 +48,7 @@ class SubjectController extends Controller
     // แก้ไขวิชา
     public function update(Request $request, $id)
     {
+        $this->checkAdmin($request);
         $request->validate([
             'subject_name' => 'required|string|max:45',
         ]);
@@ -57,11 +62,17 @@ class SubjectController extends Controller
     }
 
     // ลบวิชา
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
-        $subject = Subject::findOrFail($id);
-        $subject->delete();
+        $this->checkAdmin($request);
 
-        return redirect()->back()->with('success', 'ลบวิชาเรียบร้อยแล้ว');
+        // ใช้กฎเดียวกับหน้าแอดมิน ไม่ลบวิชาที่ผูกกับนัดหมายหรือโปรไฟล์
+        return app(AdminController::class)->deleteSubject($id);
+    }
+
+    private function checkAdmin(Request $request): void
+    {
+        $user = $request->user();
+        abort_unless($user && ($user->role === 'admin' || $user->current_role === 'admin'), 403);
     }
 }

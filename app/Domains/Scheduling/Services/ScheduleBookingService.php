@@ -15,6 +15,9 @@ class ScheduleBookingService
     public function save(array $data, ?Appointment $appointment = null): Appointment
     {
         Validator::make($data, [
+            'Student_profiles_student_id' => 'required|string',
+            'Tutor_profiles_tutor_id' => 'required|string',
+            'Subject_subject_id' => 'required|string|exists:subjects,subject_id',
             'start_datetime' => 'required|date',
             'end_datetime' => 'required|date|after:start_datetime',
             'status' => 'required|in:pending,confirmed,cancelled',
@@ -22,6 +25,9 @@ class ScheduleBookingService
 
         return DB::transaction(function () use ($data, $appointment): Appointment {
             $student = StudentProfile::query()->whereKey($data['Student_profiles_student_id'])->first();
+            if (! $student) {
+                $student = StudentProfile::query()->where('user_id', $data['Student_profiles_student_id'])->first();
+            }
             $tutor = TutorProfile::query()->whereKey($data['Tutor_profiles_tutor_id'])->first();
 
             if (! $student || ! $tutor) {
@@ -30,21 +36,23 @@ class ScheduleBookingService
                 ]);
             }
 
-            if ((string) $student->user_id === (string) $tutor->user_id) {
+            if ((string) $student->user_id === (string) $tutor->Users_user_id) {
                 throw ValidationException::withMessages(['tutor_id' => 'ไม่สามารถจองเรียนกับตัวเองได้']);
             }
 
-            $userIds = [$student->user_id, $tutor->user_id];
+            $userIds = [$student->user_id, $tutor->Users_user_id];
             $studentIds = StudentProfile::query()->whereIn('user_id', $userIds)
                 ->orderBy('id')->lockForUpdate()->toBase()->get()->pluck('id');
-            $tutorIds = TutorProfile::query()->whereIn('user_id', $userIds)
-                ->orderBy('id')->lockForUpdate()->toBase()->get()->pluck('id');
+            $studentIds = $studentIds->merge($userIds)->unique();
+            $tutorIds = TutorProfile::query()->whereIn('Users_user_id', $userIds)
+                ->orderBy('tutor_id')->lockForUpdate()->toBase()->get()->pluck('tutor_id');
 
-            if (! $appointment) {
+            if ($data['status'] !== 'cancelled') {
                 $times = app(AvailabilityService::class)->findSharedTimes(
-                    (string) $student->user_id, (string) $tutor->user_id,
+                    (string) $student->user_id, (string) $tutor->Users_user_id,
                     Carbon::parse($data['start_datetime']),
                     Carbon::parse($data['end_datetime']),
+                    $appointment ? (string) $appointment->getKey() : null,
                 );
 
                 if ($times !== [[

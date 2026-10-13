@@ -89,7 +89,7 @@
                             @if (isset($pendingAppointments) && $pendingAppointments->count() > 0)
                                 @foreach ($pendingAppointments as $appt)
                                     @php
-                                        $student = $appt->studentProfile?->user;
+                                        $student = $appt->studentProfile?->user ?? $appt->studentUser;
                                         $dateStr = \Carbon\Carbon::parse($appt->start_datetime)->format('d/m/Y');
                                         $timeStr = \Carbon\Carbon::parse($appt->start_datetime)->format('H:i') . ' - ' . \Carbon\Carbon::parse($appt->end_datetime)->format('H:i');
                                     @endphp
@@ -113,14 +113,17 @@
                                         </td>
                                         <td style="padding: 12px 10px; text-align: center;">
                                             <div style="display: flex; gap: 6px; justify-content: center;">
-                                                <form action="{{ route('appointments.accept', $appt->Appointment_id ?? $appt->id) }}" method="POST" style="margin: 0;">
+                                                {{-- ส่งให้ Controller ของเพื่อนตรวจสิทธิ์และเปลี่ยนสถานะ --}}
+                                                <form action="{{ route('appointments.confirm', $appt->Appointment_id) }}" method="POST" style="margin: 0;">
                                                     @csrf
                                                     <button type="submit" style="background: #e07a5f; color: #ffffff; border: none; padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer;">
                                                         ตอบรับ
                                                     </button>
                                                 </form>
-                                                <form action="{{ route('appointments.reject', $appt->Appointment_id ?? $appt->id) }}" method="POST" style="margin: 0;">
+                                                <form action="{{ route('appointments.status', $appt->Appointment_id) }}" method="POST" style="margin: 0;">
                                                     @csrf
+                                                    <input type="hidden" name="status" value="cancelled">
+                                                    <input type="text" name="rejection_reason" placeholder="เหตุผลที่ปฏิเสธ" maxlength="2000" required style="max-width: 160px; padding: 6px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 12px;">
                                                     <button type="submit" style="background: #fef2f2; color: #ef4444; border: 1px solid #fecaca; padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 500; cursor: pointer;">
                                                         ปฏิเสธ
                                                     </button>
@@ -155,7 +158,7 @@
                         @if (isset($todaySchedules) && $todaySchedules->count() > 0)
                             @foreach ($todaySchedules as $sched)
                                 @php
-                                    $student = $sched->studentProfile?->user;
+                                    $student = $sched->studentProfile?->user ?? $sched->studentUser;
                                     $timeStr = \Carbon\Carbon::parse($sched->start_datetime)->format('d/m/Y H:i');
                                     $isConfirmed = ($sched->status === 'confirmed');
                                 @endphp

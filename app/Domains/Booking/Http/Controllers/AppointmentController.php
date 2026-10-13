@@ -5,191 +5,315 @@ namespace App\Domains\Booking\Http\Controllers;
 use App\Domains\Booking\Models\Appointment;
 use App\Domains\Booking\Models\Notification;
 use App\Domains\Booking\Models\NotificationType;
-use App\Domains\Scheduling\Models\Availability;
+use App\Domains\Booking\Models\Subject;
+use App\Domains\Reportreview\Models\Review;
+use App\Domains\Scheduling\Services\AvailabilityService;
+use App\Domains\Scheduling\Services\ScheduleBookingService;
 use App\Domains\TutorProfile\Models\StudentProfile;
 use App\Domains\TutorProfile\Models\TutorProfile;
 use App\Http\Controllers\Controller;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Illuminate\Validation\ValidationException;
 
 class AppointmentController extends Controller
 {
-    public function index(Request $request)
+    // แสดงรายการนัดหมายทั้งหมด
+    public function index()
     {
-        $request->validate(['status' => ['nullable', 'in:all,pending,confirmed,cancelled']]);
-        $user = $request->user();
-        $status = $request->query('status', 'all');
-        $query = Appointment::with(['subject', 'studentProfile.user', 'tutorProfile.user']);
+        $userId = (string) Auth::id();
+        $studentProfileIds = StudentProfile::query()
+            ->where('user_id', $userId)
+            ->pluck('id')
+            ->map(fn ($id): string => (string) $id)
+            ->push($userId);
+        $tutorProfileIds = TutorProfile::query()
+            ->where('Users_user_id', $userId)
+            ->pluck('tutor_id');
 
-        // นักเรียนใช้ student_profiles.id ติวเตอร์ใช้ tutor_profiles.tutor_id
-        if ($user->current_role === 'tutor') {
-            $query->where('Tutor_profiles_tutor_id', $user->tutorProfile?->tutor_id);
-        } else {
-            $query->where('Student_profiles_student_id', $user->studentProfile?->id);
-        }
-        if ($status !== 'all') {
-            $query->where('status', $status);
-        }
-        $appointments = $query->orderBy('start_datetime')->get();
+        $appointments = Appointment::query()
+            ->with(['subject', 'tutorProfile.user.contact', 'studentProfile.user', 'studentUser', 'review'])
+            ->where(function ($query) use ($studentProfileIds, $tutorProfileIds): void {
+                $query->whereIn('Student_profiles_student_id', $studentProfileIds);
 
-        return view('domains.booking.appointments.index', compact('appointments', 'status'));
+                if ($tutorProfileIds->isNotEmpty()) {
+                    $query->orWhereIn('Tutor_profiles_tutor_id', $tutorProfileIds);
+                }
+            })
+            ->orderByDesc('start_datetime')
+            ->get();
+
+        foreach ($appointments as $appointment) {
+            $appointment->loadStudentProfile();
+        }
+
+        return view('domains.booking.appointments.index', compact('appointments', 'userId'));
     }
 
-    public function create(Request $request)
+    // หน้าฟอร์มสร้างการนัดหมาย
+    public function create()
     {
-        if (! $request->filled('tutor_id')) {
-            return redirect()->route('tutor.search');
-        }
+        $subjects = Subject::all();
 
-        // จองจากโปรไฟล์ เพื่อเลือกเฉพาะวิชาและเวลาที่ติวเตอร์เปิดไว้
-        return redirect()->route('tutor.show', $request->input('tutor_id'));
+        return view('domains.booking.appointments.create', compact('subjects'));
     }
 
+    // บันทึกการนัดหมายใหม่
     public function store(Request $request)
     {
-        abort_unless($request->user()->current_role === 'student', 403);
+        abort_unless(Auth::user()->current_role === 'student', 403);
         $data = $request->validate([
-            'subject_id' => ['required', 'string', 'exists:subjects,subject_id'],
-            'tutor_id' => ['required', 'string', 'exists:tutor_profiles,tutor_id'],
-            'appointment_date' => ['required_without:start_datetime', 'nullable', 'date_format:Y-m-d'],
-            'appointment_time' => ['required_without:start_datetime', 'nullable', 'regex:/^([01][0-9]|2[0-3]):[0-5][0-9] - ([01][0-9]|2[0-3]):[0-5][0-9]( น\.)?$/'],
-            'start_datetime' => ['nullable', 'date'],
+            'subject_id' => ['required', 'exists:subjects,subject_id'],
+            'tutor_id' => ['required', 'exists:tutor_profiles,tutor_id'],
+            'availability_id' => ['nullable', 'string', 'exists:availabilities,availability_id'],
+            'start_datetime' => ['required_without:availability_id', 'nullable', 'date', 'after:now'],
             'end_datetime' => ['required_with:start_datetime', 'nullable', 'date', 'after:start_datetime'],
         ]);
-        if ($request->filled('start_datetime')) {
-            $start = Carbon::parse($data['start_datetime'], 'Asia/Bangkok')->timezone('Asia/Bangkok');
-            $end = Carbon::parse($data['end_datetime'], 'Asia/Bangkok')->timezone('Asia/Bangkok');
-        } else {
-            $times = explode(' - ', str_replace(' น.', '', $data['appointment_time']));
-            $start = Carbon::parse($data['appointment_date'].' '.$times[0], 'Asia/Bangkok');
-            $end = Carbon::parse($data['appointment_date'].' '.$times[1], 'Asia/Bangkok');
-        }
-        if (! $start->isFuture() || $end->lessThanOrEqualTo($start)) {
-            throw ValidationException::withMessages(['appointment_time' => 'กรุณาเลือกเวลาในอนาคต และเวลาสิ้นสุดต้องหลังเวลาเริ่ม']);
-        }
 
-        DB::transaction(function () use ($request, $data, $start, $end) {
-            $tutor = TutorProfile::with('user')->lockForUpdate()->findOrFail($data['tutor_id']);
-            if (! $tutor->user || ! $tutor->user->is_active || $tutor->Users_user_id === $request->user()->user_id) {
-                throw ValidationException::withMessages(['tutor_id' => 'ไม่สามารถจองติวเตอร์คนนี้ได้']);
-            }
-            if (! $tutor->subjects()->where('subjects.subject_id', $data['subject_id'])->exists()) {
-                throw ValidationException::withMessages(['subject_id' => 'ติวเตอร์ไม่ได้เปิดสอนวิชานี้']);
-            }
-            $student = StudentProfile::firstOrCreate(['user_id' => $request->user()->user_id], ['id' => strtoupper(Str::random(10))]);
-            StudentProfile::where('id', $student->id)->lockForUpdate()->first();
-            $startTime = $start->format('Y-m-d H:i:s');
-            $endTime = $end->format('Y-m-d H:i:s');
+        // ล็อกข้อมูลติวเตอร์ระหว่างจอง เพื่อไม่ให้สองคำขอจองเวลาซ้ำกัน
+        // ลองบันทึกใหม่ได้ 3 ครั้ง หากคำขอพร้อมกันจับล็อกสวนกัน
+        return DB::transaction(function () use ($data) {
+            $tutor = TutorProfile::query()->where('tutor_id', $data['tutor_id'])->lockForUpdate()->firstOrFail();
+            abort_unless($tutor->approval_status === 'approved' && $tutor->user?->is_active, 422, 'ติวเตอร์ยังไม่พร้อมรับจอง');
+            abort_if($tutor->Users_user_id === Auth::id(), 422, 'ไม่สามารถจองตัวเองได้');
+            abort_unless($tutor->subjects()->where('subjects.subject_id', $data['subject_id'])->exists(), 422);
+            $contact = $tutor->user?->contact;
+            // เรียก Service เดิมของเพื่อนเพื่อคำนวณเวลา ไม่เขียนการคำนวณซ้ำ
+            $times = app(AvailabilityService::class)->resolveBookingTimes((string) $tutor->Users_user_id, $data);
+            $start = $times['start'];
+            $end = $times['end'];
 
-            $available = Availability::where('user_id', $tutor->Users_user_id)
-                ->where('start_datetime', '<=', $startTime)->where('end_datetime', '>=', $endTime)->exists();
-            if (! $available) {
-                throw ValidationException::withMessages(['appointment_time' => 'ช่วงเวลานี้ไม่อยู่ในเวลาว่างของติวเตอร์แล้ว']);
-            }
-            $studentBusy = Appointment::where('Student_profiles_student_id', $student->id)
-                ->whereIn('status', ['pending', 'confirmed'])->where('start_datetime', '<', $endTime)->where('end_datetime', '>', $startTime)->exists();
-            $tutorBusy = Appointment::where('Tutor_profiles_tutor_id', $tutor->tutor_id)
-                ->where('status', 'confirmed')->where('start_datetime', '<', $endTime)->where('end_datetime', '>', $startTime)->exists();
-            if ($studentBusy || $tutorBusy) {
-                throw ValidationException::withMessages(['appointment_time' => 'มีนัดหมายที่ทับกับช่วงเวลานี้แล้ว']);
-            }
+            do {
+                $appointmentId = 'APP'.Str::upper(Str::random(7));
+            } while (Appointment::query()->whereKey($appointmentId)->exists());
 
-            $appointment = Appointment::create([
-                'Appointment_id' => strtoupper(Str::random(10)),
-                'status' => 'pending', 'start_datetime' => $startTime, 'end_datetime' => $endTime,
+            $appointment = app(ScheduleBookingService::class)->save([
+                'Appointment_id' => $appointmentId,
+                'status' => 'pending',
+                'meeting_zoom' => $contact?->zoom_link ?? '',
+                'meeting_meet' => $contact?->google_meet_link ?? '',
+                'meeting_location' => $contact?->meeting_location ?? '',
+                'start_datetime' => $start,
+                'end_datetime' => $end,
                 'Subject_subject_id' => $data['subject_id'],
                 'Tutor_profiles_tutor_id' => $tutor->tutor_id,
-                // ใช้ผู้เรียนจากบัญชีที่ล็อกอิน ไม่รับ student_id ของคนอื่นจากฟอร์ม
-                'Student_profiles_student_id' => $student->id,
+                'Student_profiles_student_id' => Auth::id(),
             ]);
-            $this->notify($tutor->Users_user_id, 'มีคำขอเรียนใหม่ รหัส '.$appointment->Appointment_id, 'BOOKREQ001', 'คำขอจองเรียน');
-        });
 
-        return redirect()->route('appointments.index')->with('success', 'ส่งคำขอเรียนแล้ว กรุณารอติวเตอร์ยืนยัน');
+            $notificationType = NotificationType::firstOrCreate(
+                ['notification_type_id' => 'TYPE01'],
+                ['type_name' => 'คำขอจองเรียน']
+            );
+
+            // แจ้งเตือนไปยังติวเตอร์
+            Notification::create([
+                'notification_id' => $this->newNotificationId(),
+                'message' => 'มีการจองนัดหมายใหม่รอยืนยัน',
+                'is_read' => 0,
+                'Users_user_id' => $tutor->Users_user_id,
+                'NotificationType_notification_type_id' => $notificationType->notification_type_id,
+            ]);
+
+            return redirect()
+                ->route('tutor.show', $tutor->tutor_id)
+                ->with('success', 'ส่งคำขอจองสำเร็จแล้ว');
+        }, 3);
     }
 
-    public function show(Request $request, string $id)
+    // ดูรายละเอียดนัดหมาย
+    public function show($id)
     {
-        $appointment = Appointment::with(['subject', 'studentProfile.user', 'tutorProfile.user.contact'])->findOrFail($id);
-        $userId = $request->user()->user_id;
-        $isAdmin = $request->user()->role === 'admin' || $request->user()->current_role === 'admin';
-        abort_unless($isAdmin || $appointment->studentProfile?->user_id === $userId || $appointment->tutorProfile?->Users_user_id === $userId, 403);
+        $appointment = Appointment::query()
+            ->with(['subject', 'tutorProfile.user.contact', 'studentProfile.user', 'studentUser', 'review'])
+            ->findOrFail($id);
 
-        return view('domains.booking.appointments.show', compact('appointment'));
+        $appointment->loadStudentProfile();
+
+        $studentProfileIds = StudentProfile::query()
+            ->where('user_id', (string) Auth::id())
+            ->pluck('id')
+            ->map(fn ($profileId): string => (string) $profileId);
+        $tutorProfileIds = TutorProfile::query()
+            ->where('Users_user_id', (string) Auth::id())
+            ->pluck('tutor_id');
+
+        abort_unless(
+            (string) $appointment->Student_profiles_student_id === (string) Auth::id()
+                || $studentProfileIds->contains((string) $appointment->Student_profiles_student_id)
+                || $tutorProfileIds->contains((string) $appointment->Tutor_profiles_tutor_id),
+            404
+        );
+
+        $isStudentBooking = $this->isStudentOwner($appointment);
+        $isTutorBooking = $this->isTutorOwner($appointment);
+
+        return view('domains.booking.appointments.show', compact('appointment', 'isStudentBooking', 'isTutorBooking'));
     }
 
-    public function accept(Request $request, string $id)
+    public function updateStatus(Request $request, $id)
     {
-        return $this->respond($request, $id, 'confirmed');
-    }
-
-    public function reject(Request $request, string $id)
-    {
-        return $this->respond($request, $id, 'cancelled');
-    }
-
-    public function confirm(Request $request, string $id)
-    {
-        return $this->accept($request, $id);
-    }
-
-    public function updateStatus(Request $request, string $id)
-    {
-        // Route เดิมต้องใช้การตรวจเจ้าของและสถานะเหมือนปุ่มยืนยัน/ปฏิเสธ
-        $data = $request->validate(['status' => ['required', 'in:confirmed,cancelled']]);
-
-        return $this->respond($request, $id, $data['status']);
-    }
-
-    private function respond(Request $request, string $id, string $status)
-    {
-        $appointment = Appointment::findOrFail($id);
-        $tutor = $request->user()->tutorProfile;
-        abort_unless($request->user()->current_role === 'tutor' && $tutor && $appointment->Tutor_profiles_tutor_id === $tutor->tutor_id, 403);
-
-        // สถานะและแจ้งเตือนต้องบันทึกสำเร็จด้วยกัน
-        DB::transaction(function () use ($id, $tutor, $status) {
-            TutorProfile::where('tutor_id', $tutor->tutor_id)->lockForUpdate()->firstOrFail();
-            $appointment = Appointment::with('studentProfile')->lockForUpdate()->findOrFail($id);
-            if ($appointment->status !== 'pending') {
-                throw ValidationException::withMessages(['status' => 'คำขอนี้ถูกดำเนินการแล้ว']);
-            }
-            if (! $appointment->studentProfile) {
-                throw ValidationException::withMessages(['status' => 'ไม่พบข้อมูลผู้เรียนของคำขอนี้']);
-            }
-            StudentProfile::where('id', $appointment->Student_profiles_student_id)->lockForUpdate()->first();
-            if ($status === 'confirmed') {
-                $conflict = Appointment::where('status', 'confirmed')
-                    ->where('Appointment_id', '!=', $id)
-                    ->where('start_datetime', '<', $appointment->end_datetime)
-                    ->where('end_datetime', '>', $appointment->start_datetime)
-                    ->where(function ($query) use ($appointment) {
-                        $query->where('Tutor_profiles_tutor_id', $appointment->Tutor_profiles_tutor_id)
-                            ->orWhere('Student_profiles_student_id', $appointment->Student_profiles_student_id);
-                    })->exists();
-                if ($conflict) {
-                    throw ValidationException::withMessages(['status' => 'เวลาทับกับนัดหมายที่ยืนยันแล้ว กรุณาปฏิเสธคำขอหรือตกลงเวลาใหม่']);
-                }
-            }
-            $appointment->update(['status' => $status]);
-            $message = $status === 'confirmed' ? 'ติวเตอร์ยืนยันคำขอเรียนแล้ว' : 'ติวเตอร์ปฏิเสธคำขอเรียน';
-            $this->notify($appointment->studentProfile->user_id, $message.' รหัส '.$appointment->Appointment_id, 'BOOKANS001', 'ผลคำขอจองเรียน');
-        });
-
-        return back()->with('success', $status === 'confirmed' ? 'ยืนยันคำขอแล้ว นักเรียนดูรายละเอียดในตารางนัดหมายได้' : 'ปฏิเสธคำขอแล้ว');
-    }
-
-    private function notify(string $userId, string $message, string $typeId, string $typeName): void
-    {
-        // notification_types เป็นตารางเดิม สร้างเฉพาะประเภทที่ยังไม่มี
-        NotificationType::firstOrCreate(['notification_type_id' => $typeId], ['type_name' => $typeName]);
-        Notification::create([
-            'notification_id' => strtoupper(Str::random(10)), 'message' => $message,
-            'is_read' => false, 'Users_user_id' => $userId,
-            'NotificationType_notification_type_id' => $typeId,
+        $data = $request->validate([
+            'status' => ['required', 'in:confirmed,cancelled'],
+            'rejection_reason' => ['required_if:status,cancelled', 'nullable', 'string', 'max:2000'],
         ]);
+        // ตรวจ pending และบันทึกผลใน transaction เดียว กันรับ/ปฏิเสธสวนกัน
+        $appointment = DB::transaction(function () use ($id, $data) {
+            $appointment = Appointment::whereKey($id)->lockForUpdate()->firstOrFail();
+            abort_unless($this->canManageAsTutor($appointment), 403);
+            abort_unless($appointment->status === 'pending', 422);
+
+            $appointment->update(['status' => $data['status'], 'rejection_reason' => $data['rejection_reason'] ?? null]);
+            $studentUserId = $appointment->studentProfile?->user_id ?? $appointment->Student_profiles_student_id;
+            $this->notify($studentUserId, 'สถานะการนัดหมาย '.$appointment->Appointment_id.' เปลี่ยนเป็น'.($data['status'] === 'confirmed' ? 'ยืนยันแล้ว' : 'ยกเลิกแล้ว'));
+
+            return $appointment;
+        });
+
+        return redirect()->route('appointments.show', $appointment)->with('success', 'อัปเดตสถานะการนัดหมายแล้ว');
+    }
+
+    public function updateLesson(Request $request, Appointment $appointment)
+    {
+        abort_unless($this->canManageAsTutor($appointment), 403);
+        abort_unless(in_array($appointment->status, ['pending', 'confirmed'], true), 422);
+        // คืนค่าจากโปรไฟล์ หรือบันทึกข้อมูลที่แก้เฉพาะนัดหมายนี้
+        if ($request->boolean('use_profile_defaults')) {
+            $data = [
+                'meeting_zoom' => null,
+                'meeting_meet' => null,
+                'meeting_location' => null,
+                'lesson_details_customized' => false,
+                'lesson_notes' => null,
+            ];
+        } else {
+            $data = $request->validate([
+                'meeting_zoom' => ['nullable', 'url:http,https', 'max:500'],
+                'meeting_meet' => ['nullable', 'url:http,https', 'max:500'],
+                'meeting_location' => ['nullable', 'string', 'max:500'],
+                'lesson_notes' => ['nullable', 'string', 'max:3000'],
+            ]);
+            foreach (['meeting_zoom', 'meeting_meet', 'meeting_location'] as $field) {
+                $data[$field] = $data[$field] ?? '';
+            }
+            $data['lesson_details_customized'] = true;
+        }
+        $appointment->update($data);
+        $this->notify($appointment->studentProfile?->user_id ?? $appointment->Student_profiles_student_id, 'ติวเตอร์อัปเดตข้อมูลห้องเรียนของนัดหมาย '.$appointment->Appointment_id);
+
+        return back()->with('success', 'บันทึกรายละเอียดการเรียนแล้ว');
+    }
+
+    public function confirm(Appointment $appointment)
+    {
+        return $this->updateStatus(new Request(['status' => 'confirmed']), $appointment->Appointment_id);
+    }
+
+    public function cancel(Appointment $appointment)
+    {
+        abort_unless($this->isStudentOwner($appointment) || ($this->canManageAsTutor($appointment)), 403);
+        abort_unless(in_array($appointment->status, ['pending', 'confirmed'], true), 422);
+        $appointment->update(['status' => 'cancelled']);
+        $studentUserId = $appointment->studentProfile?->user_id ?? $appointment->Student_profiles_student_id;
+        $this->notify($this->isTutorOwner($appointment) ? $studentUserId : $appointment->tutorProfile?->Users_user_id, 'การนัดหมาย '.$appointment->Appointment_id.' ถูกยกเลิก');
+
+        return redirect()->route('appointments.index')->with('success', 'ยกเลิกการนัดหมายแล้ว');
+    }
+
+    // ตรวจสิทธิ์และสถานะซ้ำที่เซิร์ฟเวอร์ แม้ผู้ใช้จะส่งคำขอโดยไม่กดปุ่มในหน้าเว็บ
+    public function complete(Appointment $appointment)
+    {
+        return DB::transaction(function () use ($appointment) {
+            $appointment = Appointment::whereKey($appointment->Appointment_id)->lockForUpdate()->firstOrFail();
+            abort_unless($this->isStudentOwner($appointment), 403);
+            abort_unless($appointment->canComplete(), 422, 'ต้องรอติวเตอร์ยืนยันและเรียนจบก่อนยืนยัน session');
+
+            $appointment->update(['status' => 'completed']);
+            $this->notify($appointment->tutorProfile?->Users_user_id, 'ผู้เรียนยืนยันเรียนจบแล้ว ('.$appointment->Appointment_id.')');
+
+            return redirect()
+                ->route('appointments.index')
+                ->with('success', 'ยืนยันเรียนเสร็จแล้ว')
+                ->with('review_appointment', $appointment->Appointment_id);
+        });
+    }
+
+    // หนึ่งนัดหมายรีวิวได้ครั้งเดียว และต้องใช้ติวเตอร์ของนัดหมายนั้น
+    public function storeReview(Request $request, Appointment $appointment)
+    {
+        return DB::transaction(function () use ($request, $appointment) {
+            $appointment = Appointment::whereKey($appointment->Appointment_id)->lockForUpdate()->firstOrFail();
+            abort_unless($this->isStudentOwner($appointment), 403);
+            abort_unless($appointment->status === 'completed', 422);
+            // รีวิวที่แอดมินซ่อนยังนับว่าเคยส่ง เพื่อกันส่งซ้ำหลังถูกซ่อน
+            abort_if($appointment->review()->withTrashed()->exists(), 422, 'คุณส่งรีวิวสำหรับนัดหมายนี้แล้ว');
+
+            $data = $request->validate([
+                'rating' => ['required', 'integer', 'between:1,5'],
+                'Comment' => ['required', 'string', 'max:2000'],
+            ]);
+            do {
+                $reviewId = Str::upper(Str::random(10));
+            } while (Review::query()->whereKey($reviewId)->exists());
+
+            $appointment->review()->create([
+                'Review_id' => $reviewId,
+                'rating' => $data['rating'],
+                'Comment' => $data['Comment'],
+                'Tutor_profiles_tutor_id' => $appointment->Tutor_profiles_tutor_id,
+            ]);
+            $tutor = $appointment->tutorProfile;
+            $tutor->update(['average_rating' => round($tutor->reviews()->avg('rating') ?? 0, 2)]);
+
+            $this->notify($tutor->Users_user_id, 'มีรีวิวใหม่จากผู้เรียน คะแนน '.$data['rating'].'/5 สำหรับนัดหมาย '.$appointment->Appointment_id);
+
+            return redirect()->route('appointments.index')->with('success', 'ขอบคุณสำหรับรีวิวติวเตอร์');
+        });
+    }
+
+    private function isStudentOwner(Appointment $appointment): bool
+    {
+        // ข้อมูลเก่าบางรายการเก็บรหัสโปรไฟล์นักเรียน ส่วนข้อมูลใหม่เก็บรหัสผู้ใช้
+        $userId = (string) Auth::user()->user_id;
+
+        return (string) $appointment->Student_profiles_student_id === $userId
+            || (string) $appointment->studentProfile?->user_id === $userId;
+    }
+
+    private function isTutorOwner(Appointment $appointment): bool
+    {
+        return (string) $appointment->tutorProfile?->Users_user_id === (string) Auth::user()->user_id;
+    }
+
+    // ผู้สอนต้องเป็นเจ้าของนัดหมาย ใช้บทบาทติวเตอร์ และผ่านการอนุมัติแล้ว
+    private function canManageAsTutor(Appointment $appointment): bool
+    {
+        return $this->isTutorOwner($appointment)
+            && Auth::user()->current_role === 'tutor'
+            && $appointment->tutorProfile->approval_status === 'approved';
+    }
+
+    private function notify(?string $userId, string $message): void
+    {
+        if (! $userId) {
+            return;
+        }
+        $type = NotificationType::firstOrCreate(['notification_type_id' => 'TYPE02'], ['type_name' => 'อัปเดตนัดหมาย']);
+        Notification::create([
+            'notification_id' => $this->newNotificationId(),
+            'message' => $message,
+            'is_read' => 0,
+            'Users_user_id' => $userId,
+            'NotificationType_notification_type_id' => $type->notification_type_id,
+        ]);
+    }
+
+    private function newNotificationId(): string
+    {
+        do {
+            $id = 'NOT'.Str::upper(Str::random(7));
+        } while (Notification::query()->whereKey($id)->exists());
+
+        return $id;
     }
 }

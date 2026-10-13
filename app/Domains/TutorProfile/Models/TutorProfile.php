@@ -2,21 +2,24 @@
 
 namespace App\Domains\TutorProfile\Models;
 
+use App\Domains\Auth\Models\User;
+use App\Domains\Booking\Models\Appointment;
+use App\Domains\Booking\Models\Subject;
+use App\Domains\Reportreview\Models\Review;
+use App\Domains\Scheduling\Models\Availability;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use App\Domains\Auth\Models\User;
-use App\Domains\Booking\Models\Subject;
-use App\Domains\Booking\Models\Appointment;
-use App\Domains\Reportreview\Models\Review;
-use App\Domains\Scheduling\Models\Availability;
 
 class TutorProfile extends Model
 {
     protected $table = 'tutor_profiles';
+
     protected $primaryKey = 'tutor_id';
+
     public $incrementing = false;
+
     protected $keyType = 'string';
 
     protected $fillable = [
@@ -24,6 +27,8 @@ class TutorProfile extends Model
         'tutor_id',
         'bio',
         'experience_years',
+        // ระบบรีวิวของเพื่อนอัปเดตคะแนนเฉลี่ยผ่าน Model นี้
+        'average_rating',
         'teaching_mode',
         'line_id',
         'discord_id',
@@ -38,7 +43,21 @@ class TutorProfile extends Model
     // ใช้ในหน้าค้นหาและหน้ารวม เพื่อแสดงเฉพาะติวเตอร์ที่อนุมัติแล้ว
     public function scopeApproved($query)
     {
-        return $query->where('approval_status', 'approved');
+        // บัญชีที่ถูกพักไม่ควรแสดงเป็นติวเตอร์พร้อมรับเรียน
+        return $query->where('approval_status', 'approved')->whereHas('user', function ($users) {
+            $users->where('is_active', true);
+        });
+    }
+
+    // ใช้เฉพาะรายการเลือกผู้สอน ไม่กระทบโปรไฟล์ส่วนตัวหรือนัดหมายเดิม
+    public function scopeForStudentList($query)
+    {
+        $user = auth()->user();
+        if ($user && $user->current_role === 'student') {
+            $query->where('tutor_profiles.Users_user_id', '!=', $user->user_id);
+        }
+
+        return $query;
     }
 
     /**
@@ -86,8 +105,8 @@ class TutorProfile extends Model
             'Tutor_profiles_tutor_id',
             'tutor_id'
         )
-        ->withTrashed()
-        ->whereNull('reviews.deleted_at');
+            ->withTrashed()
+            ->whereNull('reviews.deleted_at');
     }
 
     /**

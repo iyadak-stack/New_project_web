@@ -1,3 +1,8 @@
+@if (request()->routeIs('availabilities.*'))
+    {{-- หน้าจัดเวลาใช้ navbar ชุดเดียวกับหน้า home โดยไม่แก้ระบบเวลาว่าง --}}
+    <link rel="stylesheet" href="{{ asset('CSS/tutor-navbar.css') }}">
+    <x-navbar />
+@else
 <x-logout-confirm />
 @if (auth()->guest())
     <x-guest-navbar />
@@ -149,3 +154,4 @@
         });
     });
 </script>
+@endif

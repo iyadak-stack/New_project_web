@@ -93,7 +93,28 @@ class AdminController extends Controller
     {
         $member = User::with(['studentProfile', 'tutorProfile.subjects', 'contact'])->findOrFail($id);
 
-        return view('admin.user', compact('member'));
+        $tutorId = $member->tutorProfile?->tutor_id;
+
+        // รีวิวของติวเตอร์ (รวมที่ถูกซ่อน เพื่อให้แอดมินเห็นครบ)
+        $reviews = collect();
+        // รายงานที่ติวเตอร์คนนี้เคยโดน
+        $reportsAgainst = collect();
+
+        if ($tutorId) {
+            $reviews = Review::withTrashed()
+                ->with(['appointment.studentProfile.user', 'appointment.studentUser'])
+                ->where('Tutor_profiles_tutor_id', $tutorId)
+                ->latest()
+                ->take(10)
+                ->get();
+
+            $reportsAgainst = Report::with(['reason', 'reporter'])
+                ->where('Tutor_profiles_tutor_id', $tutorId)
+                ->latest()
+                ->get();
+        }
+
+        return view('admin.user', compact('member', 'reviews', 'reportsAgainst'));
     }
 
     public function updateUserStatus(Request $request, string $id)

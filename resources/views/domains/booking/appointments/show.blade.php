@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="{{ asset('CSS/appointment-list.css') }}">
     <link rel="stylesheet" href="{{ asset('CSS/appointment-detail.css') }}">
 </head>
-<body class="booking-body">
+<body class="booking-body {{ auth()->user()?->current_role === 'tutor' ? 'tutor-appointment-body' : '' }}">
     {{-- ใช้ Navbar เดียวกับหน้าหลัก --}}
     <x-navbar />
 
@@ -54,7 +54,7 @@
             <span aria-hidden="true">←</span> {{ $backText }}
         </a>
 
-        <article class="booking-card appointment-detail-card">
+        <article class="booking-card appointment-detail-card {{ $isTutorRole && $isTutorBooking ? 'tutor-appointment-card' : '' }}">
             <header class="appointment-detail-header">
                 <span class="booking-icon"><x-appointment-icon name="calendar" /></span>
                 <div class="appointment-detail-title">
@@ -74,6 +74,9 @@
             @endif
             @if ($isStudentBooking && $appointment->status === 'pending')
                 <div class="alert alert-warning" role="status">ส่งคำขอแล้ว กรุณารอติวเตอร์ยืนยันก่อนเข้าเรียนและยืนยันว่าเรียนเสร็จแล้ว</div>
+            @endif
+            @if ($isTutorRole && $isTutorBooking && $appointment->status === 'pending')
+                <p class="tutor-request-hint">ตรวจสอบวันเวลาและข้อมูลห้องเรียน ก่อนรับหรือปฏิเสธคำขอจากผู้เรียน</p>
             @endif
 
             {{-- แสดงข้อมูลนัดหมายแบบสลับบทบาท ผู้เรียน / ติวเตอร์ --}}
@@ -129,30 +132,48 @@
 
             {{-- ฟอร์มการจัดการของติวเตอร์ (แก้ไขข้อมูลห้องเรียน) --}}
             @if($isTutorBooking && auth()->user()->current_role === 'tutor' && $appointment->tutorProfile->approval_status === 'approved' && in_array($appointment->status, ['pending', 'confirmed'], true))
-                <form class="appointment-edit-form my-3 p-3 border rounded-3 bg-light" method="POST" action="{{ route('appointments.lesson', $appointment) }}">
+                <form class="tutor-lesson-form" method="POST" action="{{ route('appointments.lesson', $appointment) }}">
                     @csrf
                     @method('PATCH')
-                    <h2 class="h5 font-weight-bold mb-2">ห้องเรียนสำหรับนัดหมายนี้</h2>
-                    <p class="small text-muted mb-3">เริ่มต้นจากข้อมูลในโปรไฟล์ แก้ไขได้เฉพาะนัดหมายนี้</p>
-                    
-                    @foreach(['meeting_zoom' => 'Zoom', 'meeting_meet' => 'Google Meet', 'meeting_location' => 'สถานที่เรียน'] as $field => $label)
-                        <div class="mb-3">
-                            <label class="form-label small fw-semibold mb-1">{{ $label }}</label>
-                            <input class="form-control form-control-sm" type="{{ $field === 'meeting_location' ? 'text' : 'url' }}" name="{{ $field }}" value="{{ old($field, $appointment->lessonValue($field)) }}">
-                            <button type="button" class="btn btn-sm btn-link text-muted p-0 text-decoration-none mt-1" onclick="this.previousElementSibling.value=''">ล้างช่องนี้</button>
+                    {{-- จัดช่องกรอกให้เหมือนภาพ โดยยังส่งข้อมูลเข้า route เดิม --}}
+                    <section class="tutor-room-panel">
+                        <div class="tutor-panel-heading">
+                            <span class="booking-icon"><x-appointment-icon name="link" /></span>
+                            <div>
+                                <h2>ห้องเรียนสำหรับนัดหมายนี้</h2>
+                                <p>เมื่อนัดหมายได้รับการยืนยัน ผู้เรียนจะเห็นช่องทางเข้าเรียนนี้</p>
+                            </div>
                         </div>
-                    @endforeach
 
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold mb-1">รายละเอียดเพิ่มเติม</label>
-                        <textarea class="form-control form-control-sm" name="lesson_notes" rows="2" maxlength="3000">{{ old('lesson_notes', $appointment->lesson_notes) }}</textarea>
-                    </div>
+                        @foreach (['meeting_zoom' => 'Zoom', 'meeting_meet' => 'Google Meet'] as $field => $label)
+                            <div class="tutor-room-row">
+                                <label for="{{ $field }}"><x-appointment-icon name="video" /> {{ $label }}</label>
+                                <input class="form-control" id="{{ $field }}" type="url" name="{{ $field }}"
+                                       value="{{ old($field, $appointment->lessonValue($field)) }}"
+                                       placeholder="ใส่ลิงก์ห้องเรียน {{ $label }}">
+                                <button type="button" class="tutor-copy-button" onclick="copyLessonLink('{{ $field }}', this)">คัดลอกลิงก์</button>
+                            </div>
+                        @endforeach
 
-                    <p class="small text-secondary">ล้างช่องที่ต้องการลบแล้วกดบันทึก การเปลี่ยนแปลงมีผลเฉพาะนัดหมายนี้</p>
-                    <div class="d-flex gap-2 flex-wrap">
-                        <button class="booking-button booking-button-primary">บันทึกรายละเอียดการเรียน</button>
-                        <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" name="use_profile_defaults" value="1" formnovalidate>ใช้ข้อมูลจากโปรไฟล์อีกครั้ง</button>
-                    </div>
+                        <div class="tutor-location-field">
+                            <label for="meeting_location"><x-appointment-icon name="pin" /> สถานที่เรียน</label>
+                            <input class="form-control" id="meeting_location" type="text" name="meeting_location"
+                                   value="{{ old('meeting_location', $appointment->lessonValue('meeting_location')) }}"
+                                   placeholder="ระบุสถานที่สำหรับการเรียนแบบนัดเจอ">
+                        </div>
+                    </section>
+
+                    <section class="tutor-notes-panel">
+                        <h2><x-appointment-icon name="book" /> รายละเอียดเพิ่มเติม</h2>
+                        <label class="visually-hidden" for="lesson_notes">รายละเอียดเพิ่มเติมเกี่ยวกับการสอน</label>
+                        <textarea class="form-control" id="lesson_notes" name="lesson_notes" rows="4" maxlength="3000"
+                                  placeholder="ใส่รายละเอียดเพิ่มเติมเกี่ยวกับการสอน (ถ้ามี)">{{ old('lesson_notes', $appointment->lesson_notes) }}</textarea>
+                        <p>ล้างช่องที่ต้องการลบแล้วกดบันทึก การเปลี่ยนแปลงมีผลเฉพาะนัดหมายนี้</p>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button type="submit" class="booking-button booking-button-primary">บันทึกรายละเอียดการเรียน</button>
+                            <button type="submit" class="booking-button booking-button-outline" name="use_profile_defaults" value="1" formnovalidate>ใช้ข้อมูลจากโปรไฟล์อีกครั้ง</button>
+                        </div>
+                    </section>
                 </form>
             @endif
 
@@ -168,20 +189,25 @@
                 @endif
 
                 @if($isTutorBooking && $appointment->status === 'pending' && auth()->user()->current_role === 'tutor' && $appointment->tutorProfile->approval_status === 'approved')
-                    <form method="POST" action="{{ url('/appointments/'.$appointment->Appointment_id.'/status') }}">
+                    <section class="tutor-request-actions">
+                    <form class="tutor-accept-panel" method="POST" action="{{ route('appointments.status', $appointment->Appointment_id) }}">
                         @csrf
                         <input type="hidden" name="status" value="confirmed">
-                        <button class="booking-button booking-button-primary">รับคำขอจอง</button>
+                        <span class="booking-icon"><x-appointment-icon name="check" /></span>
+                        <h2>ตอบรับคำขอเรียน</h2>
+                        <p>เมื่อยืนยัน ผู้เรียนจะได้รับแจ้งเตือนและเห็นรายละเอียดห้องเรียน</p>
+                        <button type="submit" class="booking-button booking-button-primary">รับคำขอจอง</button>
                     </form>
-                    <form method="POST" action="{{ url('/appointments/'.$appointment->Appointment_id.'/status') }}">
+                    <form class="tutor-reject-panel" method="POST" action="{{ route('appointments.status', $appointment->Appointment_id) }}">
                         @csrf
                         <input type="hidden" name="status" value="cancelled">
                         {{-- ต้องส่งเหตุผลพร้อมการปฏิเสธ ให้ตรงกับ validation เดิม --}}
-                        <label for="rejection_reason" class="form-label small">เหตุผลที่ปฏิเสธคำขอ</label>
+                        <label for="rejection_reason" class="form-label">เหตุผลที่ปฏิเสธคำขอ</label>
                         <textarea id="rejection_reason" name="rejection_reason" class="form-control form-control-sm mb-2"
                                   rows="2" maxlength="2000" placeholder="ระบุเหตุผลให้นักเรียนทราบ" required>{{ old('rejection_reason') }}</textarea>
-                        <button class="btn-reject-action">ปฏิเสธคำขอ</button>
+                        <button type="submit" class="btn-reject-action">ปฏิเสธคำขอ</button>
                     </form>
+                    </section>
                 @endif
 
                 @if($isStudentBooking && $appointment->canComplete())
@@ -209,6 +235,26 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // คัดลอกลิงก์จากช่องกรอก ไม่บันทึกหรือเปลี่ยนข้อมูลใน DB
+        async function copyLessonLink(inputId, button) {
+            var input = document.getElementById(inputId);
+            if (input.value.trim() === '') {
+                button.textContent = 'ยังไม่มีลิงก์';
+                input.focus();
+                return;
+            }
+
+            try {
+                await navigator.clipboard.writeText(input.value);
+                button.textContent = 'คัดลอกแล้ว ✓';
+            } catch (error) {
+                // หาก browser ไม่อนุญาต ให้เลือกข้อความเพื่อคัดลอกเอง
+                input.focus();
+                input.select();
+                button.textContent = 'กด Ctrl+C เพื่อคัดลอก';
+            }
+        }
+
         var profileButton = document.getElementById('toggleProfileBtn');
         var profileDropdown = document.getElementById('profileDropdown');
         if (profileButton && profileDropdown) {

@@ -65,13 +65,13 @@ class TutorTeachingTest extends TestCase
 
     public function test_tutor_menu_has_active_my_subjects_and_students_cannot_use_it(): void
     {
-        $this->actingAs($this->tutor)->get(route('tutor.subjects.index'))->assertOk()
+        $tutorPage = $this->actingAs($this->tutor)->get(route('tutor.subjects.index'))->assertOk()
             ->assertSee('menu-btn active', false)->assertSee('วิชาของฉัน')
             ->assertDontSee('รายวิชาทั้งหมด')->assertDontSee('ติวเตอร์ทั้งหมด')
             ->assertDontSee('name="start_time"', false);
-        $this->get(route('tutor.schedule.index'))->assertRedirect(route('availabilities.index'));
+        $tutorPage->assertSee(route('availabilities.index'), false);
         $this->actingAs($this->student)->get(route('tutor.subjects.index'))->assertRedirect(route('home'));
-        $this->get(route('tutor.schedule.index'))->assertRedirect(route('home'));
+        $this->get(route('tutor.profile'))->assertRedirect(route('home'));
         $this->put(route('tutor.subjects.update'), ['teaching_mode' => 'online'])->assertRedirect(route('home'));
     }
 
@@ -119,7 +119,7 @@ class TutorTeachingTest extends TestCase
         $this->assertSame($this->student->user_id, $appointment->Student_profiles_student_id);
         $this->assertDatabaseHas('notifications', ['Users_user_id' => $this->tutor->user_id, 'NotificationType_notification_type_id' => 'TYPE01']);
         $this->get(route('appointments.show', $appointment->Appointment_id))->assertOk()->assertDontSee('https://meet.google.com/demo-room');
-        $this->actingAs($this->tutor)->get(route('appointments.index'))->assertSee('รับคำขอ');
+        $this->actingAs($this->tutor)->get(route('appointments.index'))->assertSee('รอการยืนยัน');
         $this->post(route('appointments.confirm', $appointment->Appointment_id))->assertSessionHasNoErrors()->assertRedirect();
         $this->assertSame('confirmed', $appointment->fresh()->status);
         $this->assertDatabaseHas('notifications', ['Users_user_id' => $this->student->user_id, 'NotificationType_notification_type_id' => 'TYPE02']);

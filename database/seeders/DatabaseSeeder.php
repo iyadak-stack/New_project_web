@@ -21,6 +21,8 @@ class DatabaseSeeder extends Seeder
         User::withTrashed()->firstOrCreate(
             ['email' => 'test@example.com'],
             User::factory()->raw([
+                // ไม่ให้อีเมลสุ่มจาก factory ทับอีเมลที่ใช้ค้นหา
+                'email' => 'test@example.com',
                 'first_name' => 'Test',
                 'last_name' => 'User',
             ])

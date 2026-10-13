@@ -57,7 +57,8 @@ class FavoriteController extends Controller
             ->whereNotNull('Tutor_profiles_tutor_id')
             ->whereHas('tutorProfile.user')
             ->whereHas('tutorProfile', function ($query) {
-                $query->forStudentList();
+                // ไม่แสดงลิงก์ของผู้ที่ยังไม่อนุมัติหรือบัญชีถูกระงับ
+                $query->approved()->forStudentList();
             })
             ->with(['tutorProfile.user', 'tutorProfile.subjects'])
             ->orderByDesc('created_at')

@@ -19,22 +19,22 @@
         <nav aria-label="เมนูแอดมิน">
             <a href="{{ route('admin.tutor-applications.index') }}" class="admin-nav-link {{ request()->routeIs('admin.tutor-applications.*') ? 'is-active' : '' }}">คำขอติวเตอร์</a>
             <a href="{{ route('admin.dashboard') }}" class="admin-nav-link {{ request()->routeIs('admin.dashboard') ? 'is-active' : '' }}">
-                <span class="nav-number">01</span> ภาพรวม
+                ภาพรวม
             </a>
             <a href="{{ route('admin.users.index') }}" class="admin-nav-link {{ request()->routeIs('admin.users.*') ? 'is-active' : '' }}">
-                <span class="nav-number">02</span> จัดการผู้ใช้
+                จัดการผู้ใช้
             </a>
             <a href="{{ route('admin.reports.index') }}" class="admin-nav-link {{ request()->routeIs('admin.reports.*', 'admin.reasons.*') ? 'is-active' : '' }}">
-                <span class="nav-number">03</span> จัดการรายงาน
+                จัดการรายงาน
             </a>
             <a href="{{ route('admin.subjects.index') }}" class="admin-nav-link {{ request()->routeIs('admin.subjects.*') ? 'is-active' : '' }}">
-                <span class="nav-number">04</span> จัดการรายวิชา
+                จัดการรายวิชา
             </a>
             <a href="{{ route('admin.reviews.index') }}" class="admin-nav-link {{ request()->routeIs('admin.reviews.*') ? 'is-active' : '' }}">
-                <span class="nav-number">05</span> ตรวจสอบรีวิว
+                ตรวจสอบรีวิว
             </a>
             <a href="{{ route('admin.appointments.index') }}" class="admin-nav-link {{ request()->routeIs('admin.appointments.*') ? 'is-active' : '' }}">
-                <span class="nav-number">06</span> ตรวจสอบนัดหมาย
+                ตรวจสอบนัดหมาย
             </a>
         </nav> <div class="admin-sidebar-bottom">
             <p>ผู้ดูแลระบบ<br>

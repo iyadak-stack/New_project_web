@@ -55,13 +55,8 @@ class TutorSearchController extends Controller
 
     public function ranking()
     {
-        $tutors = TutorProfile::approved()->forStudentList()->with(['user', 'subjects'])
-            ->withCount('reviews')
-            ->orderByDesc('average_rating')
-            ->orderByDesc('experience_years')
-            ->get();
-
-        return view('domains.tutor-profile.tutor.ranking', compact('tutors'));
+        // URL เดิมใช้หน้ารวมที่เรียงคะแนนอยู่แล้ว ไม่เรียก view ที่ถูกลบไป
+        return redirect()->route('tutor.search');
     }
 
     public function show($tutor)

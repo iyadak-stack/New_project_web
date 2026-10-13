@@ -69,30 +69,18 @@ class FavoritePageSeeder extends Seeder
                 $tutorIds[] = $tutor->tutor_id;
             }
 
-            // เพิ่มให้บัญชีสาธิตและนักเรียนเดิมที่ยังไม่มีรายการโปรดเท่านั้น
-            // บัญชีที่มีรายการโปรดอยู่แล้วจะไม่ถูกเปลี่ยนแปลง
-            // บัญชีที่เพิ่งสร้างอาจยังไม่มี studentProfile ให้ตรวจบทบาทด้วย
-            $students = User::where(function ($query) {
-                $query->whereHas('studentProfile')
-                    ->orWhere('role', 'student')
-                    ->orWhere('current_role', 'student');
-            })->get();
-            if (! $students->contains('user_id', $student->user_id)) {
-                $students->push($student);
-            }
+            // เพิ่มเฉพาะบัญชีตั้งต้น ไม่เติมรายการโปรดให้บัญชีผู้ใช้ทั่วไป
+            foreach ($tutorIds as $index => $tutorId) {
+                // รวมรายการที่ลบแล้วด้วย เพื่อไม่คืนรายการที่ผู้ใช้เลือกนำออก
+                $favorite = Favorite::withTrashed()->firstOrCreate([
+                    'Users_user_id' => $student->user_id,
+                    'Tutor_profiles_tutor_id' => $tutorId,
+                ], [
+                    'favorite_id' => strtoupper(Str::random(10)),
+                ]);
 
-            foreach ($students as $viewer) {
-                if (Favorite::withTrashed()->where('Users_user_id', $viewer->user_id)->whereNotNull('Tutor_profiles_tutor_id')->exists()) {
-                    continue;
-                }
-
-                foreach ($tutorIds as $index => $tutorId) {
-                    $favorite = Favorite::create([
-                        'favorite_id' => strtoupper(Str::random(10)),
-                        'Users_user_id' => $viewer->user_id,
-                        'Tutor_profiles_tutor_id' => $tutorId,
-                    ]);
-                    // created_at ไม่อยู่ใน fillable จึงกำหนดแยกหลังสร้างรายการ
+                if ($favorite->wasRecentlyCreated) {
+                    // กำหนดเวลาเฉพาะรายการใหม่ ไม่ทับเวลาของรายการเดิม
                     $favorite->created_at = now()->subMinutes($index);
                     $favorite->save();
                 }

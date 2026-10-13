@@ -36,6 +36,8 @@
                     @php
                         $tutorUser = $tutor->user;
                         $rating = number_format($tutor->average_rating ?? 0.0, 1);
+                        // ชั่วโมงสอนคำนวณจากวินาทีสะสม ไม่ใช่ปีประสบการณ์
+                        $teachingHours = (int) floor(($tutor->total_teaching_seconds ?? 0) / 3600);
                         $reviewCount = $tutor->reviews_count ?? ($tutor->reviews ? $tutor->reviews->count() : 0);
                     @endphp
 
@@ -58,7 +60,7 @@
                                 </h3>
 
                                 <p style="font-size: 14px; color: #64748b; margin: 0;">
-                                    สอนพิเศษ {{ $tutor->experience_years ?? 0 }} ชั่วโมง
+                                    สอนพิเศษ {{ $teachingHours }} ชั่วโมง
                                 </p>
 
                                 <div style="font-size: 14px; color: #e07a5f; font-weight: 600; margin-top: 2px;">

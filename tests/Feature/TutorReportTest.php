@@ -42,7 +42,9 @@ class TutorReportTest extends TestCase
         $this->actingAs($user)->get(route('tutor.show', 'DEMOTUT001'))
             ->assertOk()->assertSee('ประเภทใหม่จากฐานข้อมูล')
             ->assertSee('value="CUSTOM0001"', false)
-            ->assertSee('confirmReportSubmission(this)', false);
+            ->assertSee('validateReportForm(this)', false)
+            ->assertSee('id="reportConfirm"', false)
+            ->assertSee('ยืนยันการส่งรายงาน');
     }
 
     public function test_submitted_report_is_saved_and_visible_to_admin(): void

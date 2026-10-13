@@ -64,9 +64,9 @@ class SchedulingIntegrationTest extends TestCase
             'status' => 'pending',
         ]);
         $this->assertDatabaseHas('notifications', ['Users_user_id' => 'USER000002']);
-        $this->get(route('appointments.index'))->assertOk()->assertSee('CSS/edit-profile.css');
+        $this->get(route('appointments.index'))->assertOk()->assertSee('CSS/appointment-list.css');
         $appointmentId = DB::table('appointments')->value('Appointment_id');
-        $this->get(route('appointments.show', $appointmentId))->assertOk()->assertSee('CSS/edit-profile.css');
+        $this->get(route('appointments.show', $appointmentId))->assertOk()->assertSee('CSS/appointment-detail.css');
         $remaining = [
             ['start' => '2026-10-14 15:00', 'end' => '2026-10-14 15:30'],
             ['start' => '2026-10-14 16:30', 'end' => '2026-10-14 17:00'],
@@ -76,7 +76,14 @@ class SchedulingIntegrationTest extends TestCase
             ->assertViewHas('availableTimes', $remaining)
             ->assertViewHas('bookableTimes', $remaining)
             ->assertSee('name="start_datetime"', false)
-            ->assertSee('data-end="2026-10-14T17:00"', false)
+            ->assertSee('data-availabilities=', false)
+            ->assertViewHas('availabilities', function ($slots) {
+                return count($slots) === 2
+                    && $slots[0]['start_datetime'] === '2026-10-14 15:00:00'
+                    && $slots[0]['end_datetime'] === '2026-10-14 15:30:00'
+                    && $slots[1]['start_datetime'] === '2026-10-14 16:30:00'
+                    && $slots[1]['end_datetime'] === '2026-10-14 17:00:00';
+            })
             ->assertDontSee('name="availability_id"', false);
     }
 
@@ -127,7 +134,7 @@ class SchedulingIntegrationTest extends TestCase
         $this->post(route('appointments.store'), $data)->assertStatus(422);
         DB::table('tutor_profiles')->where('tutor_id', 'TUTOR00001')->update(['approval_status' => 'approved']);
         $this->actingAs($this->teacher);
-        $this->post(route('appointments.store'), $data)->assertStatus(422);
+        $this->post(route('appointments.store'), $data)->assertStatus(403);
         $this->assertDatabaseCount('appointments', 0);
     }
 

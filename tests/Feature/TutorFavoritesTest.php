@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Domains\Auth\Models\User;
 use App\Domains\TutorProfile\Models\Favorite;
+use App\Domains\TutorProfile\Models\TutorProfile;
 use Database\Seeders\FavoritePageSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -11,7 +12,6 @@ use Tests\TestCase;
 class TutorFavoritesTest extends TestCase
 {
     use RefreshDatabase;
-
 
     public function test_guests_must_log_in_to_view_favorites(): void
     {
@@ -22,7 +22,7 @@ class TutorFavoritesTest extends TestCase
     public function test_guest_can_view_tutor_profiles_even_with_a_stale_role_session(): void
     {
         $this->seed(FavoritePageSeeder::class);
-        \App\Domains\TutorProfile\Models\TutorProfile::query()->update(['approval_status' => 'approved']);
+        TutorProfile::query()->update(['approval_status' => 'approved']);
 
         foreach (['DEMOTUT001', 'DEMOTUT002', 'DEMOTUT003'] as $tutorId) {
             // บทบาทใน Session อาจค้างอยู่ แต่ต้องตรวจล็อกอินก่อนอ่านข้อมูลผู้ใช้
@@ -38,6 +38,7 @@ class TutorFavoritesTest extends TestCase
     public function test_favorites_show_only_the_current_users_tutors_and_profile_links(): void
     {
         $this->seed(FavoritePageSeeder::class);
+        TutorProfile::query()->update(['approval_status' => 'approved']);
         $student = User::where('email', 'favorites.demo@example.com')->firstOrFail();
 
         foreach (['/favorites', '/tutors/favorites'] as $url) {
@@ -68,7 +69,7 @@ class TutorFavoritesTest extends TestCase
     {
         $this->seed(FavoritePageSeeder::class);
         $this->seed(FavoritePageSeeder::class);
-        \App\Domains\TutorProfile\Models\TutorProfile::query()->update(['approval_status' => 'approved']);
+        TutorProfile::query()->update(['approval_status' => 'approved']);
         $this->assertDatabaseCount('favorites', 3);
         $this->assertDatabaseCount('tutor_profiles', 3);
 
@@ -77,7 +78,7 @@ class TutorFavoritesTest extends TestCase
             ->assertOk()->assertSee('ณัฐ');
     }
 
-    public function test_student_without_profile_receives_demo_favorites_without_duplicates(): void
+    public function test_seeder_does_not_add_favorites_to_other_students(): void
     {
         $student = User::factory()->create(['role' => 'student', 'current_role' => 'student']);
         $this->assertNull($student->studentProfile);
@@ -85,8 +86,8 @@ class TutorFavoritesTest extends TestCase
         $this->seed(FavoritePageSeeder::class);
         $this->seed(FavoritePageSeeder::class);
 
-        $this->assertSame(3, $student->favorites()->count());
+        $this->assertSame(0, $student->favorites()->count());
         $this->actingAs($student)->get('/favorites')
-            ->assertOk()->assertSee('พี่ณัฐ ใจดี');
+            ->assertOk()->assertSee('ยังไม่มีติวเตอร์ในรายการโปรด');
     }
 }

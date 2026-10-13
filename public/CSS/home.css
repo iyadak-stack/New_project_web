@@ -106,6 +106,10 @@ html {
     font-weight: 500;
 }
 
+.welcome-box h1 b{
+    color: #e07a5f;
+}
+
 .welcome-box p {
     margin: 0;
     font-size: 13px;

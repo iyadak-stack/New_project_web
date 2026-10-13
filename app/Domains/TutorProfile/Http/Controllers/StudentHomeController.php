@@ -19,20 +19,29 @@ class StudentHomeController extends Controller
      */
     public function index(Request $request)
     {
-        $tutors = TutorProfile::with(['user', 'subjects'])
+        $tutors = TutorProfile::approved()->with(['user', 'subjects'])
             ->withCount('reviews')
             ->orderByDesc('average_rating')
             ->orderByDesc('experience_years')
             ->take(3)
             ->get();
 
-        $subjects = Subject::withCount('tutors')
+        $subjects = Subject::withCount(['tutors' => function ($query) {
+            $query->approved();
+        }])
             ->orderByDesc('tutors_count')
             ->take(3)
             ->get();
 
         if (Auth::check()) {
-            return view(self::STUDENT_HOME_VIEW, compact('tutors', 'subjects'));
+            // แสดงเฉพาะนัดหมายที่ยืนยันแล้วของนักเรียนคนนี้
+            $studentId = $request->user()->studentProfile?->id;
+            $confirmedAppointments = \App\Domains\Booking\Models\Appointment::with(['subject', 'tutorProfile.user'])
+                ->where('Student_profiles_student_id', $studentId)
+                ->where('status', 'confirmed')
+                ->where('end_datetime', '>=', now('Asia/Bangkok')->format('Y-m-d H:i:s'))
+                ->orderBy('start_datetime')->take(3)->get();
+            return view(self::STUDENT_HOME_VIEW, compact('tutors', 'subjects', 'confirmedAppointments'));
         }
 
         return view('welcome', compact('tutors', 'subjects'));
@@ -43,7 +52,9 @@ class StudentHomeController extends Controller
      */
     public function allSubjects()
     {
-        $subjects = Subject::withCount('tutors')
+        $subjects = Subject::withCount(['tutors' => function ($query) {
+            $query->approved();
+        }])
             ->orderByDesc('tutors_count')
             ->get();
 
@@ -58,7 +69,7 @@ class StudentHomeController extends Controller
     {
         $search = trim((string) $request->query('search', ''));
 
-        $tutors = TutorProfile::with(['user', 'subjects'])
+        $tutors = TutorProfile::approved()->with(['user', 'subjects'])
             ->withCount('reviews')
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($q) use ($search) {

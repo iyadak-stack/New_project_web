@@ -15,7 +15,7 @@ class TutorSearchController extends Controller
     {
         $search = trim($request->input('search', ''));
 
-        $tutors = TutorProfile::with(['user', 'subjects'])
+        $tutors = TutorProfile::approved()->with(['user', 'subjects'])
             ->withCount('reviews')
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($q) use ($search) {
@@ -34,7 +34,9 @@ class TutorSearchController extends Controller
             ->orderByDesc('experience_years')
             ->get();
 
-        $subjects = Subject::with('tutors.user')
+        $subjects = Subject::with(['tutors' => function ($query) {
+            $query->approved()->with('user');
+        }])
             ->when($search !== '', function ($query) use ($search) {
                 $query->where('subject_id', 'like', "%{$search}%")
                     ->orWhere('subject_name', 'like', "%{$search}%");
@@ -46,7 +48,7 @@ class TutorSearchController extends Controller
 
     public function ranking()
     {
-        $tutors = TutorProfile::with(['user', 'subjects'])
+        $tutors = TutorProfile::approved()->with(['user', 'subjects'])
             ->withCount('reviews')
             ->orderByDesc('average_rating')
             ->orderByDesc('experience_years')
@@ -65,7 +67,7 @@ class TutorSearchController extends Controller
                 ->firstOrFail();
         }
 
-        $isApproved = ($tutorProfile->approval_status === 'approved' || ($tutorProfile->status ?? null) === 'approved' || empty($tutorProfile->approval_status));
+        $isApproved = $tutorProfile->approval_status === 'approved';
 
         abort_unless($isApproved || $tutorProfile->Users_user_id == Auth::id(), 404);
 

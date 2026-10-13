@@ -27,7 +27,8 @@ class Review extends Model
         'Tutor_profiles_tutor_id',
     ];
 
-    const DELETED_AT = 'deletedAt';
+    // ใช้คอลัมน์ soft delete ที่มีอยู่จริงในตาราง reviews
+    const DELETED_AT = 'deleted_at';
 
     public function appointment()
     {

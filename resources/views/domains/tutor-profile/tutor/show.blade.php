@@ -40,6 +40,12 @@
             </div>
         @endif
 
+        @if ($errors->hasAny(['subject_id', 'tutor_id', 'appointment_date', 'appointment_time', 'start_datetime', 'end_datetime']))
+            <div role="alert" style="padding: 14px; background: #fff2f2; color: #a53838; border-radius: 10px; margin-bottom: 16px;">
+                @foreach ($errors->all() as $error)<p>{{ $error }}</p>@endforeach
+            </div>
+        @endif
+
         <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
 
             <!-- ฝั่งซ้าย: ข้อมูลติวเตอร์ -->
@@ -77,7 +83,7 @@
                             ประสบการณ์สอน {{ $tutorProfile->experience_years ?? 0 }} ปี
                         </p>
                         <div style="font-size: 13px; color: #e07a5f; font-weight: 600;">
-                            ⭐ {{ number_format($tutorProfile->rating ?? 0, 1) }}
+                            ⭐ {{ number_format($tutorProfile->average_rating ?? 0, 1) }}
                             <span style="color: #94a3b8; font-weight: 400;">({{ $reviewCount }} รีวิว)</span>
                         </div>
                     </div>
@@ -139,7 +145,7 @@
                         @if ($reviewCount > 0)
                             @foreach ($tutorProfile->reviews as $rev)
                                 @php
-                                    $reviewer = $rev->studentProfile->user ?? $rev->user ?? null;
+                                    $reviewer = $rev->appointment?->studentProfile?->user;
                                 @endphp
                                 <div style="background: #f8fafc; padding: 16px; border-radius: 12px; border: 1px solid #f1f5f9;">
                                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
@@ -157,7 +163,7 @@
                                         </div>
                                     </div>
                                     <p style="font-size: 13px; color: #475569; margin: 0; line-height: 1.5;">
-                                        {{ $rev->comment ?? $rev->review_text ?? 'ไม่มีข้อความรีวิว' }}
+                                        {{ $rev->Comment ?? 'ไม่มีข้อความรีวิว' }}
                                     </p>
                                 </div>
                             @endforeach
@@ -195,16 +201,10 @@
                         <!-- รูปแบบการเรียน -->
                         <div style="margin-bottom: 16px;">
                             <label style="font-size: 13px; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">รูปแบบการเรียน</label>
-                            <select name="teaching_mode" style="width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid #cbd5e1; font-size: 14px; color: #1e293b;" required>
-                                @if ($isBoth || (!$hasOnline && !$hasOnsite))
-                                    <option value="online">💻 ออนไลน์ (Online)</option>
-                                    <option value="onsite">📍 ตัวต่อตัว (Onsite)</option>
-                                @elseif ($hasOnline)
-                                    <option value="online">💻 ออนไลน์ (Online)</option>
-                                @else
-                                    <option value="onsite">📍 ตัวต่อตัว (Onsite)</option>
-                                @endif
-                            </select>
+                            <p style="font-size: 13px; color: #475569; margin: 6px 0;">
+    {{ ['online' => 'ออนไลน์', 'onsite' => 'นัดเจอ', 'both' => 'ออนไลน์และนัดเจอ'][$tutorProfile->teaching_mode] ?? 'ยังไม่ระบุ' }}
+</p>
+<p style="font-size: 12px; color: #64748b;">ใช้รูปแบบปัจจุบันของติวเตอร์ กรณีสอนทั้งสองแบบให้ตกลงกันก่อนเรียน</p>
                         </div>
 
                         <!-- เลือกวันที่ (ตารางว่างของติวเตอร์เก็บไว้ใน data-availabilities) -->
@@ -238,36 +238,49 @@
     </main>
 
     <!-- Modal รายงานติวเตอร์ -->
-    <div id="reportModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 9999; align-items: center; justify-content: center;">
+    <div id="reportModal" role="dialog" aria-modal="true" aria-labelledby="reportTitle" style="display: {{ $errors->hasAny(['reason_type', 'description', 'reported_tutor_id']) ? 'flex' : 'none' }}; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 9999; align-items: center; justify-content: center; overflow-y: auto;">
         <div style="background: #ffffff; border-radius: 16px; padding: 24px; max-width: 480px; width: 90%; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                <h3 style="margin: 0; font-size: 18px; color: #1e293b; font-weight: 700;">🚩 รายงานติวเตอร์คนนี้</h3>
+                <h3 id="reportTitle" style="margin: 0; font-size: 18px; color: #1e293b; font-weight: 700;">🚩 รายงานติวเตอร์คนนี้</h3>
                 <button type="button" onclick="closeReportModal()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #94a3b8;">&times;</button>
             </div>
 
-            <form action="{{ route('reports.store') }}" method="POST">
+            {{-- onsubmit ทำงานหลังตรวจ required และถามยืนยันก่อนส่งข้อมูลจริง --}}
+            <form action="{{ route('reports.store') }}" method="POST" onsubmit="return confirmReportSubmission(this)">
                 @csrf
                 <input type="hidden" name="reported_tutor_id" value="{{ $tutorProfile->tutor_id }}">
 
                 <div style="margin-bottom: 12px;">
-                    <label style="font-size: 13px; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">หัวข้อการรายงาน</label>
-                    <select name="reason_type" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 14px;" required>
+                    <label for="reportReason" style="font-size: 13px; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">หัวข้อการรายงาน</label>
+                    <select id="reportReason" name="reason_type" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 14px;" required>
                         <option value="">-- เลือกหัวข้อที่ต้องการรายงาน --</option>
-                        <option value="fake_info">ข้อมูลโปรไฟล์หรือแอบอ้างข้อมูลเท็จ</option>
-                        <option value="inappropriate_behavior">พฤติกรรมหรือภาษาไม่เหมาะสม</option>
-                        <option value="scam">เข้าข่ายหลอกลวง / ฉ้อโกง</option>
-                        <option value="other">อื่นๆ</option>
+                        {{-- value เป็น Reason_id จริง จึงบันทึกเชื่อมกับตารางประเภทได้ --}}
+                        @foreach ($reportReasons as $reason)
+                            <option value="{{ $reason->Reason_id }}" @selected(old('reason_type') === $reason->Reason_id)>{{ $reason->reason_name }}</option>
+                        @endforeach
                     </select>
+                    @error('reason_type')
+                        <p role="alert" style="color: #b91c1c; font-size: 13px;">{{ $message }}</p>
+                    @enderror
+                    @if ($reportReasons->isEmpty())
+                        <p role="alert" style="color: #b91c1c; font-size: 13px;">ยังไม่มีประเภทการรายงาน กรุณาติดต่อผู้ดูแลระบบ</p>
+                    @endif
                 </div>
 
                 <div style="margin-bottom: 16px;">
-                    <label style="font-size: 13px; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">รายละเอียดเพิ่มเติม</label>
-                    <textarea name="description" rows="4" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 14px;" placeholder="อธิบายรายละเอียดปัญหาที่พบ..." required></textarea>
+                    <label for="reportDescription" style="font-size: 13px; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">รายละเอียดเพิ่มเติม</label>
+                    <textarea id="reportDescription" name="description" rows="4" maxlength="3000" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 14px;" placeholder="อธิบายรายละเอียดปัญหาที่พบ..." required>{{ old('description') }}</textarea>
+                    @error('description')
+                        <p role="alert" style="color: #b91c1c; font-size: 13px;">{{ $message }}</p>
+                    @enderror
+                    @error('reported_tutor_id')
+                        <p role="alert" style="color: #b91c1c; font-size: 13px;">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <div style="display: flex; gap: 8px; justify-content: flex-end;">
                     <button type="button" onclick="closeReportModal()" style="padding: 10px 18px; border-radius: 8px; border: 1px solid #cbd5e1; background: #ffffff; color: #64748b; font-weight: 500; cursor: pointer;">ยกเลิก</button>
-                    <button type="submit" style="padding: 10px 18px; border-radius: 8px; border: none; background: #ef4444; color: #ffffff; font-weight: 600; cursor: pointer;">ส่งรายงาน</button>
+                    <button type="submit" @disabled($reportReasons->isEmpty()) style="padding: 10px 18px; border-radius: 8px; border: none; background: #ef4444; color: #ffffff; font-weight: 600; cursor: pointer;">ส่งรายงาน</button>
                 </div>
             </form>
         </div>
@@ -375,6 +388,19 @@
 
         function closeReportModal() {
             document.getElementById('reportModal').style.display = 'none';
+        }
+
+        // กดยกเลิกใน popup จะไม่ส่งฟอร์ม และข้อมูลที่กรอกยังอยู่
+        function confirmReportSubmission(form) {
+            if (!window.confirm('คุณต้องการส่งรายงานติวเตอร์คนนี้ให้แอดมินตรวจสอบจริง ๆ ใช่ไหม?')) {
+                return false;
+            }
+
+            // ปิดปุ่มหลังยืนยัน เพื่อป้องกันการกดซ้ำระหว่างรอ Server
+            var submitButton = form.querySelector('button[type="submit"]');
+            submitButton.disabled = true;
+            submitButton.textContent = 'กำลังส่งรายงาน...';
+            return true;
         }
     </script>
 </body>

@@ -26,7 +26,7 @@
             <a href="{{ route('student.tutors.index') }}" class="menu-btn {{ request()->routeIs('student.tutors.*') ? 'active' : '' }}">ติวเตอร์ทั้งหมด</a>
             <a href="{{ route('appointments.index') }}" class="menu-btn {{ request()->routeIs('appointments.*') ? 'active' : '' }}">ตารางนัดหมาย</a>
             <a href="{{ route('tutor.favorites') }}" class="menu-btn {{ request()->routeIs('tutor.favorites') ? 'active' : '' }}">รายการโปรด</a>
-            <a href="{{ route('notifications.index') }}" class="menu-btn {{ request()->routeIs('notifications.*') ? 'active' : '' }}">แจ้งเตือน</a>
+            <x-notification-bell />
 
             <!-- รูปโปรไฟล์วงกลม + Pop-over Card "โปรไฟล์ของฉัน" -->
             <div class="user-profile-wrapper">
@@ -75,6 +75,10 @@
                             <input type="hidden" name="role" value="tutor">
                             <button type="submit" class="role-card role-btn" style="width: 100%; text-align: left; padding: 8px 10px; border-radius: 8px;">
                                 <h5 style="margin: 0; font-size: 13px;">ติวเตอร์</h5>
+                                {{-- คำขอยังรอตรวจ แสดงสถานะใต้ชื่อบทบาท --}}
+                                @if (Auth::user()?->tutorProfile()->value('approval_status') === 'pending')
+                                    <span style="display: block; margin-top: 4px; font-size: 11px; color: #a16207;">กำลังตรวจสอบ</span>
+                                @endif
                             </button>
                         </form>
                     </div>
@@ -94,7 +98,7 @@
     <main style="max-width: 1200px; margin: 32px auto; padding: 0 20px;">
 
         <!-- Header กล่องข้อมูลวิชา -->
-        <div style="background: linear-gradient(135deg, #fff5f2 0%, #ffffff 100%); border-radius: 20px; border: 1px solid #fdeee8; padding: 28px; margin-bottom: 32px; box-shadow: 0 4px 15px rgba(224, 122, 95, 0.05);">
+        <div style="background-color: #fdf3ee; border-radius: 16px; border: 1px solid #f0d9d0; padding: 28px; margin-bottom: 32px;">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
                 <div>
                     <h1 style="font-size: 28px; font-weight: 700; color: #1e293b; margin: 0 0 8px 0;">
@@ -110,7 +114,7 @@
                 </button>
             </div>
 
-            <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid #fdeee8; display: flex; align-items: center; gap: 12px;">
+            <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid #f0d9d0; display: flex; align-items: center; gap: 12px;">
                 <span style="font-size: 14px; font-weight: 600; color: #e07a5f; background: #fdeee8; padding: 6px 16px; border-radius: 20px;">
                     🎯 มีติวเตอร์พร้อมสอน {{ $subject->tutors ? $subject->tutors->count() : 0 }} ท่าน
                 </span>

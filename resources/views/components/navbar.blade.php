@@ -1,9 +1,38 @@
 @php
     // เช็กบทบาทจาก Session ก่อน ถ้าไม่มีให้เช็กจากคอลัมน์ current_role ของผู้ใช้ หรือ default เป็น 'student'
-    $currentRole = session('active_role', Auth::user()->current_role ?? 'student');
+    $currentRole = session('active_role', Auth::user()?->current_role ?? 'student');
 @endphp
 
-@if ($currentRole === 'tutor')
+@if (Auth::guest())
+    {{-- ยังไม่ล็อกอิน: ไม่มีข้อมูลผู้ใช้ จึงไม่แสดงรูปหรือเมนูโปรไฟล์ส่วนตัว --}}
+    <header class="navbar">
+        <a href="{{ route('home') }}" class="logo">PeerTutor</a>
+        <form action="{{ route('tutor.search') }}" method="GET" class="search-box">
+            <input type="text" name="search" value="{{ request('search') }}" placeholder="ค้นหาวิชา ติวเตอร์" aria-label="ค้นหาวิชา ติวเตอร์">
+            <button type="submit">ค้นหา</button>
+        </form>
+        <nav class="menu" aria-label="เมนูผู้เยี่ยมชม">
+            <a href="{{ route('home') }}" class="menu-btn">หน้าแรก</a>
+            <a href="{{ route('tutor.search') }}" class="menu-btn">ค้นหาติวเตอร์</a>
+            <a href="{{ route('login') }}" class="menu-btn">เข้าสู่ระบบ</a>
+            <a href="{{ route('register') }}" class="menu-btn">สมัครสมาชิก</a>
+        </nav>
+    </header>
+@elseif (Auth::user()->role === 'admin' || Auth::user()->current_role === 'admin')
+    {{-- แอดมินมีทางเข้ากล่องรับรายงาน โดยตรวจบทบาทซ้ำใน Controller --}}
+    <header class="navbar">
+        <a href="{{ route('home') }}" class="logo">PeerTutor</a>
+        <nav class="menu" aria-label="เมนูแอดมิน">
+            <a href="{{ route('admin.dashboard') }}" class="menu-btn">หน้าจัดการแอดมิน</a>
+            <a href="{{ route('admin.reports.index') }}" class="menu-btn {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">รายงานจากผู้ใช้</a>
+            <x-notification-bell />
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button type="submit" class="menu-btn">ออกจากระบบ</button>
+            </form>
+        </nav>
+    </header>
+@elseif ($currentRole === 'tutor')
     <!-- ================= NAVBAR ติวเตอร์ ================= -->
     <header class="pt-navbar">
         <a href="{{ route('home') }}" class="logo">PeerTutor</a>
@@ -15,10 +44,11 @@
 
         <nav class="menu">
             <a href="{{ route('home') }}" class="menu-btn {{ request()->routeIs('home') ? 'active' : '' }}">หน้าแรก</a>
-            <a href="{{ route('subjects.index') }}" class="menu-btn {{ request()->routeIs('subjects.*') ? 'active' : '' }}">รายวิชาทั้งหมด</a>
-            <a href="{{ route('tutor.tutors') }}" class="menu-btn {{ request()->routeIs('tutor.tutors') ? 'active' : '' }}">ติวเตอร์ทั้งหมด</a>
+            <a href="{{ route('tutor.subjects.index') }}" class="menu-btn {{ request()->routeIs('tutor.subjects.*') ? 'active' : '' }}">วิชาของฉัน</a>
+            {{-- จัดเวลามีหน้าและสถานะ active ของตัวเอง --}}
+            <a href="{{ route('tutor.schedule.index') }}" class="menu-btn {{ request()->routeIs('tutor.schedule.*') ? 'active' : '' }}">จัดเวลา</a>
             <a href="{{ route('appointments.index') }}" class="menu-btn {{ request()->routeIs('appointments.*') ? 'active' : '' }}">ตารางนัดหมาย</a>
-            <a href="{{ route('notifications.index') }}" class="menu-btn {{ request()->routeIs('notifications.*') ? 'active' : '' }}">แจ้งเตือน</a>
+            <x-notification-bell />
 
             <!-- Pop-over Card บทบาทติวเตอร์ -->
             <div class="user-profile-wrapper">
@@ -68,6 +98,10 @@
                             <input type="hidden" name="role" value="tutor">
                             <button type="submit" class="role-card role-btn active" style="width: 100%; text-align: left; padding: 8px 10px; border-radius: 8px;">
                                 <h5 style="margin: 0; font-size: 13px;">ติวเตอร์</h5>
+                                {{-- คำขอยังรอตรวจ แสดงสถานะใต้ชื่อบทบาท --}}
+                                @if (Auth::user()?->tutorProfile()->value('approval_status') === 'pending')
+                                    <span style="display: block; margin-top: 4px; font-size: 11px; color: #a16207;">กำลังตรวจสอบ</span>
+                                @endif
                             </button>
                         </form>
                     </div>
@@ -100,7 +134,7 @@
             <a href="{{ route('student.tutors.index') }}" class="menu-btn {{ request()->routeIs('student.tutors.*') ? 'active' : '' }}">ติวเตอร์ทั้งหมด</a>
             <a href="{{ route('appointments.index') }}" class="menu-btn {{ request()->routeIs('appointments.*') ? 'active' : '' }}">ตารางนัดหมาย</a>
             <a href="{{ route('tutor.favorites') }}" class="menu-btn {{ request()->routeIs('tutor.favorites') ? 'active' : '' }}">รายการโปรด</a>
-            <a href="{{ route('notifications.index') }}" class="menu-btn {{ request()->routeIs('notifications.*') ? 'active' : '' }}">แจ้งเตือน</a>
+            <x-notification-bell />
 
             <!-- Pop-over Card บทบาทนักเรียน -->
             <div class="user-profile-wrapper">
@@ -150,6 +184,10 @@
                             <input type="hidden" name="role" value="tutor">
                             <button type="submit" class="role-card role-btn" style="width: 100%; text-align: left; padding: 8px 10px; border-radius: 8px;">
                                 <h5 style="margin: 0; font-size: 13px;">ติวเตอร์</h5>
+                                {{-- คำขอยังรอตรวจ แสดงสถานะใต้ชื่อบทบาท --}}
+                                @if (Auth::user()?->tutorProfile()->value('approval_status') === 'pending')
+                                    <span style="display: block; margin-top: 4px; font-size: 11px; color: #a16207;">กำลังตรวจสอบ</span>
+                                @endif
                             </button>
                         </form>
                     </div>

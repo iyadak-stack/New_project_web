@@ -29,7 +29,17 @@ class TutorProfile extends Model
         'discord_id',
         'zoom_link',
         'approval_status',
+        'submitted_at',
+        'reject_reason',
     ];
+
+    protected $casts = ['submitted_at' => 'datetime'];
+
+    // ใช้ในหน้าค้นหาและหน้ารวม เพื่อแสดงเฉพาะติวเตอร์ที่อนุมัติแล้ว
+    public function scopeApproved($query)
+    {
+        return $query->where('approval_status', 'approved');
+    }
 
     /**
      * 🟢 ระบุให้ Route Model Binding ค้นหาจากคอลัมน์ tutor_id

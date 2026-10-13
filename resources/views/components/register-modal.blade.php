@@ -1,8 +1,9 @@
 @php
-    $hasRegisterError = $errors->has('first_name') || $errors->has('last_name') || $errors->has('password') || $errors->has('password_confirmation') || ($errors->has('email') && session('is_register_error'));
+    $hasRegisterError = session('is_register_error') || $errors->has('first_name') || $errors->has('last_name') || $errors->has('password') || $errors->has('password_confirmation') || ($errors->has('email') && session('is_register_error'));
     $autoOpen = session('open_register') || $hasRegisterError;
 @endphp
 
+<link rel="stylesheet" href="{{ asset('CSS/tutor-application.css') }}">
 <dialog class="login-modal register-modal" id="registerModal" data-auto-open="{{ $autoOpen ? '1' : '0' }}">
     <div class="login-box register-box">
         <!-- ปุ่มปิดป๊อปอัพ (X) -->
@@ -52,8 +53,37 @@
                 @enderror
             </div>
 
+            @if (session('is_register_error') && $errors->any())
+                <div role="alert">
+                    @foreach ($errors->all() as $error)<p>{{ $error }}</p>@endforeach
+                </div>
+            @endif
             <!-- ข้อมูลเพิ่มเติมสำหรับติวเตอร์ (ซ่อน/แสดงตามบทบาท) -->
             <div id="modal-tutor-fields" style="display: none;">
+                {{-- สมัครติวเตอร์ต้องมีข้อมูลให้แอดมินตรวจ ไม่เปิดสิทธิ์ทันที --}}
+                <p>คำขอจะส่งให้แอดมินตรวจสอบ ก่อนใช้งานบทบาทติวเตอร์</p>
+                <div class="form-group">
+                    <label>แนะนำตัวและแนวทางการสอน</label>
+                    <textarea name="bio" rows="3" maxlength="3000">{{ old('bio') }}</textarea>
+                </div>
+                <div class="form-group">
+                    <label>ประสบการณ์ (ปี)</label>
+                    <input type="number" name="experience_years" min="0" value="{{ old('experience_years', 0) }}">
+                </div>
+                <div class="form-group">
+                    <label>รูปแบบการสอน</label>
+                    <select name="teaching_mode">
+                        <option value="online" @selected(old('teaching_mode') === 'online')>ออนไลน์</option>
+                        <option value="onsite" @selected(old('teaching_mode') === 'onsite')>นัดเจอ</option>
+                        <option value="both" @selected(old('teaching_mode') === 'both')>ทั้งสองแบบ</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>วิชาที่สอน (เลือกอย่างน้อย 1 วิชา)</label>
+                    @foreach (\App\Domains\Booking\Models\Subject::orderBy('subject_name')->get() as $subject)
+                        <label><input type="checkbox" name="subjects[]" value="{{ $subject->subject_id }}" @checked(in_array($subject->subject_id, old('subjects', [])))> {{ $subject->subject_name }}</label>
+                    @endforeach
+                </div>
                 <!-- LINE ID -->
                 <div class="form-group">
                     <label>LINE ID <span style="font-weight: normal; color: #9ca3af; font-size: 12px;">(ไม่บังคับ)</span></label>

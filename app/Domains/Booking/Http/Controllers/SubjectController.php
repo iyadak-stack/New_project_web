@@ -18,7 +18,10 @@ class SubjectController extends Controller
     // แสดงรายละเอียดวิชาพร้อมรายชื่อติวเตอร์ที่สอนวิชานี้
     public function show($id)
     {
-        $subject = Subject::with(['tutors.user'])->findOrFail($id);
+        // หน้าแสดงวิชาให้เห็นเฉพาะติวเตอร์ที่ผ่านการอนุมัติแล้ว
+        $subject = Subject::with(['tutors' => function ($query) {
+            $query->approved()->with('user');
+        }])->findOrFail($id);
         return view('domains.booking.subjects.show', compact('subject'));
     }
 

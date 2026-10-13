@@ -1,0 +1,27 @@
+/* ฟอร์มสมัครติวเตอร์มีข้อมูลเพิ่ม ให้เลื่อนดูได้บนจอเล็ก */
+dialog.register-modal {
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+#modal-tutor-fields textarea,
+#modal-tutor-fields select {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font: inherit;
+}
+
+#modal-tutor-fields input[type="checkbox"] {
+    width: auto;
+    margin-right: 6px;
+    accent-color: #e07a5f;
+}
+
+#modal-tutor-fields p {
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.8;
+}

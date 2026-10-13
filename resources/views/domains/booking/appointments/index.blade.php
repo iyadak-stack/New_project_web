@@ -26,11 +26,21 @@
             </div>
         @endif
 
+        @if ($errors->any())
+            <div role="alert" style="background: #fff2f2; color: #a53838; padding: 14px; border-radius: 10px; margin-bottom: 16px;">
+                @foreach ($errors->all() as $error)<p>{{ $error }}</p>@endforeach
+            </div>
+        @endif
+
         <!-- หัวข้อหน้า -->
         <div class="appt-header">
             <div class="appt-title">
-                <h1>📅 ตารางนัดหมายและการสอน</h1>
-                <p>ตรวจสอบ ตอบรับคำขอจองเรียน และจัดการตารางสอนของคุณได้ในที่เดียว</p>
+                <h1>ตารางนัดหมาย</h1>
+                @if (auth()->user()->current_role === 'tutor')
+                    <p>ตรวจคำขอจากนักเรียน แล้วกดยืนยันหรือปฏิเสธการเรียน</p>
+                @else
+                    <p>ติดตามคำขอเรียนของคุณ และดูช่องทางเรียนหลังติวเตอร์ยืนยัน</p>
+                @endif
             </div>
         </div>
 
@@ -113,7 +123,7 @@
                                 </div>
                                 <div class="detail-item">
                                     💻 <strong>รูปแบบ:</strong> 
-                                    {{ $appt->teaching_mode === 'onsite' ? '📍 นัดเจอ (Onsite)' : 'ออนไลน์ (Online)' }}
+                                    {{ ['online'=>'ออนไลน์', 'onsite'=>'นัดเจอ', 'both'=>'ออนไลน์และนัดเจอ'][$appt->tutorProfile?->teaching_mode] ?? 'ยังไม่ระบุ' }}
                                 </div>
                                 @if (!empty($appt->note))
                                     <div style="background: #f8fafc; padding: 8px 10px; border-radius: 8px; font-size: 12px; color: #64748b; margin-top: 4px;">
@@ -128,7 +138,7 @@
                             @if ($appt->status === 'pending' && $isTutor)
                                 <form action="{{ route('appointments.accept', $appt->Appointment_id ?? $appt->id) }}" method="POST" style="margin:0; flex:1;">
                                     @csrf
-                                    <button type="submit" class="btn-accept" style="width:100%;">ตอบรับคำขอ</button>
+                                    <button type="submit" class="btn-accept" style="width:100%;" onclick="return confirm('ยืนยันรับคำขอเรียนนี้ใช่ไหม?')">ยืนยันคำขอ</button>
                                 </form>
 
                                 <form action="{{ route('appointments.reject', $appt->Appointment_id ?? $appt->id) }}" method="POST" style="margin:0;">

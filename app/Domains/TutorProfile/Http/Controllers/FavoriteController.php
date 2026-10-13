@@ -48,9 +48,13 @@ class FavoriteController extends Controller
 
     public function tutorFavorites()
     {
+        // แสดงเฉพาะรายการของคนที่เข้าสู่ระบบ และข้ามโปรไฟล์ที่ไม่มีผู้ใช้แล้ว
+        // with โหลดผู้ใช้และวิชามาพร้อมกัน เพื่อลดการเรียกฐานข้อมูลใน foreach
         $favorites = Favorite::where('Users_user_id', auth()->id())
             ->whereNotNull('Tutor_profiles_tutor_id')
-            ->with('tutorProfile.user')
+            ->whereHas('tutorProfile.user')
+            ->with(['tutorProfile.user', 'tutorProfile.subjects'])
+            ->orderByDesc('created_at')
             ->get();
 
         return view(

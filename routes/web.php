@@ -8,6 +8,9 @@ use App\Domains\TutorProfile\Http\Controllers\StudentHomeController;
 use App\Domains\TutorProfile\Http\Controllers\StudentProfileController;
 use App\Domains\TutorProfile\Http\Controllers\TutorProfileController;
 use App\Domains\TutorProfile\Http\Controllers\TutorSearchController;
+use App\Domains\TutorProfile\Http\Controllers\TutorTeachingController;
+use App\Domains\TutorProfile\Http\Controllers\TutorApplicationController;
+use App\Http\Controllers\AdminTutorApplicationController;
 
 use App\Domains\TutorProfile\Http\Controllers\FavoriteController;
 use App\Domains\Booking\Http\Controllers\SubjectController;
@@ -20,6 +23,7 @@ use App\Domains\Auth\Http\Controllers\RoleController;
 use App\Domains\Reportreview\Http\Controllers\ReviewController;
 use App\Domains\Reportreview\Http\Controllers\Admin\ReportController;
 use App\Domains\Auth\Models\User;
+use App\Http\Controllers\AdminController;
 use App\Domains\Booking\Models\Appointment;
 
 // =========================
@@ -27,6 +31,9 @@ use App\Domains\Booking\Models\Appointment;
 // =========================
 Route::get('/', function (Request $request) {
     if (auth()->check()) {
+        if (auth()->user()->role === 'admin' || auth()->user()->current_role === 'admin') {
+            return redirect()->route('admin.dashboard');
+        }
         if (auth()->user()->current_role === 'tutor') {
             $user = auth()->user();
             $tutorId = $user->tutorProfile->tutor_id ?? null;
@@ -129,6 +136,16 @@ Route::get('/tutors/{id}', [TutorProfileController::class, 'show'])
 // กลุ่ม Route ที่ต้องล็อกอิน (Auth Middleware)
 // =========================
 Route::middleware(['auth'])->group(function () {
+    // ผู้สมัครยังเป็นนักเรียน จึงไม่ครอบฟอร์มคำขอด้วย role:tutor
+    Route::get('/tutor/application', [TutorApplicationController::class, 'index'])->name('tutor.application.index');
+    Route::middleware('role:tutor')->group(function () {
+        Route::get('/tutor/subjects', [TutorTeachingController::class, 'index'])->name('tutor.subjects.index');
+        Route::put('/tutor/subjects', [TutorTeachingController::class, 'update'])->name('tutor.subjects.update');
+        // จัดเวลาแยกจากหน้าวิชา แต่ใช้ข้อมูลเวลาว่างในตารางเดิม
+        Route::get('/tutor/schedule', [TutorTeachingController::class, 'schedule'])->name('tutor.schedule.index');
+        Route::post('/tutor/schedule', [TutorTeachingController::class, 'addAvailability'])->name('tutor.schedule.store');
+        Route::delete('/tutor/schedule/{id}', [TutorTeachingController::class, 'deleteAvailability'])->name('tutor.schedule.destroy');
+    });
 
     // กันเข้า URL /dashboard ให้วิ่งกลับไปหน้าหลัก
     Route::get('/dashboard', function () {
@@ -167,7 +184,6 @@ Route::middleware(['auth'])->group(function () {
         ->name('tutor.profile.update');
 
     Route::post('/tutor/application/submit', [TutorProfileController::class, 'submitApplication'])
-        ->middleware('role:tutor')
         ->name('tutor.application.submit');
 
 
@@ -184,7 +200,8 @@ Route::middleware(['auth'])->group(function () {
     // =========================
     // จัดการรายวิชา (Subjects Resource)
     // =========================
-    Route::resource('subjects', SubjectController::class)->except(['index']);
+    Route::resource('subjects', SubjectController::class)->only(['show']);
+    Route::resource('subjects', SubjectController::class)->except(['index', 'show'])->middleware('admin');
 
 
     // =========================
@@ -233,7 +250,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/notifications', [NotificationController::class, 'index'])
         ->name('notifications.index');
 
-    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
 
     Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy'])
         ->name('notifications.destroy');
@@ -305,3 +323,27 @@ Route::middleware(['auth'])->group(function () {
 });
 
 require __DIR__.'/settings.php';
+
+// เมนูแอดมินทั้งหมดตรวจ auth + admin ทั้งหน้าอ่านและคำสั่งบันทึก
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
+    Route::get('/tutor-applications', [AdminTutorApplicationController::class, 'index'])->name('tutor-applications.index');
+    Route::get('/tutor-applications/{id}', [AdminTutorApplicationController::class, 'show'])->name('tutor-applications.show');
+    Route::patch('/tutor-applications/{id}', [AdminTutorApplicationController::class, 'decide'])->name('tutor-applications.decide');
+    Route::get('/users', [AdminController::class, 'users'])->name('users.index');
+    Route::get('/users/{id}', [AdminController::class, 'user'])->name('users.show');
+    Route::patch('/users/{id}/status', [AdminController::class, 'updateUserStatus'])->name('users.status');
+    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::patch('/reports/{id}/status', [AdminController::class, 'updateReport'])->name('reports.status');
+    Route::get('/report-reasons', [AdminController::class, 'reasons'])->name('reasons.index');
+    Route::post('/report-reasons', [AdminController::class, 'saveReason'])->name('reasons.store');
+    Route::put('/report-reasons/{id}', [AdminController::class, 'saveReason'])->name('reasons.update');
+    Route::delete('/report-reasons/{id}', [AdminController::class, 'deleteReason'])->name('reasons.destroy');
+    Route::get('/subjects', [AdminController::class, 'subjects'])->name('subjects.index');
+    Route::post('/subjects', [AdminController::class, 'saveSubject'])->name('subjects.store');
+    Route::put('/subjects/{id}', [AdminController::class, 'saveSubject'])->name('subjects.update');
+    Route::delete('/subjects/{id}', [AdminController::class, 'deleteSubject'])->name('subjects.destroy');
+    Route::get('/reviews', [AdminController::class, 'reviews'])->name('reviews.index');
+    Route::patch('/reviews/{id}/visibility', [AdminController::class, 'updateReviewVisibility'])->name('reviews.visibility');
+    Route::get('/appointments', [AdminController::class, 'appointments'])->name('appointments.index');
+});

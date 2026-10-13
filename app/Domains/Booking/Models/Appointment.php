@@ -30,4 +30,14 @@ class Appointment extends Model
     {
         return $this->belongsTo(Subject::class, 'Subject_subject_id', 'subject_id');
     }
+
+    public function studentProfile()
+    {
+        return $this->belongsTo(\App\Domains\TutorProfile\Models\StudentProfile::class, 'Student_profiles_student_id', 'id');
+    }
+
+    public function tutorProfile()
+    {
+        return $this->belongsTo(\App\Domains\TutorProfile\Models\TutorProfile::class, 'Tutor_profiles_tutor_id', 'tutor_id');
+    }
 }

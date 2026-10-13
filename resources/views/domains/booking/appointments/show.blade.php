@@ -106,10 +106,28 @@
                     </div>
                     <div>
                         <span style="color: #94a3b8; font-size: 12px; display: block;">รูปแบบการสอน</span>
-                        <strong>{{ $appointment->teaching_mode === 'onsite' ? '📍 ตัวต่อตัว (Onsite)' : '💻 ออนไลน์ (Online)' }}</strong>
+                        <strong>{{ ['online'=>'ออนไลน์', 'onsite'=>'นัดเจอ', 'both'=>'ออนไลน์และนัดเจอ'][$appointment->tutorProfile?->teaching_mode] ?? 'ยังไม่ระบุ' }}</strong>
                     </div>
                 </div>
             </div>
+
+            {{-- ตามที่ตกลง ใช้ช่องทางปัจจุบันในโปรไฟล์ ไม่สร้างคอลัมน์ของนัดหมายเพิ่ม --}}
+            @if ($appointment->status === 'confirmed')
+                @php $contact = $appointment->tutorProfile?->user?->contact; @endphp
+                <section style="background: #fdeee8; border: 1px solid #f6cfc2; border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+                    <h2 style="font-size: 16px; margin: 0 0 12px;">ช่องทางเรียนและติดต่อ</h2>
+                    <p style="font-size: 13px;">Line: {{ $contact?->line_id ?: 'ยังไม่ระบุ' }} · Discord: {{ $contact?->discord_id ?: 'ยังไม่ระบุ' }}</p>
+                    @if ($contact?->zoom_link)
+                        <p><a href="{{ $contact->zoom_link }}" target="_blank" rel="noopener noreferrer">เปิดห้องเรียน Zoom</a></p>
+                    @endif
+                    @if ($contact?->google_meet_link)
+                        <p><a href="{{ $contact->google_meet_link }}" target="_blank" rel="noopener noreferrer">เปิดห้องเรียน Google Meet</a></p>
+                    @endif
+                    <p style="font-size: 12px; color: #64748b;">ข้อมูลนี้มาจากโปรไฟล์ปัจจุบันของติวเตอร์ หากนัดเจอให้ติดต่อเพื่อตกลงสถานที่</p>
+                </section>
+            @elseif ($appointment->status === 'pending')
+                <p style="font-size: 13px; color: #64748b;">รอติวเตอร์ยืนยันคำขอ ก่อนเปิดดูช่องทางเรียน</p>
+            @endif
 
             <!-- หมายเหตุเพิ่มเติม -->
             @if (!empty($appointment->note))

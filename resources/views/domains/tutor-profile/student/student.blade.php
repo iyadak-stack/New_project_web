@@ -22,6 +22,19 @@
         </section>
 
         <!-- Top Tutors Section -->
+        @if ($confirmedAppointments->isNotEmpty())
+            <section style="margin-top: 24px; border: 1px solid #f0d9d0; border-radius: 16px; padding: 16px 20px;">
+                <h2 style="font-size: 18px; margin: 0 0 12px;">การเรียนที่ติวเตอร์ยืนยันแล้ว</h2>
+                @foreach ($confirmedAppointments as $lesson)
+                    <div style="padding: 12px 0; border-bottom: 1px solid #f1f5f9;">
+                        <strong>{{ $lesson->subject?->subject_name }} · พี่{{ $lesson->tutorProfile?->user?->first_name }}</strong>
+                        <p style="font-size: 13px; color: #64748b;">{{ \Carbon\Carbon::parse($lesson->start_datetime)->format('d/m/Y H:i') }} – {{ \Carbon\Carbon::parse($lesson->end_datetime)->format('H:i') }}</p>
+                        <a href="{{ route('appointments.show', $lesson->Appointment_id) }}" style="font-size: 13px; color: #b84d35;">ดูรายละเอียดและช่องทางเรียน →</a>
+                    </div>
+                @endforeach
+            </section>
+        @endif
+
         <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 32px; margin-bottom: 12px;">
             <div>
                 <h2 class="section-title" style="margin: 0;">ติวเตอร์ยอดนิยม</h2>

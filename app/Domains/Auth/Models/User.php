@@ -139,6 +139,7 @@ class User extends Authenticatable implements PasskeyUser
     // รายการ Favorite ทั้งหมดที่ User คนนี้กดเซฟไว้
     public function favorites(): HasMany
     {
-        return $this->hasMany(Favorite::class, 'user_id', 'user_id');
+        // favorites เก็บรหัสผู้ใช้ใน Users_user_id ไม่ใช่ user_id
+        return $this->hasMany(Favorite::class, 'Users_user_id', 'user_id');
     }
 }

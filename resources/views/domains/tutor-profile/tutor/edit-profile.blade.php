@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>แก้ไขโปรไฟล์ติวเตอร์ - PeerTutor</title>
+    <title>{{ ($isApplication ?? false) ? 'คำขอเป็นติวเตอร์' : 'แก้ไขโปรไฟล์ติวเตอร์' }} - PeerTutor</title>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/home.css') }}?v={{ time() }}">
     <link rel="stylesheet" href="{{ asset('css/tutor-profile-edit.css') }}?v={{ time() }}">
@@ -14,6 +14,8 @@
 <body>
 
 @php
+    $isApplication = $isApplication ?? false;
+    $isPending = $isApplication && $tutorProfile?->approval_status === 'pending';
     $user = auth()->user();
     $avatarUrl = $user->profile_picture
         ? asset('storage/' . $user->profile_picture)
@@ -43,8 +45,15 @@
     <main class="pe-page">
         <div class="pe-card">
 
-            <h1 class="pe-title">แก้ไขโปรไฟล์ติวเตอร์</h1>
-            <p class="pe-sub">อัปเดตข้อมูลส่วนตัว ข้อมูลการสอน และช่องทางการติดต่อของคุณ</p>
+            <h1 class="pe-title">{{ $isApplication ? 'คำขอเป็นติวเตอร์' : 'แก้ไขโปรไฟล์ติวเตอร์' }}</h1>
+            <p class="pe-sub">{{ $isApplication ? 'กรอกข้อมูลการสอนและส่งให้แอดมินตรวจสอบ ก่อนใช้งานบทบาทติวเตอร์' : 'อัปเดตข้อมูลส่วนตัว ข้อมูลการสอน และช่องทางการติดต่อของคุณ' }}</p>
+            @if (session('success'))<p role="status">{{ session('success') }}</p>@endif
+            @if (session('error'))<p role="alert">{{ session('error') }}</p>@endif
+            @if ($isPending)
+                <p class="pe-sub">สถานะ: รอแอดมินอนุมัติ ระหว่างนี้ใช้งานเป็นนักเรียนได้</p>
+            @elseif ($isApplication && $tutorProfile?->approval_status === 'rejected')
+                <p role="alert">คำขอไม่ผ่าน: {{ $tutorProfile->reject_reason }} กรุณาแก้ไขข้อมูลและส่งใหม่</p>
+            @endif
 
             @if ($errors->any())
                 <div class="pe-errors">
@@ -56,9 +65,11 @@
                 </div>
             @endif
 
-            <form action="{{ route('tutor.profile.update') }}" method="POST" enctype="multipart/form-data">
+            <form action="{{ route($isApplication ? 'tutor.application.submit' : 'tutor.profile.update') }}" method="POST" enctype="multipart/form-data">
                 @csrf
 
+                {{-- ระหว่างรอตรวจ ไม่ให้เปลี่ยนข้อมูลที่แอดมินกำลังตรวจ --}}
+                <fieldset @disabled($isPending) style="border: none; padding: 0; margin: 0; min-width: 0;">
                 <!-- รูปโปรไฟล์ -->
                 <div class="pe-avatar-wrap">
                     <div class="pe-avatar">
@@ -173,9 +184,10 @@
 
                 <!-- ปุ่มกด -->
                 <div class="pe-actions">
-                    <button type="submit" class="pe-save">บันทึกข้อมูล</button>
+                    <button type="submit" class="pe-save">{{ $isPending ? 'รอแอดมินอนุมัติ' : ($isApplication ? 'ยืนยันและส่งคำขอ' : 'บันทึกข้อมูล') }}</button>
                     <a href="javascript:history.back()" class="pe-cancel">ยกเลิก</a>
                 </div>
+                </fieldset>
             </form>
         </div>
     </main>

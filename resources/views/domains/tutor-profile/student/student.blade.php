@@ -15,6 +15,13 @@
     <x-navbar />
 
     <main class="page">
+        <!-- ข้อความแจ้งเตือน Flash Message (เช่น หลังสลับบทบาท) -->
+        @if (session('success'))
+            <div style="background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; padding: 12px 16px; border-radius: 10px; font-size: 14px; margin-bottom: 20px;">
+                ✅ {{ session('success') }}
+            </div>
+        @endif
+
         <!-- Welcome Section -->
         <section class="welcome-box">
             <h1>ยินดีต้อนรับคุณ <b style="color:#e07a5f;">{{ Auth::user()->first_name }}</b> สู่ <b>PeerTutor</b></h1>
@@ -35,11 +42,16 @@
             </section>
         @endif
 
+        <!-- ส่วนติวเตอร์ยอดนิยม (ย้ายปุ่มขึ้นมาขนานขวาบน) -->
         <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 32px; margin-bottom: 12px;">
             <div>
                 <h2 class="section-title" style="margin: 0;">ติวเตอร์ยอดนิยม</h2>
                 <p class="section-sub" style="margin: 4px 0 0 0;">สำรวจติวเตอร์ที่มีคะแนนสูงสุด</p>
             </div>
+            <!-- ปุ่มดูติวเตอร์ทั้งหมด ย้ายมาขนานที่นี่ -->
+            <a href="{{ route('student.tutors.index') }}" style="color: #e07a5f; font-weight: 600; font-size: 14px; text-decoration: none;">
+                ดูติวเตอร์ทั้งหมด ➔
+            </a>
         </div>
 
         <div class="grid">
@@ -50,10 +62,6 @@
             @else
                 <p style="color: #94a3b8; font-size: 14px; grid-column: 1 / -1;">ยังไม่มีข้อมูลติวเตอร์ในระบบ</p>
             @endif
-        </div>
-
-        <div style="text-align: right; margin-top: 16px;">
-            <x-text-arrow-link :href="route('student.tutors.index')" label="ดูติวเตอร์ทั้งหมด" />
         </div>
 
         <!-- Top Subjects Section -->

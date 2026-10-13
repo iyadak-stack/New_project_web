@@ -134,13 +134,13 @@ Route::get('/tutors/{id}', [TutorProfileController::class, 'show'])
 Route::middleware(['auth'])->group(function () {
     // ผู้สมัครยังเป็นนักเรียน จึงไม่ครอบฟอร์มคำขอด้วย role:tutor
     Route::get('/tutor/application', [TutorApplicationController::class, 'index'])->name('tutor.application.index');
+    
     Route::middleware('role:tutor')->group(function () {
         Route::get('/tutor/subjects', [TutorTeachingController::class, 'index'])->name('tutor.subjects.index');
         Route::put('/tutor/subjects', [TutorTeachingController::class, 'update'])->name('tutor.subjects.update');
-        // ลิงก์จัดเวลาเดิมให้เปิดตัวจัดเวลาของ branch เพื่อน
-        Route::get('/tutor/schedule', function () {
-            return redirect()->route('availabilities.index');
-        })->name('tutor.schedule.index');
+        
+        // ชี้ไปยังตารางการสอนของติวเตอร์
+        Route::get('/tutor/schedule', [AppointmentController::class, 'tutorSchedule'])->name('tutor.schedule');
     });
 
     // กันเข้า URL /dashboard ให้วิ่งกลับไปหน้าหลัก

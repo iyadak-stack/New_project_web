@@ -27,9 +27,6 @@
                 </p>
             </div>
 
-            <button type="button" onclick="window.history.back()" class="btn" style="width: auto; padding: 10px 20px; background-color: #f1f5f9; color: #475569; font-weight: 500; cursor: pointer; border: none;">
-                ← ย้อนกลับ
-            </button>
         </div>
 
         <!-- Grid แสดงรายวิชาทั้งหมด -->

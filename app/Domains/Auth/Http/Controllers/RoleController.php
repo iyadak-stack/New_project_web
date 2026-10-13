@@ -39,10 +39,11 @@ class RoleController extends Controller
         // บันทึก Role ปัจจุบันลง Session เพื่อให้ Navbar เช็กค่าได้ตลอดทุกหน้า
         session(['active_role' => $role]);
 
+        $message = $role === 'tutor'
+            ? 'สลับเป็นโหมดติวเตอร์เรียบร้อยแล้ว'
+            : 'สลับเป็นโหมดนักเรียนเรียบร้อยแล้ว';
+
         // เปิดหน้าแรกใหม่ตามบทบาทที่บันทึกแล้ว ไม่ย้อนกลับไปหน้าเดิมของอีกบทบาท
-        return redirect()->route('home')->with(
-            'success',
-            'Switched to '.ucfirst($role).' mode.'
-        );
+        return redirect()->route('home')->with('success', $message);
     }
 }

@@ -31,7 +31,6 @@
                 </p>
             </div>
 
-            <x-text-arrow-link :href="route('home')" label="กลับไปหน้าหลัก" direction="left" />
         </div>
 
         <!-- Grid แสดงติวเตอร์ทั้งหมด -->

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>นัดหมายของฉัน - PeerTutor</title>
+    <title>ตารางนัดหมายและการสอน - PeerTutor</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('CSS/home.css') }}">
@@ -12,230 +12,161 @@
     <link rel="stylesheet" href="{{ asset('CSS/appointment-list.css') }}">
 </head>
 <body class="booking-body">
-    {{-- ใช้ Navbar ของหน้าหลัก เมนูและ active จึงเหมือนหน้าอื่น --}}
     <x-navbar />
-    <main class="booking-page">
-        <header class="booking-page-header">
-            <span class="booking-icon"><x-appointment-icon name="user" /></span>
+
+    @php
+        $isTutor = auth()->check() && auth()->user()->current_role === 'tutor';
+        $title = $isTutor ? 'ตารางนัดหมายและการสอน' : 'นัดหมายการเรียนของฉัน';
+        $subtitle = $isTutor
+            ? 'ตรวจสอบ ตอบรับคำขอจองเรียน และจัดการตารางสอนของคุณได้ในที่เดียว'
+            : 'ติดตามสถานะคำขอเรียน รายละเอียดห้องเรียน และประวัติการเรียน';
+
+        $allAppointments = $appointments ?? collect();
+
+        $statusBadges = [
+            'confirmed' => ['ยืนยันแล้ว', 'bg-success-subtle text-success'],
+            'pending'   => ['รอติวเตอร์ยืนยัน', 'bg-warning-subtle text-warning-emphasis'],
+            'completed' => ['เรียนเสร็จแล้ว', 'bg-info-subtle text-info-emphasis'],
+            'cancelled' => ['ยกเลิกแล้ว', 'bg-danger-subtle text-danger'],
+        ];
+
+        $tabs = [
+            [
+                'key' => 'all', 'label' => 'ทั้งหมด', 'emoji' => '📅', 'badge' => 'bg-secondary',
+                'items' => $allAppointments,
+                'empty_title' => 'ยังไม่มีรายการนัดหมายในหมวดนี้',
+                'empty_text' => 'เมื่อมีรายการนัดหมายเข้ามาจะแสดงผลในหน้านี้ทันที',
+            ],
+            [
+                'key' => 'pending', 'label' => 'รอการยืนยัน', 'emoji' => '⏳', 'badge' => 'bg-warning text-dark',
+                'items' => $allAppointments->where('status', 'pending'),
+                'empty_title' => 'ไม่มีรายการนัดหมายที่รอการยืนยัน',
+                'empty_text' => 'รายการที่รอการตอบรับจะแสดงในหมวดนี้',
+            ],
+            [
+                'key' => 'confirmed', 'label' => 'ยืนยันแล้ว', 'emoji' => '✅', 'badge' => 'bg-success',
+                'items' => $allAppointments->where('status', 'confirmed'),
+                'empty_title' => 'ไม่มีรายการนัดหมายที่ยืนยันแล้ว',
+                'empty_text' => 'รายการนัดหมายที่ได้รับการยืนยันแล้วจะแสดงในหมวดนี้',
+            ],
+            [
+                'key' => 'completed', 'label' => 'เรียนเสร็จแล้ว', 'emoji' => '🎓', 'badge' => 'bg-info text-dark',
+                'items' => $allAppointments->where('status', 'completed'),
+                'empty_title' => 'ยังไม่มีประวัติการเรียนที่เสร็จสิ้น',
+                'empty_text' => 'คลาสที่เรียนจบแล้วจะถูกเก็บไว้ในหมวดนี้',
+            ],
+            [
+                'key' => 'cancelled', 'label' => 'ยกเลิกแล้ว', 'emoji' => '❌', 'badge' => 'bg-danger',
+                'items' => $allAppointments->where('status', 'cancelled'),
+                'empty_title' => 'ไม่มีรายการนัดหมายที่ยกเลิก',
+                'empty_text' => 'รายการนัดหมายที่ถูกปฏิเสธหรือยกเลิกจะแสดงที่นี่',
+            ],
+        ];
+    @endphp
+
+    <main class="booking-page container my-4" style="max-width: 1000px;">
+        <!-- Header -->
+        <header class="d-flex align-items-center gap-3 mb-4">
+            <span class="fs-2">📅</span>
             <div>
-                <h1>นัดหมายของฉัน</h1>
-                <p>รายการจองเรียนที่คุณส่งและคำขอที่ได้รับ</p>
+                <h1 class="h3 fw-bold mb-1" style="color: #1E293B;">{{ $title }}</h1>
+                <p class="text-muted mb-0 small">{{ $subtitle }}</p>
             </div>
         </header>
-        @if ($errors->any())
-            <div class="alert alert-danger" role="alert">{{ $errors->first() }}</div>
-        @endif
+
         @if (session('success'))
-            <div class="alert alert-success" role="status">{{ session('success') }}</div>
+            <div class="alert alert-success alert-dismissible fade show rounded-3 mb-4" role="alert">
+                {{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
         @endif
-        @forelse ($appointments as $appointment)
-            @php
-                // ใช้เงื่อนไขเจ้าของเดิม รองรับทั้งรหัสผู้ใช้และรหัสโปรไฟล์
-                $isStudentBooking = (string) $appointment->Student_profiles_student_id === $userId
-                    || (string) $appointment->studentProfile?->user_id === $userId;
-                if ($isStudentBooking) {
-                    $otherPerson = $appointment->tutorProfile?->user;
-                } else {
-                    $otherPerson = $appointment->studentProfile?->user ?? $appointment->studentUser;
-                }
-                $statusLabels = [
-                    'pending' => 'รอติวเตอร์ยืนยัน',
-                    'confirmed' => 'ยืนยันแล้ว',
-                    'completed' => 'เรียนเสร็จแล้ว',
-                    'cancelled' => 'ยกเลิกแล้ว',
-                ];
-                $modeLabels = [
-                    'online' => 'ออนไลน์',
-                    'onsite' => 'นัดเจอ',
-                    'both' => 'ออนไลน์และนัดเจอ',
-                ];
-                $teachingMode = $appointment->tutorProfile?->teaching_mode;
-                // แสดงทางเข้าห้องเรียนเฉพาะนัดหมายที่ยืนยันแล้ว
-                $classroomLink = '';
-                if ($appointment->status === 'confirmed') {
-                    $classroomLink = $appointment->lessonValue('meeting_zoom');
-                    if ($classroomLink === '') {
-                        $classroomLink = $appointment->lessonValue('meeting_meet');
-                    }
-                }
-            @endphp
-            <article class="booking-card">
-                <div class="booking-card-header">
-                    <div>
-                        <span class="booking-code">รหัสนัดหมาย {{ $appointment->Appointment_id }}</span>
-                        <div class="booking-person">
-                            <span class="booking-icon"><x-appointment-icon name="user" /></span>
-                            <div>
-                                <h2>{{ $appointment->subject?->subject_name ?? 'ไม่ระบุวิชา' }}</h2>
-                                <p>{{ $isStudentBooking ? 'ติวเตอร์' : 'ผู้เรียน' }}: {{ trim(($otherPerson?->first_name ?? '') . ' ' . ($otherPerson?->last_name ?? '')) ?: 'ไม่พบข้อมูล' }}</p>
+
+        <!-- Status Filter Tabs -->
+        <ul class="nav nav-status-tabs gap-2 mb-4 border-bottom pb-3" id="appointmentTabs" role="tablist">
+            @foreach ($tabs as $tab)
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link {{ $loop->first ? 'active' : '' }}"
+                            id="{{ $tab['key'] }}-tab"
+                            data-bs-toggle="tab"
+                            data-bs-target="#tab-{{ $tab['key'] }}"
+                            type="button" role="tab">
+                        @if (! $loop->first){{ $tab['emoji'] }} @endif{{ $tab['label'] }}
+                        <span class="badge rounded-pill {{ $tab['badge'] }} ms-1">{{ $tab['items']->count() }}</span>
+                    </button>
+                </li>
+            @endforeach
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content" id="appointmentTabsContent">
+            @foreach ($tabs as $tab)
+                <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="tab-{{ $tab['key'] }}" role="tabpanel">
+                    @forelse ($tab['items'] as $appointment)
+                        @php
+                            $status = $appointment->status;
+                            [$statusText, $statusClass] = $statusBadges[$status] ?? [$status, 'bg-secondary-subtle text-secondary'];
+
+                            // นักเรียนเห็นชื่อติวเตอร์ / ติวเตอร์เห็นชื่อนักเรียน
+                            if ($isTutor) {
+                                $person = $appointment->studentProfile?->user ?? $appointment->studentUser ?? null;
+                                $personLabel = 'นักเรียน';
+                            } else {
+                                $person = $appointment->tutorProfile?->user ?? null;
+                                $personLabel = 'ติวเตอร์';
+                            }
+                            $personName = trim(($person?->first_name ?? '') . ' ' . ($person?->last_name ?? ''));
+                            $personName = $personName !== '' ? $personName : 'ไม่พบข้อมูล';
+
+                            $subjectName = $appointment->subject?->subject_name ?? 'ไม่ระบุวิชา';
+
+                            $start = $appointment->start_datetime ? \Illuminate\Support\Carbon::parse($appointment->start_datetime) : null;
+                            $end = $appointment->end_datetime ? \Illuminate\Support\Carbon::parse($appointment->end_datetime) : null;
+
+                            $detailUrl = \Illuminate\Support\Facades\Route::has('appointments.show')
+                                ? route('appointments.show', $appointment)
+                                : url('/appointments/' . $appointment->Appointment_id);
+
+                            $needsReview = ! $isTutor && $status === 'completed' && ! $appointment->review;
+                        @endphp
+
+                        <article class="card border-0 shadow-sm rounded-4 mb-3 position-relative" id="review-{{ $appointment->Appointment_id }}">
+                            <div class="card-body p-4">
+                                <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+                                    <div>
+                                        <h2 class="h5 fw-bold mb-1" style="color: #1E293B;">{{ $subjectName }}</h2>
+                                        <p class="mb-0 fw-semibold" style="color: #334155;">👤 {{ $personLabel }}: {{ $personName }}</p>
+                                    </div>
+                                    <div class="d-flex flex-column align-items-end gap-2">
+                                        <span class="badge {{ $statusClass }} px-3 py-2 rounded-pill fw-medium">{{ $statusText }}</span>
+                                        @if ($needsReview)
+                                            <span class="badge bg-warning-subtle text-warning-emphasis rounded-pill fw-medium">⭐ ยังไม่ได้รีวิว</span>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                                    <div class="d-flex flex-wrap gap-4 small text-secondary">
+                                        <span>📆 {{ $start ? $start->format('d/m/Y') : '-' }}</span>
+                                        <span>🕐 {{ $start ? $start->format('H:i') : '-' }}{{ $end ? ' - ' . $end->format('H:i') : '' }}</span>
+                                    </div>
+                                    <a href="{{ $detailUrl }}" class="stretched-link small fw-semibold text-decoration-none" style="color: #E07A5F;">
+                                        ดูรายละเอียด →
+                                    </a>
+                                </div>
                             </div>
+                        </article>
+                    @empty
+                        <div class="empty-state-box my-4">
+                            <div class="fs-1 mb-2">{{ $tab['emoji'] }}</div>
+                            <h2 class="h5 fw-bold text-dark">{{ $tab['empty_title'] }}</h2>
+                            <p class="text-muted small mb-0">{{ $tab['empty_text'] }}</p>
                         </div>
-                    </div>
-                    @if ($classroomLink !== '')
-                        <a class="booking-button booking-button-primary" href="{{ $classroomLink }}" target="_blank" rel="noopener">
-                            <x-appointment-icon name="video" /> เริ่มชั้นเรียน
-                        </a>
-                    @else
-                        <span class="booking-status {{ $appointment->status }}">{{ $statusLabels[$appointment->status] ?? $appointment->status }}</span>
-                    @endif
+                    @endforelse
                 </div>
-                @if ($isStudentBooking && $appointment->status === 'pending')
-                    <p class="booking-hint">กรุณารอติวเตอร์ยืนยันก่อนเข้าเรียนและยืนยันว่าเรียนเสร็จแล้ว</p>
-                @endif
-                <div class="booking-details">
-                    <div class="booking-detail">
-                        <span class="booking-icon"><x-appointment-icon name="calendar" /></span>
-                        <div>
-                            <span>วันเรียน</span>
-                            <p>{{ $appointment->start_datetime?->locale('th')->translatedFormat('lที่ j F Y') ?? 'ไม่ระบุ' }}</p>
-                        </div>
-                    </div>
-                    <div class="booking-detail">
-                        <span class="booking-icon"><x-appointment-icon name="clock" /></span>
-                        <div>
-                            <span>เวลาเรียน</span>
-                            <p>{{ $appointment->start_datetime?->format('H:i') ?? '--:--' }}–{{ $appointment->end_datetime?->format('H:i') ?? '--:--' }} น.</p>
-                        </div>
-                    </div>
-                    <div class="booking-detail">
-                        <span class="booking-icon"><x-appointment-icon name="screen" /></span>
-                        <div>
-                            <span>รูปแบบการเรียน</span>
-                            <p>{{ $modeLabels[$teachingMode] ?? 'ตามที่ตกลงกับติวเตอร์' }}</p>
-                        </div>
-                    </div>
-                    <div class="booking-detail">
-                        <span class="booking-icon"><x-appointment-icon name="calendar" /></span>
-                        <div>
-                            <span>ส่งคำขอเมื่อ</span>
-                            <p>{{ $appointment->created_at?->locale('th')->translatedFormat('j F Y H:i') ?? 'ไม่ระบุ' }}</p>
-                        </div>
-                    </div>
-                </div>
-                {{-- คง component รายละเอียดและสิทธิ์เดิม เปลี่ยนเฉพาะกล่องด้านนอก --}}
-                @if (in_array($appointment->status, ['confirmed', 'completed'], true))
-                    <section class="booking-lesson">
-                        <span class="booking-icon"><x-appointment-icon name="link" /></span>
-                        <div class="booking-lesson-content">
-                            <x-lesson-details :appointment="$appointment" />
-                        </div>
-                    </section>
-                @endif
-                <div class="booking-actions">
-                    <a href="{{ route('appointments.show', $appointment->Appointment_id) }}" class="booking-button booking-button-outline">
-                        <span aria-hidden="true">←</span>
-                        ดูรายละเอียด
-                    </a>
-                    @if(!$isStudentBooking && $appointment->status === 'pending' && auth()->user()->current_role === 'tutor' && $appointment->tutorProfile->approval_status === 'approved')
-                        <form method="POST" action="{{ url('/appointments/'.$appointment->Appointment_id.'/status') }}">
-                            @csrf
-                            <input type="hidden" name="status" value="confirmed">
-                            <button class="btn btn-success btn-sm">รับคำขอ</button>
-                        </form>
-                        <form method="POST" action="{{ url('/appointments/'.$appointment->Appointment_id.'/status') }}">
-                            @csrf
-                            <input type="hidden" name="status" value="cancelled">
-                            <input class="form-control mb-2" name="rejection_reason" placeholder="เหตุผลที่ปฏิเสธ" required maxlength="2000">
-                            <button class="btn btn-outline-danger btn-sm">ปฏิเสธ</button>
-                        </form>
-                    @endif
-                    @if($isStudentBooking && $appointment->canComplete())
-                        <form method="POST" action="{{ route('appointments.complete', $appointment) }}">
-                            @csrf
-                            <button class="booking-button booking-button-primary">ยืนยันว่าเรียนเสร็จแล้ว</button>
-                        </form>
-                    @endif
-                    @if($isStudentBooking && $appointment->status === 'completed' && !$appointment->review)
-                        <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#review-{{ $appointment->Appointment_id }}">
-                            เขียนรีวิว
-                        </button>
-                    @elseif($appointment->review)
-                        <span class="badge text-bg-light align-self-center">รีวิวแล้ว {{ $appointment->review->rating }}/5</span>
-                    @endif
-                    @if($isStudentBooking && $appointment->tutorProfile)
-                        <a href="{{ route('tutor.show', $appointment->tutorProfile) }}" class="btn btn-outline-secondary btn-sm">
-                            ดูโปรไฟล์ติวเตอร์
-                        </a>
-                    @endif
-                </div>
-            </article>
-            @if($isStudentBooking && $appointment->status === 'completed' && !$appointment->review)
-                <div class="modal fade" id="review-{{ $appointment->Appointment_id }}" tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <form method="POST" action="{{ route('appointments.review', $appointment) }}">
-                                @csrf
-                                <div class="modal-header">
-                                    <h2 class="modal-title fs-5">รีวิวติวเตอร์</h2>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="ปิด"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <label class="form-label" for="rating-{{ $appointment->Appointment_id }}">
-                                        คะแนน
-                                    </label>
-                                    <select class="form-select mb-3" id="rating-{{ $appointment->Appointment_id }}" name="rating" required>
-                                        <option value="5">5 - ดีมาก</option>
-                                        <option value="4">4 - ดี</option>
-                                        <option value="3">3 - ปานกลาง</option>
-                                        <option value="2">2 - ควรปรับปรุง</option>
-                                        <option value="1">1 - ไม่พอใจ</option>
-                                    </select>
-                                    <label class="form-label" for="comment-{{ $appointment->Appointment_id }}">
-                                        ความคิดเห็น
-                                    </label>
-                                    <textarea class="form-control" id="comment-{{ $appointment->Appointment_id }}" name="Comment" rows="4" required maxlength="2000"></textarea>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">ยกเลิก</button>
-                                    <button class="booking-button booking-button-primary">ส่งรีวิว</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            @endif
-
-            @empty
-                <section class="booking-empty">
-                    <span class="booking-icon"><x-appointment-icon name="calendar" /></span>
-                    <h2>ยังไม่มีนัดหมาย</h2>
-                    <p>เมื่อส่งคำขอเรียนหรือได้รับคำขอ นัดหมายจะแสดงที่นี่</p>
-                    <a class="booking-button booking-button-outline" href="{{ route('tutor.search') }}">ค้นหาติวเตอร์</a>
-                </section>
-            @endforelse
+            @endforeach
+        </div>
     </main>
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-        <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                // ใช้เมนูโปรไฟล์ component เดียวกับหน้าหลัก
-                var profileButton = document.getElementById('toggleProfileBtn');
-                var profileDropdown = document.getElementById('profileDropdown');
-                if (profileButton && profileDropdown) {
-                    profileButton.addEventListener('click', function () {
-                        profileDropdown.classList.toggle('show');
-                    });
-                    document.addEventListener('click', function (event) {
-                        if (!profileButton.contains(event.target) && !profileDropdown.contains(event.target)) {
-                            profileDropdown.classList.remove('show');
-                        }
-                    });
-                }
 
-                // เปิดฟอร์มหลังยืนยันเรียนจบ หรือเมื่อกดลิงก์เขียนรีวิวจากหน้ารายละเอียด
-                const completedAppointmentId = @json(session('review_appointment'));
-                let reviewModalId = window.location.hash.substring(1);
-
-                if (completedAppointmentId) {
-                    reviewModalId = 'review-' + completedAppointmentId;
-                }
-
-                if (reviewModalId.startsWith('review-')) {
-                    const reviewModal = document.getElementById(reviewModalId);
-                    if (reviewModal) {
-                        bootstrap.Modal.getOrCreateInstance(reviewModal).show();
-                    }
-                }
-            });
-        </script>
-    </body>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
 </html>

@@ -40,7 +40,7 @@
 
             <!-- Pop-over Card บทบาทติวเตอร์ -->
             <div class="user-profile-wrapper">
-                <button type="button" class="user-avatar-btn" id="toggleProfileBtn">
+                <button type="button" class="user-avatar-btn" id="toggleProfileBtn" aria-haspopup="true" aria-expanded="false">
                     @if (Auth::user()->profile_picture)
                         <img src="{{ asset('storage/' . Auth::user()->profile_picture) }}" alt="Profile" class="user-avatar-img">
                     @else
@@ -126,7 +126,7 @@
 
             <!-- Pop-over Card บทบาทนักเรียน -->
             <div class="user-profile-wrapper">
-                <button type="button" class="user-avatar-btn" id="toggleProfileBtn">
+                <button type="button" class="user-avatar-btn" id="toggleProfileBtn" aria-haspopup="true" aria-expanded="false">
                     @if (Auth::user()->profile_picture)
                         <img src="{{ asset('storage/' . Auth::user()->profile_picture) }}" alt="Profile" class="user-avatar-img">
                     @else
@@ -194,12 +194,58 @@
 @endif
 
 @auth
-    <script>
-        // กดย้อนกลับอาจได้ HTML เก่าจากแคช ให้โหลดใหม่เพื่ออ่านบทบาทล่าสุด
-        window.addEventListener('pageshow', function (event) {
-            if (event.persisted) {
-                window.location.reload();
+<script>
+    // กดปุ่มย้อนกลับอาจได้ HTML เก่าจากแคช ให้โหลดใหม่เพื่ออ่านบทบาทล่าสุด
+    window.addEventListener('pageshow', function (event) {
+        if (event.persisted) {
+            window.location.reload();
+        }
+    });
+
+    // ควบคุมเมนูโปรไฟล์ที่เดียว (กันสคริปต์ซ้ำของแต่ละหน้า)
+    // ใช้ capture ที่ document เพื่อให้ทำงานก่อน listener ของหน้าอื่นที่ผูกกับปุ่มเดียวกัน
+    // แล้วหยุดการส่งต่อ ไม่ให้ถูกสลับซ้ำจนเมนูเปิดแล้วปิดทันที
+    (function () {
+        if (window.__ptProfileMenuReady) return;
+        window.__ptProfileMenuReady = true;
+
+        function parts() {
+            return {
+                btn: document.getElementById('toggleProfileBtn'),
+                menu: document.getElementById('profileDropdown')
+            };
+        }
+
+        function setOpen(open) {
+            var p = parts();
+            if (!p.btn || !p.menu) return;
+            p.menu.classList.toggle('show', open);
+            p.menu.classList.toggle('active', open);
+            // ล้าง inline display ที่สคริปต์เก่าของบางหน้าอาจตั้งไว้ ให้ CSS คุมเอง
+            p.menu.style.display = '';
+            p.btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        }
+
+        document.addEventListener('click', function (e) {
+            var p = parts();
+            if (!p.btn || !p.menu) return;
+
+            if (p.btn.contains(e.target)) {
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                setOpen(!p.menu.classList.contains('show'));
+                return;
             }
+
+            // คลิกนอกเมนูให้ปิด
+            if (!p.menu.contains(e.target)) {
+                setOpen(false);
+            }
+        }, true);
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') setOpen(false);
         });
-    </script>
+    })();
+</script>
 @endauth

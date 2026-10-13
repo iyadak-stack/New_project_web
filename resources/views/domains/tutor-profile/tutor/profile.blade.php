@@ -87,7 +87,7 @@
                 <!-- 4. วิชาที่เปิดสอน (Subjects) -->
                 <div style="margin-bottom: 24px;">
                     <h2 style="font-size: 15px; font-weight: 600; color: #64748b; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
-                        📘 วิชาที่เปิดสอน
+                        วิชาที่เปิดสอน
                     </h2>
                     <div style="display: flex; flex-wrap: wrap; gap: 8px; background: #f8fafc; padding: 14px 16px; border-radius: 12px; border: 1px solid #e2e8f0; min-height: 48px; align-items: center;">
                         @if ($tutorProfile->subjects && $tutorProfile->subjects->count() > 0)

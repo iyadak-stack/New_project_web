@@ -1,9 +1,18 @@
 /* public/css/appointments.css */
+:root {
+    --primary-orange: #E87A5D;
+    --primary-orange-hover: #D6694C;
+    --light-orange-bg: #FFF3ED;
+    --text-dark: #2B2B2B;
+    --text-muted: #8C8C8C;
+}
+
 .appt-page {
     max-width: 1140px;
     margin: 32px auto;
     padding: 0 20px;
     font-family: 'Prompt', sans-serif;
+    color: var(--text-dark);
 }
 
 .appt-header {
@@ -18,13 +27,13 @@
 .appt-title h1 {
     font-size: 24px;
     font-weight: 700;
-    color: #1e293b;
+    color: var(--text-dark);
     margin: 0 0 4px 0;
 }
 
 .appt-title p {
     font-size: 14px;
-    color: #64748b;
+    color: var(--text-muted);
     margin: 0;
 }
 
@@ -33,7 +42,7 @@
     display: flex;
     gap: 8px;
     margin-bottom: 24px;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid #f0f0f0;
     padding-bottom: 8px;
     overflow-x: auto;
 }
@@ -41,33 +50,34 @@
 .tab-btn {
     background: none;
     border: none;
-    padding: 8px 16px;
+    padding: 8px 18px;
     font-size: 14px;
-    font-weight: 600;
-    color: #64748b;
-    border-radius: 8px;
+    font-weight: 500;
+    color: var(--text-muted);
+    border-radius: 20px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.2s ease;
     white-space: nowrap;
     text-decoration: none;
 }
 
 .tab-btn.active {
-    background-color: #fdeee8;
-    color: #e07a5f;
+    background-color: var(--light-orange-bg);
+    color: var(--primary-orange);
+    font-weight: 600;
 }
 
 .tab-count {
-    background: #e2e8f0;
-    color: #475569;
+    background: #f1f3f5;
+    color: #64748b;
     font-size: 12px;
     padding: 2px 8px;
     border-radius: 12px;
-    margin-left: 4px;
+    margin-left: 6px;
 }
 
 .tab-btn.active .tab-count {
-    background: #e07a5f;
+    background: var(--primary-orange);
     color: #ffffff;
 }
 
@@ -80,34 +90,34 @@
 
 .appt-card {
     background: #ffffff;
-    border-radius: 16px;
-    border: 1px solid #f1f5f9;
-    padding: 20px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+    border-radius: 20px;
+    border: 1px solid #f0f0f0;
+    padding: 22px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .appt-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
 }
 
 .appt-card-head {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 12px;
+    margin-bottom: 14px;
     padding-bottom: 12px;
     border-bottom: 1px solid #f8fafc;
 }
 
 .subject-badge {
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 700;
-    color: #1e293b;
+    color: var(--text-dark);
     display: flex;
     align-items: center;
     gap: 6px;
@@ -115,14 +125,14 @@
 
 .status-pill {
     font-size: 12px;
-    font-weight: 600;
-    padding: 4px 10px;
+    font-weight: 500;
+    padding: 4px 12px;
     border-radius: 20px;
 }
 
-.status-pending { background: #fef3c7; color: #b45309; }
-.status-confirmed { background: #d1fae5; color: #047857; }
-.status-cancelled { background: #fef2f2; color: #b91c1c; }
+.status-pending { background: var(--light-orange-bg); color: var(--primary-orange); }
+.status-confirmed { background: #e6f4ea; color: #137333; }
+.status-cancelled { background: #fce8e6; color: #c5221f; }
 
 /* Student Info Box */
 .student-info {
@@ -130,9 +140,9 @@
     align-items: center;
     gap: 12px;
     margin-bottom: 16px;
-    background: #f8fafc;
-    padding: 10px 12px;
-    border-radius: 12px;
+    background: #fafafa;
+    padding: 10px 14px;
+    border-radius: 14px;
 }
 
 .student-avatar {
@@ -140,15 +150,15 @@
     height: 44px;
     border-radius: 50%;
     object-fit: cover;
-    border: 2px solid #e07a5f;
+    border: 2px solid var(--primary-orange);
 }
 
 .student-placeholder {
     width: 44px;
     height: 44px;
     border-radius: 50%;
-    background: #fdeee8;
-    color: #e07a5f;
+    background: var(--light-orange-bg);
+    color: var(--primary-orange);
     font-weight: 700;
     font-size: 16px;
     display: flex;
@@ -159,20 +169,20 @@
 .student-name {
     font-size: 14px;
     font-weight: 600;
-    color: #334155;
+    color: var(--text-dark);
     margin: 0;
 }
 
 .student-role {
     font-size: 12px;
-    color: #64748b;
+    color: var(--text-muted);
     margin: 0;
 }
 
 /* Detail List */
 .appt-details {
-    font-size: 13px;
-    color: #475569;
+    font-size: 13.5px;
+    color: var(--text-dark);
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -187,33 +197,39 @@
 
 .appt-actions {
     display: flex;
-    gap: 8px;
+    gap: 10px;
     margin-top: 12px;
-    padding-top: 12px;
-    border-top: 1px solid #f1f5f9;
+    padding-top: 14px;
+    border-top: 1px solid #f5f5f5;
 }
 
 .btn-accept {
     flex: 1;
-    background: #e07a5f;
-    color: #ffffff;
+    background: var(--primary-orange);
+    color: #ffffff !important;
     border: none;
     padding: 9px;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 600;
+    border-radius: 20px;
+    font-size: 13.5px;
+    font-weight: 500;
     cursor: pointer;
     text-align: center;
     text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.btn-accept:hover {
+    background: var(--primary-orange-hover);
+    box-shadow: 0 2px 8px rgba(232, 122, 93, 0.25);
 }
 
 .btn-reject {
-    background: #fef2f2;
-    color: #ef4444;
-    border: 1px solid #fecaca;
-    padding: 9px 14px;
-    border-radius: 8px;
-    font-size: 13px;
+    background: #fce8e6;
+    color: #c5221f;
+    border: none;
+    padding: 9px 16px;
+    border-radius: 20px;
+    font-size: 13.5px;
     font-weight: 500;
     cursor: pointer;
     text-decoration: none;
@@ -221,22 +237,28 @@
 
 .btn-outline {
     flex: 1;
-    background: #f1f5f9;
-    color: #475569;
+    background: var(--primary-orange);
+    color: #ffffff !important;
     border: none;
     padding: 9px;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 600;
+    border-radius: 20px;
+    font-size: 13.5px;
+    font-weight: 500;
     cursor: pointer;
     text-align: center;
     text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.btn-outline:hover {
+    background: var(--primary-orange-hover);
+    box-shadow: 0 2px 8px rgba(232, 122, 93, 0.25);
 }
 
 .empty-box {
     background: #ffffff;
-    border: 1px dashed #cbd5e1;
-    border-radius: 16px;
+    border: 1px dashed #ffdcd2;
+    border-radius: 20px;
     padding: 48px 20px;
     text-align: center;
     grid-column: 1 / -1;

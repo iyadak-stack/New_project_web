@@ -110,40 +110,7 @@
                             <input type="number" id="experience_years" name="experience_years" min="0"
                                    value="{{ old('experience_years', $tutorProfile?->experience_years ?? 0) }}">
                         </div>
-                        <div class="pe-field">
-                            <label for="teaching_mode">รูปแบบการสอน</label>
-                            <select id="teaching_mode" name="teaching_mode">
-                                <option value="online" {{ old('teaching_mode', $tutorProfile?->teaching_mode) === 'online' ? 'selected' : '' }}>ออนไลน์ (Online)</option>
-                                <option value="onsite" {{ old('teaching_mode', $tutorProfile?->teaching_mode) === 'onsite' ? 'selected' : '' }}>นัดเจอ (Onsite)</option>
-                                <option value="both" {{ old('teaching_mode', $tutorProfile?->teaching_mode) === 'both' ? 'selected' : '' }}>ทั้งสองแบบ (Both)</option>
-                            </select>
-                        </div>
                     </div>
-                </div>
-
-                <!-- รายวิชาที่เปิดสอน (Tutor_profiles_has_Subject Table) -->
-                <div class="pe-section">
-                    <h2>วิชาที่เปิดสอน</h2>
-                    <p class="pe-select-hint">เลือกรายวิชาที่คุณสะดวกสอนจากรายการด้านล่าง</p>
-
-                    <div id="subject-data" hidden
-                         data-initial="{{ json_encode($selectedSubjectIds) }}"
-                         data-all="{{ json_encode($allSubjectsList) }}"></div>
-
-                    <div id="selected-tags-container" class="pe-tags-box"></div>
-
-                    <div class="pe-field" style="margin-top: 8px;">
-                        <select id="subject-picker" class="pe-custom-select" onchange="addSubjectTag(this)">
-                            <option value="">+ กดเพื่อเลือกวิชาที่สอน...</option>
-                            @foreach ($allSubjects as $subject)
-                                <option value="{{ $subject->subject_id ?? $subject->id }}" data-name="{{ $subject->subject_name }}">
-                                    📘 {{ $subject->subject_name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div id="hidden-inputs-container"></div>
                 </div>
 
                 <!-- ช่องทางการติดต่อ (Contact Table) -->

@@ -1,10 +1,22 @@
 /* ตกแต่งเฉพาะหน้ารายละเอียดนัดหมาย ไม่กระทบ schedule/availability */
+:root {
+    --primary-orange: #E87A5D;
+    --primary-orange-hover: #D6694C;
+    --light-orange-bg: #FFF3ED;
+    --text-dark: #2B2B2B;
+    --text-muted: #8C8C8C;
+}
+
 .appointment-back {
     margin-bottom: 20px;
 }
 
 .appointment-detail-card {
-    padding: 26px;
+    padding: 28px;
+    background: #ffffff;
+    border: 1px solid #f0f0f0;
+    border-radius: 20px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
 }
 
 .appointment-detail-header {
@@ -13,13 +25,19 @@
     gap: 16px;
     padding-bottom: 22px;
     margin-bottom: 20px;
-    border-bottom: 1px solid #e2eaf2;
+    border-bottom: 1px solid #f5f5f5;
 }
 
 .appointment-detail-header > .booking-icon {
     width: 56px;
     height: 56px;
-    color: #16639a;
+    border-radius: 50%;
+    background-color: var(--light-orange-bg);
+    color: var(--primary-orange);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
 }
 
 .appointment-detail-title {
@@ -27,21 +45,25 @@
 }
 
 .appointment-detail-title h1 {
-    margin: 0 0 6px;
+    margin: 0 0 4px;
     font-size: 22px;
     font-weight: 700;
-    color: #18375c;
+    color: var(--text-dark);
 }
 
 .appointment-detail-title p {
     margin: 0;
     font-size: 13px;
-    color: #7b8da6;
+    color: var(--text-muted);
 }
 
 .appointment-header-status.confirmed {
-    background: #4cba7b;
-    color: #ffffff;
+    background: #e6f4ea;
+    color: #137333;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
 }
 
 /* dl แสดงเป็นสองคอลัมน์: ชื่อข้อมูลและรายละเอียด */
@@ -56,16 +78,29 @@
     display: flex;
     align-items: center;
     gap: 14px;
-    color: #7b96b9;
+    color: var(--text-muted);
     font-size: 14px;
     font-weight: 500;
+}
+
+.appointment-detail-rows dt .booking-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: #ebf3fa;
+    color: #3182ce;
+    font-size: 15px;
 }
 
 .appointment-detail-rows dd {
     align-self: center;
     margin: 0;
     font-size: 14px;
-    color: #18375c;
+    font-weight: 600;
+    color: var(--text-dark);
     overflow-wrap: anywhere;
 }
 
@@ -77,52 +112,61 @@
 
 .appointment-detail-card .booking-lesson {
     margin-bottom: 20px;
+    background-color: #ebf5fb;
+    border-radius: 14px;
+    padding: 16px;
 }
 
 .appointment-profile-link {
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    /* ให้ปุ่มอยู่ขวาสุดของแถวปุ่มจัดการนัดหมาย */
     margin-left: auto;
-    padding: 9px 16px;
-    border: 1px solid transparent;
-    border-radius: 24px;
-    background-color: #ed805b;
-    color: #ffffff;
-    font-size: 13px;
+    padding: 9px 20px;
+    border: none;
+    border-radius: 20px;
+    background-color: var(--primary-orange);
+    color: #ffffff !important;
+    font-size: 13.5px;
+    font-weight: 500;
     text-decoration: none;
+    transition: all 0.2s ease;
 }
 
 .appointment-profile-link:hover {
-    background-color: #d96b49;
-    color: #ffffff;
+    background-color: var(--primary-orange-hover);
+    color: #ffffff !important;
+    box-shadow: 0 2px 8px rgba(232, 122, 93, 0.25);
 }
 
 .appointment-edit-form {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    padding: 18px;
+    padding: 20px;
     margin-bottom: 20px;
-    border: 1px solid #dbe7f0;
-    border-radius: 14px;
+    border: 1px solid #f0f0f0;
+    border-radius: 16px;
+    background-color: #fafafa;
 }
 
 .appointment-edit-form h2 {
     font-size: 16px;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin: 0;
 }
 
 .appointment-edit-form p {
     margin: 0;
     font-size: 13px;
-    color: #64748b;
+    color: var(--text-muted);
 }
 
-/* จอเล็กยังอ่านเป็นคู่ชื่อกับค่าได้ และสถานะขึ้นบรรทัดใหม่ได้ */
+/* จอเล็ก */
 @media (max-width: 600px) {
     .appointment-detail-card {
-        padding: 16px;
+        padding: 18px;
     }
 
     .appointment-detail-header {

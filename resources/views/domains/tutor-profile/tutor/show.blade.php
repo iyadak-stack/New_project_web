@@ -30,9 +30,12 @@
         <!-- ปุ่มย้อนกลับ -->
         <div style="margin-bottom: 20px;">
             {{-- เปิดหน้าหลักใหม่ เพื่อให้ใช้บทบาทล่าสุดหลังสลับ role --}}
-            <button type="button" onclick="window.location.href='{{ route('home') }}'" style="background: #ffffff; border: 1px solid #e2e8f0; color: #64748b; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 500; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                ← ย้อนกลับ
-            </button>
+            <a href="javascript:history.back()" 
+                style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 18px; background-color: #FFF2EE; color: #E87A5D; border: 1px solid #FCD2C4; border-radius: 999px; text-decoration: none; font-size: 14px; font-weight: 500; transition: all 0.2s;"
+                onmouseover="this.style.backgroundColor='#E87A5D'; this.style.color='#ffffff';"
+                onmouseout="this.style.backgroundColor='#FFF2EE'; this.style.color='#E87A5D';">
+                    ← ย้อนกลับ
+            </a>
         </div>
 
         @if (session('success'))
@@ -209,9 +212,9 @@
                         <div style="margin-bottom: 16px;">
                             <label style="font-size: 13px; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">รูปแบบการเรียน</label>
                             <p style="font-size: 13px; color: #475569; margin: 6px 0;">
-    {{ ['online' => 'ออนไลน์', 'onsite' => 'นัดเจอ', 'both' => 'ออนไลน์และนัดเจอ'][$tutorProfile->teaching_mode] ?? 'ยังไม่ระบุ' }}
-</p>
-<p style="font-size: 12px; color: #64748b;">ใช้รูปแบบปัจจุบันของติวเตอร์ กรณีสอนทั้งสองแบบให้ตกลงกันก่อนเรียน</p>
+                                {{ ['online' => 'ออนไลน์', 'onsite' => 'นัดเจอ', 'both' => 'ออนไลน์และนัดเจอ'][$tutorProfile->teaching_mode] ?? 'ยังไม่ระบุ' }}
+                            </p>
+                            <p style="font-size: 12px; color: #64748b;">ใช้รูปแบบปัจจุบันของติวเตอร์ กรณีสอนทั้งสองแบบให้ตกลงกันก่อนเรียน</p>
                         </div>
 
                         <!-- เลือกวันที่ (ตารางว่างของติวเตอร์เก็บไว้ใน data-availabilities) -->
@@ -254,20 +257,21 @@
                 <button type="button" onclick="closeReportModal()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #94a3b8;">&times;</button>
             </div>
 
-            {{-- onsubmit ทำงานหลังตรวจ required และถามยืนยันก่อนส่งข้อมูลจริง --}}
-            <form action="{{ route('reports.store') }}" method="POST" onsubmit="return confirmReportSubmission(this)">
+            {{-- novalidate: ปิดข้อความอังกฤษของเบราว์เซอร์ ใช้การตรวจและข้อความภาษาไทยของเราเอง --}}
+            <form id="reportForm" action="{{ route('reports.store') }}" method="POST" novalidate onsubmit="return validateReportForm(this)">
                 @csrf
                 <input type="hidden" name="reported_tutor_id" value="{{ $tutorProfile->tutor_id }}">
 
                 <div style="margin-bottom: 12px;">
-                    <label for="reportReason" style="font-size: 13px; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">หัวข้อการรายงาน</label>
-                    <select id="reportReason" name="reason_type" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 14px;" required>
+                    <label for="reportReason" style="font-size: 13px; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">หัวข้อการรายงาน <span style="color:#ef4444;">*</span></label>
+                    <select id="reportReason" name="reason_type" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 14px;">
                         <option value="">-- เลือกหัวข้อที่ต้องการรายงาน --</option>
                         {{-- value เป็น Reason_id จริง จึงบันทึกเชื่อมกับตารางประเภทได้ --}}
                         @foreach ($reportReasons as $reason)
                             <option value="{{ $reason->Reason_id }}" @selected(old('reason_type') === $reason->Reason_id)>{{ $reason->reason_name }}</option>
                         @endforeach
                     </select>
+                    <p id="reasonError" role="alert" style="display:none; color: #b91c1c; font-size: 13px; margin: 6px 0 0;">กรุณาเลือกหัวข้อที่ต้องการรายงาน</p>
                     @error('reason_type')
                         <p role="alert" style="color: #b91c1c; font-size: 13px;">{{ $message }}</p>
                     @enderror
@@ -277,8 +281,9 @@
                 </div>
 
                 <div style="margin-bottom: 16px;">
-                    <label for="reportDescription" style="font-size: 13px; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">รายละเอียดเพิ่มเติม</label>
-                    <textarea id="reportDescription" name="description" rows="4" maxlength="3000" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 14px;" placeholder="อธิบายรายละเอียดปัญหาที่พบ..." required>{{ old('description') }}</textarea>
+                    <label for="reportDescription" style="font-size: 13px; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">รายละเอียดเพิ่มเติม <span style="color:#ef4444;">*</span></label>
+                    <textarea id="reportDescription" name="description" rows="4" maxlength="3000" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 14px;" placeholder="อธิบายรายละเอียดปัญหาที่พบ...">{{ old('description') }}</textarea>
+                    <p id="descError" role="alert" style="display:none; color: #b91c1c; font-size: 13px; margin: 6px 0 0;">กรุณากรอกรายละเอียดของปัญหาที่พบ</p>
                     @error('description')
                         <p role="alert" style="color: #b91c1c; font-size: 13px;">{{ $message }}</p>
                     @enderror
@@ -289,9 +294,21 @@
 
                 <div style="display: flex; gap: 8px; justify-content: flex-end;">
                     <button type="button" onclick="closeReportModal()" style="padding: 10px 18px; border-radius: 8px; border: 1px solid #cbd5e1; background: #ffffff; color: #64748b; font-weight: 500; cursor: pointer;">ยกเลิก</button>
-                    <button type="submit" @disabled($reportReasons->isEmpty()) style="padding: 10px 18px; border-radius: 8px; border: none; background: #ef4444; color: #ffffff; font-weight: 600; cursor: pointer;">ส่งรายงาน</button>
+                    <button type="submit" id="reportSubmitBtn" @disabled($reportReasons->isEmpty()) style="padding: 10px 18px; border-radius: 8px; border: none; background: #ef4444; color: #ffffff; font-weight: 600; cursor: pointer;">ส่งรายงาน</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- ป๊อปอัพยืนยันการส่งรายงาน (อยู่เหนือ modal รายงาน) -->
+    <div id="reportConfirm" role="dialog" aria-modal="true" aria-labelledby="reportConfirmTitle" style="display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.5); z-index: 10000; align-items: center; justify-content: center; padding: 16px;">
+        <div style="background: #ffffff; border-radius: 16px; padding: 24px; width: 100%; max-width: 380px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+            <h3 id="reportConfirmTitle" style="margin: 0 0 8px; font-size: 18px; font-weight: 700; color: #1e293b;">ยืนยันการส่งรายงาน</h3>
+            <p style="margin: 0 0 20px; font-size: 14px; color: #64748b; line-height: 1.5;">คุณต้องการส่งรายงานติวเตอร์คนนี้ให้แอดมินตรวจสอบจริง ๆ ใช่ไหม?</p>
+            <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                <button type="button" onclick="closeReportConfirm()" style="padding: 9px 18px; border-radius: 999px; border: 1px solid #cbd5e1; background: #ffffff; color: #64748b; font-weight: 600; cursor: pointer;">กลับไปแก้ไข</button>
+                <button type="button" onclick="submitReportForm()" style="padding: 9px 18px; border-radius: 999px; border: none; background: #ef4444; color: #ffffff; font-weight: 600; cursor: pointer;">ยืนยันส่งรายงาน</button>
+            </div>
         </div>
     </div>
 
@@ -353,7 +370,6 @@
             }
         };
 
-        // พอเลือกวันที่ ให้โชว์เวลาว่างของวันนั้น
         // เลือกเวลาแล้วส่งวันเวลาเต็มให้ระบบจองตรวจซ้ำฝั่ง Server
         function updateBookingTimes() {
             var option = timeSelect.options[timeSelect.selectedIndex];
@@ -361,6 +377,7 @@
             document.getElementById('booking_end').value = option.dataset.end || '';
         }
 
+        // พอเลือกวันที่ ให้โชว์เวลาว่างของวันนั้น
         function updateAvailableTimes() {
             var selectedDate = dateSelect.value;
             document.getElementById('booking_start').value = '';
@@ -410,17 +427,41 @@
             document.getElementById('reportModal').style.display = 'none';
         }
 
-        // กดยกเลิกใน popup จะไม่ส่งฟอร์ม และข้อมูลที่กรอกยังอยู่
-        function confirmReportSubmission(form) {
-            if (!window.confirm('คุณต้องการส่งรายงานติวเตอร์คนนี้ให้แอดมินตรวจสอบจริง ๆ ใช่ไหม?')) {
-                return false;
-            }
+        // ตรวจครบถ้วนก่อน ถ้าครบค่อยเปิดป๊อปอัพยืนยัน (ไม่ส่งฟอร์มทันที)
+        function validateReportForm(form) {
+            var reason = document.getElementById('reportReason');
+            var desc = document.getElementById('reportDescription');
+            var reasonError = document.getElementById('reasonError');
+            var descError = document.getElementById('descError');
 
-            // ปิดปุ่มหลังยืนยัน เพื่อป้องกันการกดซ้ำระหว่างรอ Server
-            var submitButton = form.querySelector('button[type="submit"]');
-            submitButton.disabled = true;
-            submitButton.textContent = 'กำลังส่งรายงาน...';
-            return true;
+            var okReason = reason.value.trim() !== '';
+            var okDesc = desc.value.trim() !== ''; // ช่องว่างล้วนไม่ผ่าน
+
+            reasonError.style.display = okReason ? 'none' : 'block';
+            descError.style.display = okDesc ? 'none' : 'block';
+            reason.style.borderColor = okReason ? '#cbd5e1' : '#ef4444';
+            desc.style.borderColor = okDesc ? '#cbd5e1' : '#ef4444';
+
+            if (!okReason) { reason.focus(); }
+            else if (!okDesc) { desc.focus(); }
+
+            if (okReason && okDesc) {
+                document.getElementById('reportConfirm').style.display = 'flex';
+            }
+            return false; // ไม่ส่งตรงนี้ ส่งตอนกดยืนยันในป๊อปอัพ
+        }
+
+        function closeReportConfirm() {
+            document.getElementById('reportConfirm').style.display = 'none';
+        }
+
+        function submitReportForm() {
+            var form = document.getElementById('reportForm');
+            var btn = document.getElementById('reportSubmitBtn');
+            btn.disabled = true;
+            btn.textContent = 'กำลังส่งรายงาน...';
+            closeReportConfirm();
+            form.submit(); // submit() ข้าม onsubmit จึงไม่วนลูป
         }
     </script>
     @endauth

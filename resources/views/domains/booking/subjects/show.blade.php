@@ -16,21 +16,25 @@
     <!-- Main Content -->
     <main style="max-width: 1200px; margin: 32px auto; padding: 0 20px;">
 
+        <!-- ปุ่มย้อนกลับทรงแคปซูล สีส้มพาสเทล อยู่นอกกล่องข้อมูลวิชาด้านบนซ้าย -->
+        <div style="margin-bottom: 16px;">
+            <button type="button" onclick="window.history.back()" 
+                    style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 18px; background-color: #FFF2EE; color: #E87A5D; border: 1px solid #FCD2C4; border-radius: 999px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s;"
+                    onmouseover="this.style.backgroundColor='#E87A5D'; this.style.color='#ffffff';"
+                    onmouseout="this.style.backgroundColor='#FFF2EE'; this.style.color='#E87A5D';">
+                ← ย้อนกลับ
+            </button>
+        </div>
+
         <!-- Header กล่องข้อมูลวิชา -->
         <div style="background-color: #fdf3ee; border-radius: 16px; border: 1px solid #f0d9d0; padding: 28px; margin-bottom: 32px;">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
-                <div>
-                    <h1 style="font-size: 28px; font-weight: 700; color: #1e293b; margin: 0 0 8px 0;">
-                        📚 {{ $subject->subject_name }}
-                    </h1>
-                    <p style="font-size: 15px; color: #64748b; margin: 0; max-width: 700px; line-height: 1.6;">
-                        {{ $subject->description ?? 'รายละเอียดวิชาคุณภาพสำหรับเสริมสร้างความรู้ความเข้าใจอย่างเจาะลึก' }}
-                    </p>
-                </div>
-
-                <button type="button" onclick="window.history.back()" style="background: #ffffff; color: #475569; border: 1px solid #cbd5e1; padding: 10px 20px; border-radius: 12px; font-size: 14px; font-weight: 500; cursor: pointer;">
-                    ← ย้อนกลับ
-                </button>
+            <div>
+                <h1 style="font-size: 28px; font-weight: 700; color: #1e293b; margin: 0 0 8px 0;">
+                    📚 {{ $subject->subject_name }}
+                </h1>
+                <p style="font-size: 15px; color: #64748b; margin: 0; max-width: 700px; line-height: 1.6;">
+                    {{ $subject->description ?? 'รายละเอียดวิชาคุณภาพสำหรับเสริมสร้างความรู้ความเข้าใจอย่างเจาะลึก' }}
+                </p>
             </div>
 
             <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid #f0d9d0; display: flex; align-items: center; gap: 12px;">
@@ -97,7 +101,10 @@
                 <div style="font-size: 36px; margin-bottom: 12px;">🔍</div>
                 <h3 style="font-size: 16px; font-weight: 700; color: #1e293b; margin-bottom: 6px;">ยังไม่มีติวเตอร์เปิดสอนวิชานี้</h3>
                 <p style="font-size: 14px; color: #64748b; margin-bottom: 16px;">ลองเลือกดูรายวิชาอื่น หรือกลับมาเช็กใหม่อีกครั้งในภายหลัง</p>
-                <button type="button" onclick="window.history.back()" style="background: #e07a5f; color: #fff; border: none; padding: 8px 20px; border-radius: 10px; font-size: 14px; font-weight: 500; cursor: pointer;">
+                <button type="button" onclick="window.history.back()" 
+                        style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 20px; background-color: #FFF2EE; color: #E87A5D; border: 1px solid #FCD2C4; border-radius: 999px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s;"
+                        onmouseover="this.style.backgroundColor='#E87A5D'; this.style.color='#ffffff';"
+                        onmouseout="this.style.backgroundColor='#FFF2EE'; this.style.color='#E87A5D';">
                     ← ย้อนกลับ
                 </button>
             </div>

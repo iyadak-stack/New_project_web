@@ -120,6 +120,8 @@
             <a href="{{ route('home') }}" class="menu-btn {{ request()->routeIs('home') ? 'active' : '' }}">หน้าแรก</a>
             <a href="{{ route('subjects.index') }}" class="menu-btn {{ request()->routeIs('subjects.*') ? 'active' : '' }}">รายวิชาทั้งหมด</a>
             <a href="{{ route('student.tutors.index') }}" class="menu-btn {{ request()->routeIs('student.tutors.*') ? 'active' : '' }}">ติวเตอร์ทั้งหมด</a>
+            {{-- นักเรียนตั้งเวลาว่างผ่านหน้าเดิมของระบบเพื่อน --}}
+            <a href="{{ route('availabilities.index') }}" class="menu-btn {{ request()->routeIs('availabilities.*') ? 'active' : '' }}">จัดเวลา</a>
             <a href="{{ route('appointments.index') }}" class="menu-btn {{ request()->routeIs('appointments.*') ? 'active' : '' }}">ตารางนัดหมาย</a>
             <a href="{{ route('tutor.favorites') }}" class="menu-btn {{ request()->routeIs('tutor.favorites') ? 'active' : '' }}">รายการโปรด</a>
             <x-notification-bell />

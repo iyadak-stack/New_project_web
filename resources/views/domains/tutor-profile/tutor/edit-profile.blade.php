@@ -27,16 +27,13 @@
     $contact = $user->contact;
 
     // ID ของวิชาที่ติวเตอร์เลือกไว้แล้ว (ตาราง Tutor_profiles_has_Subject)
-    $selectedSubjectIds = collect(old('subjects', $tutorProfile?->subjects->pluck('subject_id')->toArray() ?? []))
-        ->map(fn ($id) => (string) $id)
-        ->values()
-        ->all();
+    $selectedSubjectIds = [];
+    $previousSubjects = old('subjects', $tutorProfile?->subjects->pluck('subject_id')->toArray() ?? []);
+    // คืนวิชาที่เคยเลือกไว้ เมื่อส่งฟอร์มแล้ว validation ไม่ผ่าน
+    foreach ((array) $previousSubjects as $subjectId) {
+        $selectedSubjectIds[] = (string) $subjectId;
+    }
 
-    // รายวิชาทั้งหมดส่งให้ JS อ่านผ่าน data-attribute
-    $allSubjectsList = $allSubjects->map(fn ($s) => [
-        'id'   => (string) ($s->subject_id ?? $s->id),
-        'name' => $s->subject_name,
-    ])->values()->all();
 @endphp
 
     <!-- เรียกใช้งาน Dynamic Navbar ตาม Session Role -->
@@ -110,6 +107,31 @@
                             <input type="number" id="experience_years" name="experience_years" min="0"
                                    value="{{ old('experience_years', $tutorProfile?->experience_years ?? 0) }}">
                         </div>
+                        <div class="pe-field">
+                            <label for="teaching_mode">รูปแบบการสอน</label>
+                            <select id="teaching_mode" name="teaching_mode" required>
+                                <option value="">เลือกรูปแบบการสอน</option>
+                                <option value="online" @selected(old('teaching_mode', $tutorProfile?->teaching_mode) === 'online')>ออนไลน์</option>
+                                <option value="onsite" @selected(old('teaching_mode', $tutorProfile?->teaching_mode) === 'onsite')>นัดเจอ</option>
+                                <option value="both" @selected(old('teaching_mode', $tutorProfile?->teaching_mode) === 'both')>ออนไลน์และนัดเจอ</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {{-- ใช้ checkbox ส่งวิชาเข้า Controller โดยตรง ไม่ต้องสร้าง hidden input ด้วย JavaScript --}}
+                    <div class="pe-field" style="margin-top: 16px;">
+                        <p>วิชาที่สอน (เลือกอย่างน้อย 1 วิชา)</p>
+                        @forelse ($allSubjects as $subject)
+                            <label for="subject-{{ $subject->subject_id }}">
+                                <input type="checkbox" id="subject-{{ $subject->subject_id }}"
+                                       name="subjects[]" value="{{ $subject->subject_id }}"
+                                       style="width: auto;"
+                                       @checked(in_array((string) $subject->subject_id, $selectedSubjectIds, true))>
+                                {{ $subject->subject_name }}
+                            </label>
+                        @empty
+                            <p>ยังไม่มีรายวิชาในระบบ กรุณาติดต่อแอดมินก่อนส่งคำขอ</p>
+                        @endforelse
                     </div>
                 </div>
 
@@ -162,7 +184,10 @@
     <script>
         function previewImage(event) {
             const file = event.target.files[0];
-            if (!file) return;
+            // หากยังไม่ได้เลือกรูป ไม่ต้องเปลี่ยนภาพตัวอย่าง
+            if (!file) {
+                return;
+            }
             const reader = new FileReader();
             reader.onload = () => {
                 document.getElementById('avatar-preview').src = reader.result;
@@ -170,29 +195,8 @@
             reader.readAsDataURL(file);
         }
 
-        const selectedSubjects = new Map();
-        const dataEl = document.getElementById('subject-data');
-        const initialSubjects = JSON.parse(dataEl.dataset.initial || '[]');
-        const allSubjects = JSON.parse(dataEl.dataset.all || '[]');
-
-        const allSubjectsMap = {};
-        allSubjects.forEach(s => {
-            allSubjectsMap[String(s.id)] = s.name;
-        });
-
         document.addEventListener('DOMContentLoaded', () => {
-            if (Array.isArray(initialSubjects)) {
-                initialSubjects.forEach(id => {
-                    const key = String(id);
-                    const name = allSubjectsMap[key] || key;
-                    if (key) {
-                        selectedSubjects.set(key, name);
-                    }
-                });
-            }
-            renderSubjectTags();
-
-            // Script เปิด/ปิด Profile Card Dropdown
+            // เปิดและปิดเมนูโปรไฟล์ตามเดิม
             const toggleBtn = document.getElementById('toggleProfileBtn');
             const dropdown = document.getElementById('profileDropdown');
 
@@ -210,65 +214,6 @@
             }
         });
 
-        function addSubjectTag(selectEl) {
-            const value = selectEl.value;
-            if (!value) return;
-
-            const option = selectEl.options[selectEl.selectedIndex];
-            const name = option.getAttribute('data-name');
-
-            if (!selectedSubjects.has(String(value))) {
-                selectedSubjects.set(String(value), name);
-                renderSubjectTags();
-            }
-
-            selectEl.value = '';
-        }
-
-        function removeSubjectTag(id) {
-            selectedSubjects.delete(String(id));
-            renderSubjectTags();
-        }
-
-        function renderSubjectTags() {
-            const tagsContainer = document.getElementById('selected-tags-container');
-            const hiddenContainer = document.getElementById('hidden-inputs-container');
-
-            tagsContainer.innerHTML = '';
-            hiddenContainer.innerHTML = '';
-
-            if (selectedSubjects.size === 0) {
-                const empty = document.createElement('span');
-                empty.style.fontSize = '13px';
-                empty.style.color = '#94a3b8';
-                empty.textContent = 'ยังไม่ได้เลือกวิชา (กดเลือกวิชาจากช่องด้านล่าง)';
-                tagsContainer.appendChild(empty);
-                return;
-            }
-
-            selectedSubjects.forEach((name, id) => {
-                const tag = document.createElement('div');
-                tag.className = 'pe-tag';
-
-                const label = document.createElement('span');
-                label.textContent = '📘 ' + name;
-
-                const removeBtn = document.createElement('span');
-                removeBtn.className = 'remove-btn';
-                removeBtn.innerHTML = '&times;';
-                removeBtn.addEventListener('click', () => removeSubjectTag(id));
-
-                tag.appendChild(label);
-                tag.appendChild(removeBtn);
-                tagsContainer.appendChild(tag);
-
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = 'subjects[]';
-                input.value = id;
-                hiddenContainer.appendChild(input);
-            });
-        }
     </script>
 </body>
 </html>

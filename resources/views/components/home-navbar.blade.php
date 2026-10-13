@@ -23,6 +23,14 @@
         @endif
         <x-notification-nav-link />
         @auth
+            {{-- เมนูที่ปกป้องเพิ่ม: ติวเตอร์ที่อนุมัติแล้วมีเมนูจัดการวันเวลาว่างด้านบนอยู่แล้ว --}}
+            @unless(auth()->user()->current_role === 'tutor' && auth()->user()->tutorProfile?->approval_status === 'approved')
+                <a class="menu-btn {{ request()->routeIs('availabilities.*') ? 'active' : '' }}" href="{{ route('availabilities.index') }}">เวลาว่างของฉัน</a>
+            @endunless
+            <a class="menu-btn {{ request()->routeIs('schedule.check*', 'schedule.booking') ? 'active' : '' }}" href="{{ route('schedule.check') }}">เช็กเวลาตรงกัน</a>
+            <a class="menu-btn {{ request()->routeIs('schedule.history') ? 'active' : '' }}" href="{{ route('schedule.history') }}">ประวัติการเรียนและการสอน</a>
+        @endauth
+        @auth
             <!-- รูปโปรไฟล์วงกลม + Pop-over Card "โปรไฟล์ของฉัน" --><div class="user-profile-wrapper">
                 <button type="button" class="user-avatar-btn" id="sharedProfileToggle" aria-expanded="false" aria-controls="sharedProfileDropdown" aria-label="เปิดเมนูบัญชี">
                     @if (Auth::user()->profile_picture)

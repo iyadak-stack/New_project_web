@@ -6,11 +6,13 @@ use App\Domains\Auth\Models\Contact;
 use App\Domains\Booking\Models\Appointment;
 use App\Domains\Booking\Models\Subject;
 use App\Domains\Scheduling\Models\Availability;
+use App\Domains\Scheduling\Services\AvailabilityService;
 use App\Domains\TutorProfile\Models\Favorite;
 use App\Domains\TutorProfile\Models\TutorProfile;
 use App\Domains\TutorProfile\Services\TutorApplication;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 
 class TutorController extends Controller
@@ -170,39 +172,67 @@ class TutorController extends Controller
         // 🟢 ดึงข้อมูลวิชาทั้งหมดจาก Seeder/DB สำรองไว้กรณีติวเตอร์ยังไม่ได้เลือกผูกวิชา
         $allSubjects = Subject::all();
 
-        $bookedAppointments = Appointment::query()
-            ->where('Tutor_profiles_tutor_id', $tutorProfile->tutor_id)
-            ->where('status', '!=', 'cancelled')
-            ->whereNotNull('start_datetime')
-            ->whereNotNull('end_datetime')
-            ->get(['start_datetime', 'end_datetime']);
+        /*
+         * โค้ดเดิมของส่วน Tutor Profile (แฟง) ก่อนปกป้องเชื่อม Service
+         * ปกป้องเชื่อมให้แฟง: โค้ดเดิมด้านล่างซ่อนทั้ง Availability เมื่อมีนัดทับบางส่วน
+         * ถ้าแฟงเขียน Controller เอง เพิ่ม use App\Domains\Scheduling\Services\AvailabilityService;
+         * แล้วเรียก findTutorAvailableTimes(user_id ของติวเตอร์) ได้เลย ไม่ต้องเขียนการตัดช่วงเวลาซ้ำ
+         * ผลลัพธ์เป็น array แต่ละรายการมี start/end; Blade ใช้เวลาเหล่านี้ ไม่ใช่ availability_id
+         * $bookedAppointments = Appointment::query()
+         * ->where('Tutor_profiles_tutor_id', $tutorProfile->tutor_id)
+         * ->where('status', '!=', 'cancelled')
+         * ->whereNotNull('start_datetime')
+         * ->whereNotNull('end_datetime')
+         * ->get(['start_datetime', 'end_datetime']);
+         *
+         * $availableSlots = Availability::query()
+         * ->where('user_id', $tutorProfile->Users_user_id)
+         * ->where('start_datetime', '>', now())
+         * ->orderBy('start_datetime')
+         * ->get();
+         *
+         * // แสดงเฉพาะเวลาว่างที่ไม่ทับกับนัดหมายที่มีคนจองไว้แล้ว
+         * $availabilities = collect();
+         * foreach ($availableSlots as $slot) {
+         * $isBooked = false;
+         * foreach ($bookedAppointments as $appointment) {
+         * if ($appointment->start_datetime < $slot->end_datetime
+         * && $appointment->end_datetime > $slot->start_datetime) {
+         * $isBooked = true;
+         * break;
+         * }
+         * }
+         *
+         * if (! $isBooked) {
+         * $availabilities->push($slot);
+         * }
+         * }
+         */
+        // โค้ดใหม่ที่ปกป้องเพิ่มให้: แสดงเฉพาะช่วงที่เหลือ ไม่ซ่อนทั้งรายการ
+        $availabilityService = app(AvailabilityService::class);
+        $tutorUserId = (string) $tutorProfile->Users_user_id;
+        $availableTimes = $availabilityService->findTutorAvailableTimes($tutorUserId);
 
-        $availableSlots = Availability::query()
-            ->where('user_id', $tutorProfile->Users_user_id)
-            ->where('start_datetime', '>', now())
-            ->orderBy('start_datetime')
-            ->get();
-
-        // แสดงเฉพาะเวลาว่างที่ไม่ทับกับนัดหมายที่มีคนจองไว้แล้ว
-        $availabilities = collect();
-        foreach ($availableSlots as $slot) {
-            $isBooked = false;
-            foreach ($bookedAppointments as $appointment) {
-                if ($appointment->start_datetime < $slot->end_datetime
-                    && $appointment->end_datetime > $slot->start_datetime) {
-                    $isBooked = true;
-                    break;
+        // ฝั่งจองแสดงเฉพาะช่วงที่ตรงกับเวลาว่างของคนที่ล็อกอินด้วย
+        $bookableTimes = $availableTimes;
+        if (Auth::check()) {
+            $bookableTimes = [];
+            if (Auth::user()->studentProfile) {
+                foreach ($availableTimes as $time) {
+                    $sharedTimes = $availabilityService->findSharedTimes(
+                        (string) Auth::id(),
+                        $tutorUserId,
+                        Carbon::parse($time['start']),
+                        Carbon::parse($time['end']),
+                    );
+                    $bookableTimes = array_merge($bookableTimes, $sharedTimes);
                 }
-            }
-
-            if (! $isBooked) {
-                $availabilities->push($slot);
             }
         }
 
         return view(
             'domains.tutor-profile.tutor.show',
-            compact('tutorProfile', 'isFavorite', 'allSubjects', 'availabilities')
+            compact('tutorProfile', 'isFavorite', 'allSubjects', 'availableTimes', 'bookableTimes')
         );
     }
 }

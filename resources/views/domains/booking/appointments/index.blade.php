@@ -7,8 +7,11 @@
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
         <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
         <style>body{font-family:'Prompt',sans-serif;background:#f8fafc}.navbar-peer{background:#fff;padding:14px 4vw;box-shadow:0 1px 8px #00000012}.navbar-peer a{color:#334155;text-decoration:none;margin-right:18px}.navbar-peer .brand{font-size:21px;font-weight:700;color:#e07a5f}.appointment-card{border:0;border-radius:16px;box-shadow:0 4px 20px #0f172a0d}</style>
-        <link rel="stylesheet" href="{{ asset('css/home.css') }}">
-        <link rel="stylesheet" href="{{ asset('css/profile-card.css') }}">
+        {{-- ปกป้องแก้ให้: path เดิม css/home.css ต้องเป็น CSS/home.css ให้ตรงกับโฟลเดอร์บน Linux --}}
+        <link rel="stylesheet" href="{{ asset('CSS/home.css') }}">
+        {{-- ปกป้องแก้ให้: path เดิม css/profile-card.css ต้องเป็น CSS/profile-card.css ให้ตรงกับโฟลเดอร์บน Linux --}}
+        <link rel="stylesheet" href="{{ asset('CSS/profile-card.css') }}">
+        <link rel="stylesheet" href="{{ asset('CSS/edit-profile.css') }}">
     </head>
     <body>
         <x-home-navbar />
@@ -82,7 +85,13 @@
                             <x-lesson-details :appointment="$appointment" />
                         @endif
                         <div class="mt-3 d-flex flex-wrap align-items-start gap-2">
+                            {{-- โค้ดเดิมของส่วน Appointment (ทับทิม): ปุ่ม Bootstrap
                             <a href="{{ route('appointments.show', $appointment->Appointment_id) }}" class="btn btn-outline-primary btn-sm">
+                                ดูรายละเอียด
+                            </a>
+                            --}}
+                            {{-- ปกป้องปรับเฉพาะคลาสปุ่มให้ใช้ CSS เดิมของเพื่อน ไม่เปลี่ยนการทำงาน --}}
+                            <a href="{{ route('appointments.show', $appointment->Appointment_id) }}" class="home-card-button">
                                 ดูรายละเอียด
                             </a>
                             @if(!$isStudentBooking && $appointment->status === 'pending' && auth()->user()->current_role === 'tutor' && $appointment->tutorProfile->approval_status === 'approved')
@@ -101,7 +110,11 @@
                             @if($isStudentBooking && $appointment->canComplete())
                                 <form method="POST" action="{{ route('appointments.complete', $appointment) }}">
                                     @csrf
+                                    {{-- โค้ดเดิมของส่วน Appointment (ทับทิม): ปุ่ม Bootstrap
                                     <button class="btn btn-primary btn-sm">ยืนยันว่าเรียนเสร็จแล้ว</button>
+                                    --}}
+                                    {{-- ปกป้องปรับเฉพาะคลาสปุ่มให้ใช้ CSS เดิมของเพื่อน ไม่เปลี่ยนการทำงาน --}}
+                                    <button class="pe-save">ยืนยันว่าเรียนเสร็จแล้ว</button>
                                 </form>
                             @endif
                             @if($isStudentBooking && $appointment->status === 'completed' && !$appointment->review)
@@ -147,7 +160,11 @@
                                     </div>
                                     <div class="modal-footer">
                                         <button type="button" class="btn btn-light" data-bs-dismiss="modal">ยกเลิก</button>
+                                        {{-- โค้ดเดิมของส่วน Appointment (ทับทิม): ปุ่ม Bootstrap
                                         <button class="btn btn-primary">ส่งรีวิว</button>
+                                        --}}
+                                        {{-- ปกป้องปรับเฉพาะคลาสปุ่มให้ใช้ CSS เดิมของเพื่อน ไม่เปลี่ยนการทำงาน --}}
+                                        <button class="pe-save">ส่งรีวิว</button>
                                     </div>
                                 </form>
                             </div>
@@ -158,7 +175,11 @@
                 <div class="alert alert-info">
                     ยังไม่มีนัดหมายที่เกี่ยวข้องกับบัญชีนี้
                 </div>
+                {{-- โค้ดเดิมของส่วน Appointment (ทับทิม): ปุ่ม Bootstrap
                 <a href="{{ route('tutor.search') }}" class="btn btn-primary">ค้นหาติวเตอร์</a>
+                --}}
+                {{-- ปกป้องปรับเฉพาะคลาสปุ่มให้ใช้ CSS เดิมของเพื่อน ไม่เปลี่ยนการทำงาน --}}
+                <a href="{{ route('tutor.search') }}" class="home-card-button">ค้นหาติวเตอร์</a>
             @endforelse
         </main>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

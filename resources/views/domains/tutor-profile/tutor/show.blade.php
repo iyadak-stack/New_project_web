@@ -6,10 +6,14 @@
         <title>รายละเอียดติวเตอร์ - PeerTutor</title>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
         <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-        <link rel="stylesheet" href="{{ asset('css/home.css') }}?v={{ time() }}">
-        <link rel="stylesheet" href="{{ asset('css/profile-card.css') }}?v={{ time() }}">
-        <link rel="stylesheet" href="{{ asset('css/tutor-navbar.css') }}?v={{ time() }}">
-        <link rel="stylesheet" href="{{ asset('css/tutor-detail.css') }}?v={{ time() }}">
+        {{-- ปกป้องแก้ให้: path เดิม css/home.css ต้องเป็น CSS/home.css ให้ตรงกับโฟลเดอร์บน Linux --}}
+        <link rel="stylesheet" href="{{ asset('CSS/home.css') }}?v={{ time() }}">
+        {{-- ปกป้องแก้ให้: path เดิม css/profile-card.css ต้องเป็น CSS/profile-card.css ให้ตรงกับโฟลเดอร์บน Linux --}}
+        <link rel="stylesheet" href="{{ asset('CSS/profile-card.css') }}?v={{ time() }}">
+        {{-- ปกป้องแก้ให้: path เดิม css/tutor-navbar.css ต้องเป็น CSS/tutor-navbar.css ให้ตรงกับโฟลเดอร์บน Linux --}}
+        <link rel="stylesheet" href="{{ asset('CSS/tutor-navbar.css') }}?v={{ time() }}">
+        {{-- ปกป้องแก้ให้: path เดิม css/tutor-detail.css ต้องเป็น CSS/tutor-detail.css ให้ตรงกับโฟลเดอร์บน Linux --}}
+        <link rel="stylesheet" href="{{ asset('CSS/tutor-detail.css') }}?v={{ time() }}">
     </head>
     <body>
         <!-- Header / Navbar ด้านบน --><x-home-navbar />
@@ -67,7 +71,11 @@
                             </a>
                         @endif
                         @else
+                            {{-- โค้ดเดิมของส่วน Tutor Profile (แฟง): ปุ่ม Bootstrap
                             <a href="{{ route('login') }}" class="btn btn-outline-primary">เข้าสู่ระบบเพื่อบันทึกรายการโปรด</a>
+                            --}}
+                            {{-- ปกป้องปรับเฉพาะคลาสปุ่มให้ใช้ CSS เดิมของเพื่อน ไม่เปลี่ยนการทำงาน --}}
+                            <a href="{{ route('login') }}" class="home-card-button">เข้าสู่ระบบเพื่อบันทึกรายการโปรด</a>
                         @endauth
                     </div>
                 </div>
@@ -89,10 +97,23 @@
                     </div>
                     <!-- วันและเวลาที่เปิดสอน --><div class="detail-card">
                         <h2 class="card-title">วันและเวลาที่เปิดสอน</h2>
+                        {{-- โค้ดเดิมของส่วน Tutor Profile (แฟง): แสดง Availability ทั้งรายการ
                         @forelse($availabilities as $availability)
                             <div class="schedule-item">
                                 <div class="schedule-time">
                                     {{ $availability->start_datetime->locale('th')->translatedFormat('lที่ j F Y เวลา H:i') }} – {{ $availability->end_datetime->format('H:i') }} น.
+                                </div>
+                                <span class="status-badge">พร้อมรับจอง</span>
+                            </div>
+                        @empty
+                            <p class="empty-text">ตอนนี้ยังไม่มีช่วงเวลาว่างให้เลือก</p>
+                        @endforelse
+                        --}}
+                        {{-- โค้ดใหม่ที่ปกป้องเพิ่มให้: แสดง start/end ของช่วงที่ยังว่างจาก Service --}}
+                        @forelse ($availableTimes as $time)
+                            <div class="schedule-item">
+                                <div class="schedule-time">
+                                    {{ \Illuminate\Support\Carbon::parse($time['start'])->locale('th')->translatedFormat('lที่ j F Y เวลา H:i') }} – {{ \Illuminate\Support\Carbon::parse($time['end'])->format('d/m/Y H:i') }} น.
                                 </div>
                                 <span class="status-badge">พร้อมรับจอง</span>
                             </div>
@@ -168,6 +189,7 @@
                                 @endif
                             </select>
                         </div>
+                        {{-- โค้ดเดิมของส่วน Tutor Profile (แฟง): เลือก availability_id
                         <div class="mb-3">
                             <label for="availability_id" class="form-label">
                                 วันและเวลาที่ติวเตอร์สะดวก
@@ -191,6 +213,31 @@
                             </div>
                             @enderror
                         </div>
+                        --}}
+                        {{-- โค้ดใหม่ที่ปกป้องเพิ่มให้: ส่ง start_datetime/end_datetime ของช่วงที่เลือก
+                             ถ้าแฟงเขียนฟอร์มเอง ส่งสองชื่อนี้พร้อม tutor_id/subject_id เข้า appointments.store ได้เลย --}}
+                        <div class="mb-3">
+                            <label for="schedule-start" class="form-label">วันและเวลาที่ว่างตรงกัน</label>
+                            <select id="schedule-start" name="start_datetime" class="form-select" required>
+                                <option value="" disabled {{ old('start_datetime') ? '' : 'selected' }}>-- เลือกวันและเวลา --</option>
+                                @foreach ($bookableTimes as $time)
+                                    @php
+                                        $slotStart = \Illuminate\Support\Carbon::parse($time['start'])->format('Y-m-d\TH:i');
+                                        $slotEnd = \Illuminate\Support\Carbon::parse($time['end'])->format('Y-m-d\TH:i');
+                                    @endphp
+                                    <option value="{{ $slotStart }}" data-end="{{ $slotEnd }}" @selected(old('start_datetime') === $slotStart)>
+                                        {{ \Illuminate\Support\Carbon::parse($time['start'])->locale('th')->translatedFormat('lที่ j F Y เวลา H:i') }} – {{ \Illuminate\Support\Carbon::parse($time['end'])->format('d/m/Y H:i') }} น.
+                                    </option>
+                                @endforeach
+                            </select>
+                            <input id="schedule-end" type="hidden" name="end_datetime" value="{{ old('end_datetime') }}">
+                            @if (empty($bookableTimes))
+                                <div class="form-text">ยังไม่มีเวลาว่างตรงกัน ลองเพิ่มเวลาว่างของคุณหรือเลือกติวเตอร์คนอื่น</div>
+                            @endif
+                            @error('start_datetime') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                            @error('end_datetime') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                            @error('availability_id') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                        </div>
                         <!-- 2. ระดับชั้น --><div class="mb-3">
                             <label style="font-size: 14px; font-weight: 600; color: #475569; display: block; margin-bottom: 8px;">
                                 ระดับชั้น
@@ -213,17 +260,35 @@
                             <input type="hidden" name="teaching_mode" value="{{ $tutorProfile->teaching_mode ?? 'online' }}">
                         </div>
                         @auth
-                        <!-- ปุ่มส่งคำขอ --><button type="submit" class="btn-submit-request" @disabled($availabilities->isEmpty()) style="width: 100%; background: #e07a5f; color: #ffffff; border: none; padding: 12px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s;">
+                        {{-- ปกป้อง: เงื่อนไขเดิม @disabled($availabilities->isEmpty()) เปลี่ยนเป็นช่วงที่ว่างตรงกันจาก Service --}}
+                        <!-- ปุ่มส่งคำขอ --><button type="submit" class="btn-submit-request" @disabled(empty($bookableTimes)) style="width: 100%; background: #e07a5f; color: #ffffff; border: none; padding: 12px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s;">
                     ส่งคำขอจองเรียน
                         </button>
                         @else
+                            {{-- โค้ดเดิมของส่วน Tutor Profile (แฟง): ปุ่ม Bootstrap
                             <a href="{{ route('login') }}" class="btn btn-primary">เข้าสู่ระบบหรือสมัครสมาชิกเพื่อจองเรียน</a>
+                            --}}
+                            {{-- ปกป้องปรับเฉพาะคลาสปุ่มให้ใช้ CSS เดิมของเพื่อน ไม่เปลี่ยนการทำงาน --}}
+                            <a href="{{ route('login') }}" class="home-card-button">เข้าสู่ระบบหรือสมัครสมาชิกเพื่อจองเรียน</a>
                         @endauth
                     </form>
                 </div>
             </main>
             <x-login-modal />
             <x-register-modal />
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    // ปกป้อง: option ส่งเวลาเริ่ม และ data-end ส่งเวลาจบของช่วงย่อยเข้า Appointment
+                    const startSelect = document.getElementById('schedule-start');
+                    const endInput = document.getElementById('schedule-end');
+                    function updateEndTime() {
+                        const option = startSelect.options[startSelect.selectedIndex];
+                        endInput.value = option ? option.dataset.end || '' : '';
+                    }
+                    startSelect.addEventListener('change', updateEndTime);
+                    updateEndTime();
+                });
+            </script>
             <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
             <!-- เปิด/ปิดแผงโปรไฟล์ --><script>
         document.addEventListener('DOMContentLoaded', () => {

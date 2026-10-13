@@ -7,13 +7,19 @@
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
         <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
         <style>body{font-family:'Prompt',sans-serif;background:#f8fafc}</style>
-        <link rel="stylesheet" href="{{ asset('css/home.css') }}">
-        <link rel="stylesheet" href="{{ asset('css/profile-card.css') }}">
+        {{-- ปกป้องแก้ให้: path เดิม css/home.css ต้องเป็น CSS/home.css ให้ตรงกับโฟลเดอร์บน Linux --}}
+        <link rel="stylesheet" href="{{ asset('CSS/home.css') }}">
+        {{-- ปกป้องแก้ให้: path เดิม css/profile-card.css ต้องเป็น CSS/profile-card.css ให้ตรงกับโฟลเดอร์บน Linux --}}
+        <link rel="stylesheet" href="{{ asset('CSS/profile-card.css') }}">
+        <link rel="stylesheet" href="{{ asset('CSS/edit-profile.css') }}">
     </head>
     <body>
         <x-home-navbar />
         <main class="container py-5" style="max-width:850px">
+            {{-- โค้ดเดิมของส่วน Appointment (ทับทิม): ลิงก์ใช้สีเริ่มต้นของ Bootstrap
             <a href="{{ route('appointments.index') }}" class="text-decoration-none">← กลับนัดหมายของฉัน</a>
+            --}}
+            <a href="{{ route('appointments.index') }}" class="pe-cancel">← กลับนัดหมายของฉัน</a>
             <article class="card border-0 shadow-sm mt-3">
                 <div class="card-body p-4 p-md-5">
                     <h1 class="h3 fw-bold">รายละเอียดนัดหมาย</h1>
@@ -77,7 +83,11 @@
                             </label>
                             <p class="small text-secondary">ล้างช่องที่ต้องการลบแล้วกดบันทึก การเปลี่ยนแปลงมีผลเฉพาะนัดหมายนี้</p>
                             <div class="d-flex gap-2 flex-wrap">
+                                {{-- โค้ดเดิมของส่วน Appointment (ทับทิม): ปุ่ม Bootstrap
                                 <button class="btn btn-primary">บันทึกรายละเอียดการเรียน</button>
+                                --}}
+                                {{-- ปกป้องปรับเฉพาะคลาสปุ่มให้ใช้ CSS เดิมของเพื่อน ไม่เปลี่ยนการทำงาน --}}
+                                <button class="pe-save">บันทึกรายละเอียดการเรียน</button>
                                 <button class="btn btn-outline-secondary" name="use_profile_defaults" value="1" formnovalidate>ใช้ข้อมูลจากโปรไฟล์อีกครั้ง</button>
                             </div>
                         </form>
@@ -99,7 +109,11 @@
                         @if($isStudentBooking && $appointment->canComplete())
                             <form method="POST" action="{{ route('appointments.complete', $appointment) }}">
                                 @csrf
+                                {{-- โค้ดเดิมของส่วน Appointment (ทับทิม): ปุ่ม Bootstrap
                                 <button class="btn btn-primary">ยืนยันว่าเรียนเสร็จแล้ว</button>
+                                --}}
+                                {{-- ปกป้องปรับเฉพาะคลาสปุ่มให้ใช้ CSS เดิมของเพื่อน ไม่เปลี่ยนการทำงาน --}}
+                                <button class="pe-save">ยืนยันว่าเรียนเสร็จแล้ว</button>
                             </form>
                         @endif
                         @if($isStudentBooking && $appointment->status === 'completed' && !$appointment->review)
@@ -108,7 +122,13 @@
                             </a>
                         @endif
                         @if($appointment->tutorProfile)
+                            {{-- โค้ดเดิมของส่วน Appointment (ทับทิม): ปุ่ม Bootstrap
                             <a href="{{ route('tutor.show', $appointment->tutorProfile) }}" class="btn btn-outline-primary">
+                                ดูโปรไฟล์ติวเตอร์
+                            </a>
+                            --}}
+                            {{-- ปกป้องปรับเฉพาะคลาสปุ่มให้ใช้ CSS เดิมของเพื่อน ไม่เปลี่ยนการทำงาน --}}
+                            <a href="{{ route('tutor.show', $appointment->tutorProfile) }}" class="home-card-button">
                                 ดูโปรไฟล์ติวเตอร์
                             </a>
                         @endif

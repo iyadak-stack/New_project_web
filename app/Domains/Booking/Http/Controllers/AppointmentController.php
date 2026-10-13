@@ -8,6 +8,8 @@ use App\Domains\Booking\Models\NotificationType;
 use App\Domains\Booking\Models\Subject;
 use App\Domains\Reportreview\Models\Review;
 use App\Domains\Scheduling\Models\Availability;
+use App\Domains\Scheduling\Services\AvailabilityService;
+use App\Domains\Scheduling\Services\ScheduleBookingService;
 use App\Domains\TutorProfile\Models\StudentProfile;
 use App\Domains\TutorProfile\Models\TutorProfile;
 use App\Http\Controllers\Controller;
@@ -56,58 +58,159 @@ class AppointmentController extends Controller
     }
 
     // บันทึกการนัดหมายใหม่
+    /*
+     * โค้ดเดิมของส่วน Appointment (ทับทิม) ก่อนปกป้องเชื่อม Service
+     * ปกป้องเชื่อม Service ด้านล่างตามที่อนุญาต เพื่อใช้เวลาจาก CheckSchedule และกันจองชน
+     * การตรวจสิทธิ์ วิชา แจ้งเตือน และ redirect ยังใช้แบบเดิม
+     *     public function store(Request $request)
+     *     {
+     *         $data = $request->validate([
+     *             'subject_id' => ['required', 'exists:subjects,subject_id'],
+     *             'tutor_id' => ['required', 'exists:tutor_profiles,tutor_id'],
+     *             'availability_id' => ['required', 'string', 'exists:availabilities,availability_id'],
+     *         ]);
+     *
+     *         // ล็อกข้อมูลติวเตอร์ระหว่างจอง เพื่อไม่ให้สองคำขอจองเวลาซ้ำกัน
+     *         return DB::transaction(function () use ($data) {
+     *             $tutor = TutorProfile::query()->where('tutor_id', $data['tutor_id'])->lockForUpdate()->firstOrFail();
+     *             abort_unless($tutor->approval_status === 'approved' && $tutor->user?->is_active, 422, 'ติวเตอร์ยังไม่พร้อมรับจอง');
+     *             abort_if($tutor->Users_user_id === Auth::id(), 422, 'ไม่สามารถจองตัวเองได้');
+     *             abort_unless($tutor->subjects()->where('subjects.subject_id', $data['subject_id'])->exists(), 422);
+     *             $contact = $tutor->user?->contact;
+     *             $availability = Availability::query()
+     *                 ->where('availability_id', $data['availability_id'])
+     *                 ->where('user_id', $tutor->Users_user_id)
+     *                 ->where('start_datetime', '>', now())
+     *                 ->first();
+     *
+     *             if (! $availability) {
+     *                 throw ValidationException::withMessages([
+     *                     'availability_id' => 'ช่วงเวลานี้ไม่พร้อมให้จองแล้ว กรุณาเลือกเวลาใหม่',
+     *                 ]);
+     *             }
+     *
+     *             $slotIsBooked = Appointment::query()
+     *                 ->where('Tutor_profiles_tutor_id', $tutor->tutor_id)
+     *                 ->where('status', '!=', 'cancelled')
+     *                 ->where('start_datetime', '<', $availability->end_datetime)
+     *                 ->where('end_datetime', '>', $availability->start_datetime)
+     *                 ->exists();
+     *
+     *             if ($slotIsBooked) {
+     *                 throw ValidationException::withMessages([
+     *                     'availability_id' => 'ช่วงเวลานี้มีผู้ส่งคำขอจองแล้ว กรุณาเลือกเวลาอื่น',
+     *                 ]);
+     *             }
+     *
+     *             do {
+     *                 $appointmentId = 'APP'.Str::upper(Str::random(7));
+     *             } while (Appointment::query()->whereKey($appointmentId)->exists());
+     *
+     *             $appointment = Appointment::create([
+     *                 'Appointment_id' => $appointmentId,
+     *                 'status' => 'pending',
+     *                 'meeting_zoom' => $contact?->zoom_link ?? '',
+     *                 'meeting_meet' => $contact?->google_meet_link ?? '',
+     *                 'meeting_location' => $contact?->meeting_location ?? '',
+     *                 'start_datetime' => $availability->start_datetime,
+     *                 'end_datetime' => $availability->end_datetime,
+     *                 'Subject_subject_id' => $data['subject_id'],
+     *                 'Tutor_profiles_tutor_id' => $tutor->tutor_id,
+     *                 'Student_profiles_student_id' => Auth::id(),
+     *             ]);
+     *
+     *             $notificationType = NotificationType::firstOrCreate(
+     *                 ['notification_type_id' => 'TYPE01'],
+     *                 ['type_name' => 'คำขอจองเรียน']
+     *             );
+     *
+     *             // แจ้งเตือนไปยังติวเตอร์
+     *             Notification::create([
+     *                 'notification_id' => $this->newNotificationId(),
+     *                 'message' => 'มีการจองนัดหมายใหม่รอยืนยัน',
+     *                 'is_read' => 0,
+     *                 'Users_user_id' => $tutor->Users_user_id,
+     *                 'NotificationType_notification_type_id' => $notificationType->notification_type_id,
+     *             ]);
+     *
+     *             return redirect()
+     *                 ->route('tutor.show', $tutor->tutor_id)
+     *                 ->with('success', 'ส่งคำขอจองสำเร็จแล้ว');
+     *         });
+     *     }
+     */
     public function store(Request $request)
     {
         $data = $request->validate([
             'subject_id' => ['required', 'exists:subjects,subject_id'],
             'tutor_id' => ['required', 'exists:tutor_profiles,tutor_id'],
-            'availability_id' => ['required', 'string', 'exists:availabilities,availability_id'],
+            'availability_id' => ['nullable', 'string', 'exists:availabilities,availability_id'],
+            'start_datetime' => ['required_without:availability_id', 'nullable', 'date', 'after:now'],
+            'end_datetime' => ['required_with:start_datetime', 'nullable', 'date', 'after:start_datetime'],
         ]);
 
         // ล็อกข้อมูลติวเตอร์ระหว่างจอง เพื่อไม่ให้สองคำขอจองเวลาซ้ำกัน
+        // ปกป้องเพิ่มให้: ลอง transaction ใหม่เมื่อคำขอพร้อมกันจับล็อกสวนกัน
         return DB::transaction(function () use ($data) {
             $tutor = TutorProfile::query()->where('tutor_id', $data['tutor_id'])->lockForUpdate()->firstOrFail();
             abort_unless($tutor->approval_status === 'approved' && $tutor->user?->is_active, 422, 'ติวเตอร์ยังไม่พร้อมรับจอง');
             abort_if($tutor->Users_user_id === Auth::id(), 422, 'ไม่สามารถจองตัวเองได้');
             abort_unless($tutor->subjects()->where('subjects.subject_id', $data['subject_id'])->exists(), 422);
             $contact = $tutor->user?->contact;
-            $availability = Availability::query()
-                ->where('availability_id', $data['availability_id'])
-                ->where('user_id', $tutor->Users_user_id)
-                ->where('start_datetime', '>', now())
-                ->first();
-
-            if (! $availability) {
-                throw ValidationException::withMessages([
-                    'availability_id' => 'ช่วงเวลานี้ไม่พร้อมให้จองแล้ว กรุณาเลือกเวลาใหม่',
-                ]);
-            }
-
-            $slotIsBooked = Appointment::query()
-                ->where('Tutor_profiles_tutor_id', $tutor->tutor_id)
-                ->where('status', '!=', 'cancelled')
-                ->where('start_datetime', '<', $availability->end_datetime)
-                ->where('end_datetime', '>', $availability->start_datetime)
-                ->exists();
-
-            if ($slotIsBooked) {
-                throw ValidationException::withMessages([
-                    'availability_id' => 'ช่วงเวลานี้มีผู้ส่งคำขอจองแล้ว กรุณาเลือกเวลาอื่น',
-                ]);
-            }
+            /*
+             * โค้ดเดิมของส่วน Appointment: ตรวจเวลาว่างก่อนเชื่อม Service รวมช่วง
+             * ปกป้องเชื่อมให้: โค้ดก่อนหน้านี้ต้องหา Availability รายการเดียวที่ครอบคลุมทั้งนัด
+             * เก็บไว้เทียบด้านล่าง แล้วใช้ Service รวมช่วงติดกันแทน
+             * ถ้าทับทิมเขียน store เอง ใช้ AvailabilityService และ ScheduleBookingService ที่ import ด้านบนได้
+             * resolveBookingTimes(user_id ของติวเตอร์, ข้อมูลที่ validate แล้ว) คืน start/end
+             * จากนั้นส่ง start/end เข้า ScheduleBookingService::save() เพื่อเช็กเวลาของทั้งสองคนและกันจองชน
+             * ส่วนสิทธิ์ วิชา แจ้งเตือน และ redirect ยังอยู่ตามเดิม
+             * $availability = Availability::query()
+             * ->when($data['availability_id'] ?? null, fn ($query, $id) => $query->where('availability_id', $id))
+             * ->when($data['start_datetime'] ?? null, fn ($query, $start) => $query->where('start_datetime', '<=', $start))
+             * ->when($data['end_datetime'] ?? null, fn ($query, $end) => $query->where('end_datetime', '>=', $end))
+             * ->where('user_id', $tutor->Users_user_id)
+             * ->where('start_datetime', '>', now())
+             * ->first();
+             *
+             * if (! $availability) {
+             * throw ValidationException::withMessages([
+             * 'availability_id' => 'ช่วงเวลานี้ไม่พร้อมให้จองแล้ว กรุณาเลือกเวลาใหม่',
+             * ]);
+             * }
+             *
+             * $start = $data['start_datetime'] ?? $availability->start_datetime;
+             * $end = $data['end_datetime'] ?? $availability->end_datetime;
+             * $slotIsBooked = Appointment::query()
+             * ->where('Tutor_profiles_tutor_id', $tutor->tutor_id)
+             * ->where('status', '!=', 'cancelled')
+             * ->where('start_datetime', '<', $end)
+             * ->where('end_datetime', '>', $start)
+             * ->exists();
+             *
+             * if ($slotIsBooked) {
+             * throw ValidationException::withMessages([
+             * 'availability_id' => 'ช่วงเวลานี้มีผู้ส่งคำขอจองแล้ว กรุณาเลือกเวลาอื่น',
+             * ]);
+             * }
+             */
+            // โค้ดใหม่ที่ปกป้องเพิ่มให้: ใช้ Service รวมช่วงติดกันและตรวจนัดที่มีอยู่แล้ว
+            $times = app(AvailabilityService::class)->resolveBookingTimes((string) $tutor->Users_user_id, $data);
+            $start = $times['start'];
+            $end = $times['end'];
 
             do {
                 $appointmentId = 'APP'.Str::upper(Str::random(7));
             } while (Appointment::query()->whereKey($appointmentId)->exists());
 
-            $appointment = Appointment::create([
+            $appointment = app(ScheduleBookingService::class)->save([
                 'Appointment_id' => $appointmentId,
                 'status' => 'pending',
                 'meeting_zoom' => $contact?->zoom_link ?? '',
                 'meeting_meet' => $contact?->google_meet_link ?? '',
                 'meeting_location' => $contact?->meeting_location ?? '',
-                'start_datetime' => $availability->start_datetime,
-                'end_datetime' => $availability->end_datetime,
+                'start_datetime' => $start,
+                'end_datetime' => $end,
                 'Subject_subject_id' => $data['subject_id'],
                 'Tutor_profiles_tutor_id' => $tutor->tutor_id,
                 'Student_profiles_student_id' => Auth::id(),
@@ -130,7 +233,7 @@ class AppointmentController extends Controller
             return redirect()
                 ->route('tutor.show', $tutor->tutor_id)
                 ->with('success', 'ส่งคำขอจองสำเร็จแล้ว');
-        });
+        }, 3);
     }
 
     // ดูรายละเอียดนัดหมาย

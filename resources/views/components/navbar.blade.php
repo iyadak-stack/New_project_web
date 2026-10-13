@@ -1,7 +1,7 @@
 <x-logout-confirm />
 @php
-    // เช็กบทบาทจาก Session ก่อน ถ้าไม่มีให้เช็กจากคอลัมน์ current_role ของผู้ใช้ หรือ default เป็น 'student'
-    $currentRole = session('active_role', Auth::user()?->current_role ?? 'student');
+    // อ่านบทบาทจริงจากบัญชี ให้ตรงกับหน้าแรกและการตรวจสิทธิ์ใน Controller
+    $currentRole = Auth::user()?->current_role ?? 'student';
 @endphp
 
 @if (Auth::guest())
@@ -192,3 +192,14 @@
         </nav>
     </header>
 @endif
+
+@auth
+    <script>
+        // กดย้อนกลับอาจได้ HTML เก่าจากแคช ให้โหลดใหม่เพื่ออ่านบทบาทล่าสุด
+        window.addEventListener('pageshow', function (event) {
+            if (event.persisted) {
+                window.location.reload();
+            }
+        });
+    </script>
+@endauth

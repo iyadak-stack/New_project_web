@@ -33,6 +33,10 @@ class DatabaseSeeder extends Seeder
             AccountSeeder::class,
             TutorProfilePhotoSeeder::class,
             TutorSeeder::class,
+            StudentSeeder::class,
+            ReportSeeder::class,
+            CompletedLessonSeeder::class,
+            ReviewSeeder::class,
         ]);
     }
 }

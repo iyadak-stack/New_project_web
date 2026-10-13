@@ -55,6 +55,35 @@ class RoleSwitchTest extends TestCase
         $this->get(route('tutor.profile.edit'))->assertOk();
     }
 
+    public function test_switching_from_a_tutor_profile_keeps_the_selected_role_on_home(): void
+    {
+        $user = User::where('email', 'tutor1.demo@example.com')->firstOrFail();
+        $user->tutorProfile->update(['approval_status' => 'approved']);
+        $user->update(['current_role' => 'student']);
+
+        $profileUrl = route('tutor.show', $user->tutorProfile->tutor_id);
+        $this->actingAs($user)->get($profileUrl)->assertOk()->assertDontSee('window.history.back()', false);
+
+        // เริ่มจากหน้าโปรไฟล์ แล้วสลับบทบาท ต้องไปหน้าหลักของติวเตอร์
+        $this->from($profileUrl)->post(route('role.switch'), ['role' => 'tutor'])
+            ->assertRedirect(route('home'))
+            ->assertSessionHas('active_role', 'tutor');
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertViewIs('domains.tutor-profile.tutor.tutor')
+            ->assertSee('วิชาของฉัน')
+            ->assertSee('event.persisted', false);
+        $this->assertSame('tutor', $user->fresh()->current_role);
+
+        // สลับกลับก็ต้องอ่านบทบาทใหม่ ไม่แสดง Dashboard ของติวเตอร์ค้างอยู่
+        $this->from($profileUrl)->post(route('role.switch'), ['role' => 'student'])
+            ->assertRedirect(route('home'));
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertViewIs('domains.tutor-profile.student.student');
+        $this->assertSame('student', $user->fresh()->current_role);
+    }
+
     public function test_tutor_registration_sends_pending_request_and_student_registration_does_not(): void
     {
         $this->post(route('register'), $this->applicationData() + ['role' => 'tutor', 'email' => 'newtutor@example.com',

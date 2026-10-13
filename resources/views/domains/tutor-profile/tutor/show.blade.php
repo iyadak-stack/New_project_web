@@ -29,7 +29,8 @@
 
         <!-- ปุ่มย้อนกลับ -->
         <div style="margin-bottom: 20px;">
-            <button type="button" onclick="window.history.back()" style="background: #ffffff; border: 1px solid #e2e8f0; color: #64748b; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 500; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            {{-- เปิดหน้าหลักใหม่ เพื่อให้ใช้บทบาทล่าสุดหลังสลับ role --}}
+            <button type="button" onclick="window.location.href='{{ route('home') }}'" style="background: #ffffff; border: 1px solid #e2e8f0; color: #64748b; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 500; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                 ← ย้อนกลับ
             </button>
         </div>

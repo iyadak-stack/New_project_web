@@ -1,31 +1,52 @@
-<x-tutor-page title="จัดการวันเวลาว่าง">
-    <a href="{{ route('tutor.profile') }}">กลับหน้าติวเตอร์</a>
-    <form class="card p-3 my-3" method="POST" action="{{ route('availabilities.store') }}">
+@extends('domains.scheduling.layout')
+
+@section('title', 'จัดการเวลาว่าง')
+
+@section('content')
+    <div class="welcome-box">
+        <h1>จัดการเวลาว่าง</h1>
+        <p>เพิ่มช่วงเวลาที่คุณสะดวก เพื่อใช้ค้นหาเวลาว่างตรงกัน</p>
+    </div>
+    @if (session('success'))
+        <p class="alert alert-success" role="status">{{ session('success') }}</p>
+    @endif
+    @if ($errors->any())
+        <div class="pe-errors" role="alert">
+            <ul>
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+    <form class="detail-card" method="POST" action="{{ route('availabilities.store') }}">
         @csrf
-        <h2 class="h5">เพิ่มช่วงเวลาสอน</h2>
-        <label>
-            เริ่ม
-            <input class="form-control" type="datetime-local" name="start_datetime" value="{{ old('start_datetime') }}" required>
-        </label>
-        <label>
-            สิ้นสุด
-            <input class="form-control" type="datetime-local" name="end_datetime" value="{{ old('end_datetime') }}" required>
-        </label>
-        <button class="btn btn-primary mt-3">เพิ่มเวลาสอน</button>
+        <h2 class="card-title">เพิ่มเวลาว่าง</h2>
+        <div class="form-group">
+            <label for="start_datetime">เริ่ม</label>
+            <input id="start_datetime" class="form-control" type="datetime-local" name="start_datetime" value="{{ old('start_datetime') }}" required>
+        </div>
+        <div class="form-group">
+            <label for="end_datetime">สิ้นสุด</label>
+            <input id="end_datetime" class="form-control" type="datetime-local" name="end_datetime" value="{{ old('end_datetime') }}" required>
+        </div>
+        <button class="pe-save" type="submit">เพิ่มเวลาว่าง</button>
     </form>
-    @forelse($availabilities as $slot)
-        <div class="card p-3 mb-2">
-            <p>{{ $slot->start_datetime->format('d/m/Y H:i') }}–{{ $slot->end_datetime->format('d/m/Y H:i') }}</p>
-            <div class="d-flex gap-2">
-                <a class="btn btn-outline-primary" href="{{ route('availabilities.edit',$slot) }}">แก้ไข</a>
-                <form method="POST" action="{{ route('availabilities.destroy',$slot) }}">
+    <h2 class="card-title">เวลาว่างของฉัน</h2>
+    @forelse ($availabilities as $slot)
+        <div class="detail-card">
+            <p>{{ $slot->start_datetime->format('d/m/Y H:i') }} – {{ $slot->end_datetime->format('d/m/Y H:i') }}</p>
+            <div class="pe-actions">
+                <a class="home-card-button" href="{{ route('availabilities.edit', $slot) }}">แก้ไข</a>
+                <form method="POST" action="{{ route('availabilities.destroy', $slot) }}">
                     @csrf
                     @method('DELETE')
-                    <button class="btn btn-outline-danger">ลบ</button>
+                    <button class="btn pe-cancel" type="submit">ลบ</button>
                 </form>
             </div>
         </div>
     @empty
-        <p>ยังไม่มีเวลาสอน</p>
+        <div class="detail-card"><p class="empty-text">ยังไม่มีเวลาว่าง</p></div>
     @endforelse
-</x-tutor-page>
+    <a class="btn-back" href="{{ route('home') }}">← กลับหน้าหลัก</a>
+@endsection

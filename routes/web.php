@@ -133,19 +133,17 @@ Route::middleware(['auth', 'active'])->group(function () {
     // ตารางเวลาและความพร้อม (Availability & Schedule Check)
     // =========================
 
-    Route::middleware('role:tutor')->group(function () {
-        Route::get('/availabilities', [AvailabilityController::class, 'index'])->name('availabilities.index');
-        Route::post('/availabilities', [AvailabilityController::class, 'store'])->name('availabilities.store');
-        Route::get('/availabilities/history', [AvailabilityController::class, 'history'])->name('availabilities.history');
-        Route::get('/availabilities/{availability}/edit', [AvailabilityController::class, 'edit'])->name('availabilities.edit');
-        Route::put('/availabilities/{availability}', [AvailabilityController::class, 'update'])->name('availabilities.update');
-        Route::delete('/availabilities/{availability}', [AvailabilityController::class, 'destroy'])->name('availabilities.destroy');
-
-    });
+    Route::get('/availabilities', [AvailabilityController::class, 'index'])->name('availabilities.index');
+    Route::post('/availabilities', [AvailabilityController::class, 'store'])->name('availabilities.store');
+    Route::get('/availabilities/history', [AvailabilityController::class, 'history'])->name('availabilities.history');
+    Route::get('/availabilities/{availability}/edit', [AvailabilityController::class, 'edit'])->name('availabilities.edit');
+    Route::put('/availabilities/{availability}', [AvailabilityController::class, 'update'])->name('availabilities.update');
+    Route::delete('/availabilities/{availability}', [AvailabilityController::class, 'destroy'])->name('availabilities.destroy');
 
     Route::get('/schedule/check', [CheckScheduleController::class, 'index'])->name('schedule.check');
     Route::get('/schedule/history', [CheckScheduleController::class, 'history'])->name('schedule.history');
     Route::get('/schedule/booking', [CheckScheduleController::class, 'booking'])->name('schedule.booking');
+    Route::get('/schedule/availability', [CheckScheduleController::class, 'availability'])->name('schedule.availability');
     Route::post('/schedule/check', [CheckScheduleController::class, 'check'])->name('schedule.check.results');
 
     // =========================

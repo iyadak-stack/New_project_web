@@ -12,8 +12,8 @@ class LearningHistoryService
 {
     public function forUser(string $userId): Collection
     {
-        $studentIds = StudentProfile::query()->where('user_id', $userId)->toBase()->pluck('id');
-        $tutorIds = TutorProfile::query()->where('user_id', $userId)->toBase()->pluck('id');
+        $studentIds = StudentProfile::query()->where('user_id', $userId)->toBase()->pluck('id')->push($userId);
+        $tutorIds = TutorProfile::query()->where('Users_user_id', $userId)->toBase()->pluck('tutor_id');
 
         return Appointment::query()
             ->with('subject')

@@ -2,11 +2,9 @@
 
 namespace App\Domains\Auth\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Domains\TutorProfile\Models\StudentProfile;
-use App\Domains\TutorProfile\Models\TutorProfile;
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 
 class RoleController extends Controller
 {
@@ -20,19 +18,10 @@ class RoleController extends Controller
         $role = $validated['role'];
 
         if ($role === 'tutor') {
-            // สร้าง TutorProfile อัตโนมัติหากยังไม่มีใน Database
-            TutorProfile::firstOrCreate(
-                ['Users_user_id' => $user->user_id],
-                [
-                    'tutor_id' => 'TUT-' . strtoupper(Str::random(8)),
-                    'bio' => '',
-                    'experience_years' => 0,
-                    'total_teaching_seconds' => 0,
-                    'average_rating' => 0,
-                    'teaching_mode' => 'online',
-                ]
-            );
-            $user->load('tutorProfile');
+            // ยังไม่อนุมัติ: ให้กรอกใบสมัครก่อน และยังใช้บทบาทนักเรียน
+            if ($user->tutorProfile()->first()?->approval_status !== 'approved') {
+                return redirect()->route('tutor.application.index');
+            }
         }
 
         if ($role === 'student') {
@@ -42,13 +31,19 @@ class RoleController extends Controller
             $user->load('studentProfile');
         }
 
+        // บันทึกลง Database
         $user->current_role = $role;
         $user->save();
         $user->refresh();
 
-        return back()->with(
-            'success',
-            'Switched to ' . ucfirst($role) . ' mode.'
-        );
+        // บันทึก Role ปัจจุบันลง Session เพื่อให้ Navbar เช็กค่าได้ตลอดทุกหน้า
+        session(['active_role' => $role]);
+
+        $message = $role === 'tutor'
+            ? 'สลับเป็นโหมดติวเตอร์เรียบร้อยแล้ว'
+            : 'สลับเป็นโหมดนักเรียนเรียบร้อยแล้ว';
+
+        // เปิดหน้าแรกใหม่ตามบทบาทที่บันทึกแล้ว ไม่ย้อนกลับไปหน้าเดิมของอีกบทบาท
+        return redirect()->route('home')->with('success', $message);
     }
 }

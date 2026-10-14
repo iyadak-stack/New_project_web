@@ -1,0 +1,53 @@
+/* ใช้ระฆังแบบเดียวกันใน Navbar นักเรียนและติวเตอร์ */
+.notification-bell {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background-color: #fdeee8;
+    color: #f48464;
+    text-decoration: none;
+}
+
+.notification-bell:hover,
+.notification-bell.active {
+    background-color: #fbe2d8;
+    color: #ee7355;
+}
+
+.notification-bell:focus-visible {
+    outline: 2px solid #f48464;
+    outline-offset: 3px;
+}
+
+/* ฝั่งแอดมินใช้สีฟ้าตามธีมเดิมของหน้าแอดมิน */
+.admin-body .notification-bell:hover,
+.admin-body .notification-bell.active {
+    background-color: #eaf6ff;
+    color: #0096ff;
+}
+
+/* วางจำนวนที่มุมขวาบน และซ่อนเมื่อไม่มีรายการที่ยังไม่อ่าน */
+.notification-count {
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 3px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #ffffff;
+    border-radius: 12px;
+    background-color: #f27b5e;
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1;
+}

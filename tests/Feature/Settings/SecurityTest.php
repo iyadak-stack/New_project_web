@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Settings;
 
-use App\Models\User;
+use App\Domains\Auth\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Fortify\Features;
@@ -102,7 +102,7 @@ class SecurityTest extends TestCase
         $component->assertSet('twoFactorEnabled', false);
 
         $this->assertDatabaseHas('users', [
-            'id' => $user->id,
+            'user_id' => $user->user_id,
             'two_factor_secret' => null,
             'two_factor_recovery_codes' => null,
         ]);

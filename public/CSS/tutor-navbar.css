@@ -1,7 +1,9 @@
 /* นาบบาร์ + แผงโปรไฟล์ สำหรับหน้าติวเตอร์ (หน้าตาเหมือนฝั่งนักเรียน)
    คัดมาจาก home.css โดยเปลี่ยน .navbar เป็น .pt-navbar เพื่อไม่ชนกับ .navbar ของ Bootstrap
    ใช้คู่กับ profile-card.css (โหลดต่อท้ายไฟล์นี้) */
-
+html {
+    overflow-y: scroll;
+}
 .pt-navbar,
 .pt-navbar .user-profile-wrapper {
     font-family: 'Prompt', sans-serif;

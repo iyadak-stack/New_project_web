@@ -4,6 +4,7 @@ namespace App\Domains\Auth\Actions\Fortify;
 
 use App\Domains\Auth\Concerns\PasswordValidationRules;
 use App\Domains\Auth\Models\User;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Laravel\Fortify\Contracts\ResetsUserPasswords;
 
@@ -23,7 +24,8 @@ class ResetUserPassword implements ResetsUserPasswords
         ])->validate();
 
         $user->forceFill([
-            'password' => $input['password'],
+            // ไม่เก็บรหัสผ่านเป็นข้อความธรรมดา
+            'password' => Hash::make($input['password']),
         ])->save();
     }
 }

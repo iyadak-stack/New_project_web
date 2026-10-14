@@ -26,4 +26,5 @@
             </form>
         </div>
     </div>
+    <x-logout-confirm />
 </x-layouts::auth>

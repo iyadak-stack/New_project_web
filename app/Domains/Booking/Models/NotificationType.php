@@ -10,8 +10,11 @@ class NotificationType extends Model
     use HasFactory;
 
     protected $table = 'notification_types';
+
     protected $primaryKey = 'notification_type_id';
+
     public $incrementing = false;
+
     protected $keyType = 'string';
 
     protected $fillable = [

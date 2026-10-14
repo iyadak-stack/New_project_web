@@ -37,3 +37,4 @@
         </flux:menu.radio.group>
     </flux:menu>
 </flux:dropdown>
+<x-logout-confirm />

@@ -6,8 +6,10 @@ namespace App\Providers;
 use App\Domains\Auth\Actions\Fortify\CreateNewUser;
 /* @end-chisel-registration */
 use App\Domains\Auth\Actions\Fortify\ResetUserPassword;
+use App\Domains\Auth\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
@@ -30,6 +32,13 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // ตรวจสถานะบัญชีและรหัสผ่านก่อนเข้าสู่ขั้นตอนล็อกอินของ Fortify
+        Fortify::authenticateUsing(function ($request) {
+            $user = User::where('email', $request->input('email'))->first();
+
+            return $user && $user->is_active && Hash::check($request->input('password'), $user->password)
+                ? $user : null;
+        });
         $this->configureActions();
         $this->configureViews();
         $this->configureRateLimiting();
@@ -42,17 +51,27 @@ class FortifyServiceProvider extends ServiceProvider
     private function configureResponses(): void
     {
         // เมื่อ Login สำเร็จ ให้ Redirect กลับหน้าหลัก (/)
-        $this->app->instance(LoginResponse::class, new class implements LoginResponse {
+        $this->app->instance(LoginResponse::class, new class implements LoginResponse
+        {
             public function toResponse($request)
             {
+                if ($request->user()->role === 'admin' || $request->user()->current_role === 'admin') {
+                    return redirect()->route('admin.dashboard');
+                }
+
                 return redirect('/');
             }
         });
 
         // เมื่อ Register สำเร็จ ให้ Redirect กลับหน้าหลัก (/)
-        $this->app->instance(RegisterResponse::class, new class implements RegisterResponse {
+        $this->app->instance(RegisterResponse::class, new class implements RegisterResponse
+        {
             public function toResponse($request)
             {
+                if ($request->user()->tutorProfile?->approval_status === 'pending') {
+                    return redirect()->route('tutor.application.index');
+                }
+
                 return redirect('/');
             }
         });

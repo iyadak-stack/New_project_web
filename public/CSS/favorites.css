@@ -1,0 +1,279 @@
+/* แยก CSS ของหน้านี้ เพื่อแก้ไขง่ายและไม่กระทบการ์ดในหน้าอื่น */
+.favorites-body {
+    background-color: #ffffff;
+    color: #243447;
+}
+.favorites-page {
+    max-width: 1100px;
+    margin: 30px auto 60px;
+    padding: 0 24px;
+}
+
+/* เน้นเมนูรายการโปรด รองรับทั้ง URL /favorites และ /tutors/favorites */
+.favorites-body .menu-btn[href$="/favorites"] {
+    background: #fdeee8;
+    border-color: #f6cfc2;
+    color: #b84d35;
+}
+
+/* ค่าของ Banner ตามโจทย์ */
+.favorites-banner {
+    background-color: #fdeee8;
+    border: 1px solid #f6cfc2;
+    border-radius: 16px;
+    padding: 30px 32px;
+    margin-bottom: 28px;
+}
+.favorites-banner h1 {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0 0 8px;
+}
+.favorites-banner p {
+    font-size: 13px;
+    color: #657080;
+    margin: 0;
+    line-height: 1.8;
+}
+.favorites-message {
+    padding: 14px;
+    margin-bottom: 20px;
+    border-radius: 10px;
+    background: #edf7f0;
+    color: #326447;
+    font-size: 13px;
+}
+.favorites-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+.favorites-summary h2 {
+    font-size: 16px;
+    margin: 0 0 6px;
+    font-weight: 600;
+}
+.favorites-summary h2 span {
+    color: #b84d35;
+    margin-left: 8px;
+}
+.favorites-summary p, .favorites-order {
+    font-size: 13px;
+    color: #657080;
+    margin: 0;
+}
+.favorites-list {
+    display: grid;
+    gap: 16px;
+}
+.favorite-card {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 16px 20px;
+    background: #fff;
+    border: 1px solid #f0d9d0;
+    border-radius: 16px;
+    box-shadow: 0 4px 16px rgba(76, 48, 35, .03);
+}
+.favorite-details {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    flex: 1;
+    min-width: 0;
+}
+
+/* รูปและตัวอักษรแทนรูป ใช้มุมมน 10px เหมือนกัน */
+.favorite-avatar {
+    width: 80px;
+    height: 90px;
+    border-radius: 10px;
+    overflow: hidden;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fdeee8;
+    color: #b84d35;
+    font-size: 30px;
+    font-weight: 600;
+}
+.favorite-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+}
+.favorite-info {
+    min-width: 0;
+}
+.favorite-info h3 {
+    font-size: 16px;
+    margin: 0 0 6px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+.favorite-subjects {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+    font-size: 13px;
+    color: #657080;
+}
+.favorite-rating {
+    font-size: 13px;
+    color: #657080;
+    margin: 6px 0;
+}
+.favorite-rating span {
+    color: #b57a09;
+}
+.favorite-bio {
+    font-size: 13px;
+    color: #576477;
+    line-height: 1.8;
+    margin: 0 0 8px;
+    overflow-wrap: anywhere;
+}
+.favorite-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.favorite-tags span {
+    font-size: 12px;
+    padding: 5px 12px;
+    background: #f2f5f8;
+    border-radius: 8px;
+    color: #526174;
+}
+.favorite-side {
+    width: 250px;
+    flex-shrink: 0;
+}
+.favorite-experience {
+    border-left: 3px solid #e07a5f;
+    background: #fff7f3;
+    border-radius: 0 10px 10px 0;
+    padding: 10px 14px;
+    margin-bottom: 10px;
+}
+.experience-label {
+    font-size: 13px;
+    color: #657080;
+}
+.favorite-experience p {
+    margin: 3px 0;
+    font-size: 13px;
+    color: #e07a5f;
+}
+.favorite-experience strong {
+    font-size: 24px;
+    font-weight: 600;
+}
+.experience-note {
+    font-size: 11px;
+    color: #657080;
+}
+.favorite-experience .experience-new {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 8px 0;
+}
+.favorite-profile-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 9px 16px;
+    border-radius: 20px;
+    background: #e07a5f;
+    color: #fff;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    transition: .2s;
+}
+.favorite-profile-link:hover {
+    background: #ae432b;
+}
+.favorite-profile-link:focus-visible {
+    outline: 3px solid #243447;
+    outline-offset: 3px;
+}
+.favorites-empty {
+    background: #fff;
+    border: 1px dashed #f6cfc2;
+    border-radius: 16px;
+    text-align: center;
+    padding: 48px 20px;
+}
+.empty-heart {
+    color: #c9563c;
+    font-size: 44px;
+}
+.favorites-empty h3 {
+    font-size: 18px;
+    margin: 12px 0 8px;
+}
+.favorites-empty p {
+    font-size: 13px;
+    color: #657080;
+    margin: 0;
+    line-height: 1.8;
+}
+
+/* เปิดเมนูโปรไฟล์เดิมด้วย CSS เมื่อคลิกหรือใช้ Tab เข้ามาในเมนู */
+.favorites-body .user-profile-wrapper:focus-within .profile-card-dropdown {
+    display: block;
+}
+
+/* จอเล็กเปลี่ยนการ์ดเป็นแนวตั้ง เพื่อให้อ่านง่ายและไม่ล้นจอ */
+@media (max-width: 900px) {
+    .favorites-body .navbar, .favorites-body .pt-navbar {
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+    .favorites-body .menu {
+        flex-wrap: wrap;
+    }
+    .favorite-card {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 20px;
+    }
+    .favorite-side {
+        width: 100%;
+    }
+}
+@media (max-width: 576px) {
+    .favorites-page {
+        margin-top: 20px;
+        padding: 0 16px;
+    }
+    .favorites-banner {
+        padding: 24px 20px;
+    }
+    .favorites-summary {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .favorite-details {
+        gap: 14px;
+    }
+    .favorite-avatar {
+        width: 60px;
+        height: 68px;
+        font-size: 26px;
+    }
+    .favorite-info h3 {
+        font-size: 16px;
+    }
+    .favorites-body .search-box {
+        max-width: 100%;
+    }
+}

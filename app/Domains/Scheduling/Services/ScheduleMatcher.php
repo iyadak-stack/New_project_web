@@ -30,6 +30,20 @@ class ScheduleMatcher
             }
         }
 
+        usort($sharedTimes, fn ($first, $second) => $first['start']->getTimestamp() <=> $second['start']->getTimestamp());
+        $mergedTimes = [];
+        foreach ($sharedTimes as $time) {
+            $lastIndex = count($mergedTimes) - 1;
+            if ($lastIndex >= 0 && $time['start']->lessThanOrEqualTo($mergedTimes[$lastIndex]['end'])) {
+                if ($time['end']->greaterThan($mergedTimes[$lastIndex]['end'])) {
+                    $mergedTimes[$lastIndex]['end'] = $time['end'];
+                }
+            } else {
+                $mergedTimes[] = $time;
+            }
+        }
+        $sharedTimes = $mergedTimes;
+
         foreach ($bookedTimes as $appointment) {
             $bookedStart = Carbon::parse($appointment->start_datetime);
             $bookedEnd = Carbon::parse($appointment->end_datetime);

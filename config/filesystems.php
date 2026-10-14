@@ -33,6 +33,8 @@ return [
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
+            // แยก URL ไฟล์ private ไม่ให้ทับ /storage ของรูปโปรไฟล์ public
+            'url' => rtrim((string) env('APP_URL', 'http://localhost'), '/').'/private-storage',
             'serve' => true,
             'throw' => false,
             'report' => false,

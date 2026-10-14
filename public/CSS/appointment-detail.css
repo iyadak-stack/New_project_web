@@ -1,0 +1,394 @@
+/* ตกแต่งเฉพาะหน้ารายละเอียดนัดหมาย ไม่กระทบ schedule/availability */
+:root {
+    --primary-orange: #E87A5D;
+    --primary-orange-hover: #D6694C;
+    --light-orange-bg: #FFF3ED;
+    --text-dark: #2B2B2B;
+    --text-muted: #8C8C8C;
+}
+
+.appointment-back {
+    margin-bottom: 20px;
+}
+
+.appointment-detail-card {
+    padding: 28px;
+    background: #ffffff;
+    border: 1px solid #f0f0f0;
+    border-radius: 20px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
+}
+
+.appointment-detail-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding-bottom: 22px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.appointment-detail-header > .booking-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background-color: var(--light-orange-bg);
+    color: var(--primary-orange);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+}
+
+.appointment-detail-title {
+    flex: 1;
+}
+
+.appointment-detail-title h1 {
+    margin: 0 0 4px;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+.appointment-detail-title p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.appointment-header-status.confirmed {
+    background: #e6f4ea;
+    color: #137333;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* dl แสดงเป็นสองคอลัมน์: ชื่อข้อมูลและรายละเอียด */
+.appointment-detail-rows {
+    display: grid;
+    grid-template-columns: 40% 60%;
+    gap: 18px 0;
+    margin: 0 0 24px;
+}
+
+.appointment-detail-rows dt {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    color: var(--text-muted);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.appointment-detail-rows dt .booking-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: #ebf3fa;
+    color: #3182ce;
+    font-size: 15px;
+}
+
+.appointment-detail-rows dd {
+    align-self: center;
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-dark);
+    overflow-wrap: anywhere;
+}
+
+.appointment-detail-rows .booking-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.appointment-detail-card .booking-lesson {
+    margin-bottom: 20px;
+    background-color: #ebf5fb;
+    border-radius: 14px;
+    padding: 16px;
+}
+
+.appointment-profile-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+    padding: 9px 20px;
+    border: none;
+    border-radius: 20px;
+    background-color: var(--primary-orange);
+    color: #ffffff !important;
+    font-size: 13.5px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.appointment-profile-link:hover {
+    background-color: var(--primary-orange-hover);
+    color: #ffffff !important;
+    box-shadow: 0 2px 8px rgba(232, 122, 93, 0.25);
+}
+
+.appointment-edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid #f0f0f0;
+    border-radius: 16px;
+    background-color: #fafafa;
+}
+
+.appointment-edit-form h2 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin: 0;
+}
+
+.appointment-edit-form p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+/* โทนส้มเฉพาะรายละเอียดนัดหมายฝั่งติวเตอร์ */
+.booking-body.tutor-appointment-body {
+    background: #ffffff;
+}
+
+.tutor-appointment-body .appointment-detail-page {
+    max-width: 1100px;
+}
+
+.tutor-appointment-body .appointment-back {
+    border-color: #f0d9d0;
+    color: #c45c3b;
+    background: #ffffff;
+}
+
+.tutor-appointment-card {
+    border: 1px solid #f0d9d0;
+    border-radius: 20px;
+    padding: 28px 32px;
+    box-shadow: 0 6px 24px rgba(100, 60, 40, 0.04);
+}
+
+.tutor-appointment-card .appointment-detail-header {
+    border-color: #f6e5dd;
+}
+
+.tutor-appointment-card .appointment-detail-rows {
+    padding: 20px;
+    border: 1px solid #f6e5dd;
+    border-radius: 16px;
+    background: #fffdfc;
+    grid-template-columns: 36% 64%;
+}
+
+.tutor-appointment-card .appointment-detail-rows dt {
+    color: #8c746a;
+}
+
+.tutor-appointment-card .appointment-detail-rows dd {
+    padding-left: 24px;
+    border-left: 1px solid #f6e5dd;
+    font-weight: 400;
+}
+
+.tutor-appointment-card .booking-icon {
+    background: #fdeee8;
+    color: #ed805b;
+}
+
+.tutor-appointment-card .booking-status.pending {
+    background: #fdeee8;
+    color: #c45c3b;
+}
+
+.tutor-request-hint {
+    font-size: 13px;
+    color: #8c746a;
+    margin-bottom: 16px;
+}
+
+.tutor-room-panel,
+.tutor-notes-panel {
+    padding: 22px;
+    margin-bottom: 20px;
+    border-radius: 16px;
+}
+
+.tutor-room-panel {
+    background: #fff4ee;
+    border: 1px solid #f6e5dd;
+}
+
+.tutor-notes-panel {
+    background: #ffffff;
+    border: 1px solid #f0d9d0;
+}
+
+.tutor-panel-heading {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.tutor-appointment-card h2 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 8px;
+}
+
+.tutor-panel-heading p,
+.tutor-notes-panel p,
+.tutor-accept-panel p {
+    font-size: 13px;
+    color: #8c746a;
+    margin: 8px 0 16px;
+}
+
+.tutor-room-row {
+    display: grid;
+    grid-template-columns: 150px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.tutor-room-row label,
+.tutor-location-field label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+}
+
+.tutor-location-field {
+    padding-top: 18px;
+    border-top: 1px solid #f0d9d0;
+}
+
+.tutor-location-field label {
+    margin-bottom: 8px;
+}
+
+.tutor-appointment-card .form-control {
+    border: 1px solid #efd9ce;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 13px;
+}
+
+.tutor-appointment-card .form-control:focus {
+    border-color: #ed805b;
+    box-shadow: 0 0 0 3px rgba(237, 128, 91, 0.12);
+}
+
+.tutor-copy-button {
+    padding: 9px 14px;
+    border: 1px solid #f6cfc2;
+    border-radius: 24px;
+    background: #fdeee8;
+    color: #c45c3b;
+    font-size: 13px;
+}
+
+.tutor-request-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    width: 100%;
+    padding-top: 20px;
+    border-top: 1px solid #f6e5dd;
+}
+
+.tutor-accept-panel {
+    background: #fff4ee;
+    border-radius: 16px;
+    padding: 20px;
+}
+
+.tutor-accept-panel > .booking-icon {
+    margin-bottom: 12px;
+}
+
+.tutor-reject-panel {
+    padding: 12px 0;
+}
+
+.tutor-appointment-card .booking-button-primary {
+    background: #ed805b;
+    border: 1px solid transparent;
+    padding: 9px 16px;
+}
+
+.tutor-appointment-card .btn-reject-action {
+    background: #ed805b;
+    border: 1px solid transparent;
+    color: #ffffff;
+    padding: 9px 16px;
+    border-radius: 24px;
+}
+
+@media (max-width: 768px) {
+    .tutor-room-row,
+    .tutor-request-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .tutor-copy-button {
+        justify-self: start;
+    }
+}
+
+/* จอเล็ก */
+@media (max-width: 600px) {
+    .appointment-detail-card {
+        padding: 18px;
+    }
+
+    .appointment-detail-header {
+        flex-wrap: wrap;
+    }
+
+    .appointment-detail-rows {
+        grid-template-columns: 36% 64%;
+    }
+
+    .appointment-detail-rows dt {
+        gap: 8px;
+        font-size: 13px;
+    }
+
+    .tutor-appointment-card {
+        padding: 18px;
+    }
+
+    .tutor-appointment-card .appointment-detail-rows {
+        padding: 14px;
+        grid-template-columns: 40% 60%;
+    }
+
+    .tutor-appointment-card .appointment-detail-rows dd {
+        padding-left: 12px;
+    }
+
+    .tutor-room-panel,
+    .tutor-notes-panel {
+        padding: 16px;
+    }
+}

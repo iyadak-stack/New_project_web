@@ -14,7 +14,7 @@ class StoreAvailabilityRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'start_datetime' => ['required', 'date'],
+            'start_datetime' => ['required', 'date', 'after:now'],
             'end_datetime' => ['required', 'date', 'after:start_datetime'],
         ];
     }

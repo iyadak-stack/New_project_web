@@ -2,10 +2,10 @@
 
 namespace App\Domains\Reportreview\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Domains\Booking\Models\Appointment;
 use App\Domains\TutorProfile\Models\TutorProfile;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Review extends Model
 {
@@ -27,7 +27,8 @@ class Review extends Model
         'Tutor_profiles_tutor_id',
     ];
 
-    const DELETED_AT = 'deletedAt';
+    // ใช้คอลัมน์ soft delete ที่มีอยู่จริงในตาราง reviews
+    const DELETED_AT = 'deleted_at';
 
     public function appointment()
     {

@@ -97,5 +97,6 @@
         @endpersist
 
         @fluxScripts
+        <x-logout-confirm />
     </body>
 </html>

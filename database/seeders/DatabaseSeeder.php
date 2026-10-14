@@ -15,17 +15,30 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'first_name' => 'Test',
-            'last_name' => 'User',
-            'email' => 'test@example.com',
-        ]);
+        // สร้างเฉพาะเมื่อยังไม่มีอีเมลนี้ จึงรัน db:seed ซ้ำได้
+        // withTrashed ตรวจบัญชีที่ soft delete แล้วด้วย เพราะอีเมลยังต้องไม่ซ้ำ
+        // ข้อมูลจาก factory ใช้เฉพาะตอนสร้างใหม่ ไม่เขียนทับชื่อหรือรหัสผ่านเดิม
+        User::withTrashed()->firstOrCreate(
+            ['email' => 'test@example.com'],
+            User::factory()->raw([
+                // ไม่ให้อีเมลสุ่มจาก factory ทับอีเมลที่ใช้ค้นหา
+                'email' => 'test@example.com',
+                'first_name' => 'Test',
+                'last_name' => 'User',
+            ])
+        );
 
         // 🟢 เรียกใช้ SubjectSeeder ที่แยกไว้
         $this->call([
             SubjectSeeder::class,
+            ReportReasonSeeder::class,
+            AccountSeeder::class,
+            TutorProfilePhotoSeeder::class,
+            TutorSeeder::class,
+            StudentSeeder::class,
+            ReportSeeder::class,
+            CompletedLessonSeeder::class,
+            ReviewSeeder::class,
         ]);
     }
 }

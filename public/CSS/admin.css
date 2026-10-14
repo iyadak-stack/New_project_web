@@ -1,0 +1,663 @@
+/* สีและ Layout นี้ใช้เฉพาะหน้าแอดมิน แยกจากหน้าเดิมของผู้ใช้ */
+* {
+    box-sizing: border-box;
+}
+
+.admin-body {
+    margin: 0;
+    background: #fff;
+    color: #17324D;
+    font: 13px 'Prompt', sans-serif;
+}
+
+.admin-body input, .admin-body select, .admin-body button, .admin-body textarea {
+    font: inherit;
+}
+
+.admin-body a {
+    text-decoration: none;
+}
+
+/* เมนูด้านซ้ายของจอใหญ่ ยึดไว้กับขอบหน้าจอ */
+.admin-sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 235px;
+    padding: 32px 20px 20px;
+    border-right: 1px solid #D4EAFF;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+}
+
+.admin-logo {
+    display: block;
+    color: #0075C7;
+    font-size: 25px;
+    font-weight: 700;
+    letter-spacing: -.8px;
+}
+
+.admin-logo span {
+    display: block;
+    color: #60748B;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 3px;
+    margin-top: 4px;
+}
+
+.admin-menu-label {
+    font-size: 11px;
+    color: #60748B;
+    margin: 38px 12px 12px;
+}
+
+.admin-nav-link {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding: 13px 12px;
+    margin-bottom: 6px;
+    border-radius: 10px;
+    color: #60748B;
+    font-weight: 500;
+}
+
+.admin-nav-link:hover {
+    background: #EAF6FF;
+    color: #17324D;
+}
+
+.admin-nav-link.is-active {
+    background: #0096FF;
+    color: #072A44;
+}
+
+.nav-number {
+    font-size: 10px;
+    opacity: .85;
+}
+
+.admin-sidebar-bottom {
+    margin-top: auto;
+    border-top: 1px solid #D4EAFF;
+    padding-top: 12px;
+}
+
+.admin-sidebar-bottom p {
+    line-height: 1.9;
+    color: #60748B;
+}
+
+.admin-sidebar-bottom strong {
+    color: #17324D;
+    font-size: 14px;
+}
+
+.admin-workspace {
+    margin-left: 235px;
+}
+
+.admin-topbar {
+    height: 76px;
+    border-bottom: 1px solid #D4EAFF;
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #60748B;
+}
+
+.admin-account {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #17324D;
+}
+
+.admin-avatar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 35px;
+    height: 35px;
+    border-radius: 10px;
+    color: #005FA3;
+    background: #EAF6FF;
+    font-weight: 600;
+}
+
+.admin-page {
+    max-width: 1100px;
+    margin: 28px auto 60px;
+    padding: 0 28px;
+}
+
+/* กล่องหัวข้อแต่ละหน้า ใช้สีฟ้าอ่อนและหัวข้อ 22px */
+.admin-banner {
+    padding: 24px;
+    background: #EAF6FF;
+    border: 1px solid #D4EAFF;
+    border-radius: 16px;
+    margin-bottom: 24px;
+}
+
+.admin-eyebrow {
+    font-size: 10px;
+    color: #0071C1;
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+
+.admin-banner h1 {
+    font-size: 22px;
+    margin: 8px 0;
+    font-weight: 600;
+}
+
+.admin-banner p {
+    font-size: 13px;
+    margin: 0;
+    color: #60748B;
+    line-height: 1.8;
+}
+
+.admin-panel {
+    padding: 16px 20px;
+    border: 1px solid #D4EAFF;
+    border-radius: 16px;
+    margin-bottom: 18px;
+    background: #fff;
+}
+
+.admin-panel h2, .admin-section-heading h2 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.admin-panel p {
+    line-height: 1.8;
+}
+
+.admin-section-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.admin-section-heading h2 span {
+    font-size: 13px;
+    color: #60748B;
+    margin-left: 8px;
+    font-weight: 400;
+}
+
+.admin-section-heading p {
+    color: #60748B;
+    margin: 5px 0 0;
+}
+
+/* การ์ดตัวเลขสรุป: จอใหญ่ 3 คอลัมน์ จอเล็ก 2 คอลัมน์ */
+.admin-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.admin-stat {
+    padding: 20px;
+    border: 1px solid #D4EAFF;
+    border-radius: 16px;
+    color: #17324D;
+    transition: border-color .15s;
+}
+
+.admin-stat:hover {
+    border-color: #0096FF;
+}
+
+.admin-stat span {
+    display: block;
+    color: #60748B;
+}
+
+.admin-stat strong {
+    display: block;
+    margin: 12px 0 8px;
+    font-size: 30px;
+    font-weight: 600;
+}
+
+.admin-stat small {
+    color: #0071C1;
+    font-size: 11px;
+}
+
+.admin-filters {
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 16px 20px;
+    border: 1px solid #D4EAFF;
+    border-radius: 16px;
+    margin-bottom: 24px;
+    background: #FAFDFF;
+}
+
+.admin-filters label:first-child {
+    flex: 1;
+    min-width: 190px;
+}
+
+.admin-body label {
+    display: block;
+    color: #60748B;
+    font-size: 12px;
+}
+
+.admin-body input, .admin-body select, .admin-body textarea {
+    border: 1px solid #D4EAFF;
+    border-radius: 8px;
+    padding: 10px 12px;
+    background: #fff;
+    color: #17324D;
+    max-width: 100%;
+}
+
+.admin-body label input, .admin-body label select {
+    display: block;
+    margin-top: 6px;
+    width: 100%;
+}
+
+.admin-body input:focus, .admin-body select:focus, .admin-body textarea:focus {
+    outline: 2px solid #0096FF;
+    outline-offset: 2px;
+}
+
+.admin-button {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border: 1px solid #0096FF;
+    border-radius: 8px;
+    background: #0096FF;
+    color: #072A44;
+    cursor: pointer;
+    white-space: nowrap;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.admin-button:hover {
+    background: #72C4FF;
+    border-color: #72C4FF;
+}
+
+.admin-button.secondary {
+    background: #fff;
+    border-color: #D4EAFF;
+    color: #006BB6;
+}
+
+.admin-button.secondary:hover {
+    background: #EAF6FF;
+}
+
+.admin-button.danger {
+    background: #FFF2F2;
+    border-color: #F2CDCD;
+    color: #A53838;
+}
+
+.admin-button:focus-visible, .admin-body a:focus-visible {
+    outline: 2px solid #17324D;
+    outline-offset: 3px;
+}
+
+.admin-reset {
+    padding: 10px 0;
+    color: #60748B;
+    font-size: 12px;
+}
+
+.admin-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.admin-actions form {
+    margin: 0;
+}
+
+.admin-inline-form {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.admin-inline-form label {
+    flex: 1;
+}
+
+/* ถ้าตารางกว้างกว่าจอ ให้เลื่อนในกล่องแทนการดันทั้งหน้า */
+.admin-table-wrap {
+    overflow-x: auto;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.admin-table th {
+    padding: 12px 10px;
+    font-size: 11px;
+    color: #60748B;
+    font-weight: 500;
+    border-bottom: 1px solid #D4EAFF;
+    white-space: nowrap;
+    background: #FAFDFF;
+}
+
+.admin-table td {
+    padding: 16px 10px;
+    border-bottom: 1px solid #EDF5FC;
+    font-size: 12px;
+    vertical-align: middle;
+}
+
+.admin-table tr:last-child td {
+    border-bottom: 0;
+}
+
+.admin-table td strong {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.admin-table td small {
+    display: block;
+    color: #60748B;
+    font-size: 11px;
+    margin-top: 4px;
+}
+
+.admin-table input {
+    min-width: 180px;
+    width: 100%;
+}
+
+.admin-badge {
+    display: inline-block;
+    padding: 5px 10px;
+    font-size: 11px;
+    border-radius: 7px;
+    background: #EAF6FF;
+    color: #006BB6;
+    white-space: nowrap;
+}
+
+.admin-badge.green {
+    background: #EDF8F1;
+    color: #306344;
+}
+
+.admin-badge.red {
+    background: #FFF2F2;
+    color: #A53838;
+}
+
+.admin-muted {
+    color: #60748B;
+    font-size: 12px;
+}
+
+.admin-description {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    line-height: 1.9;
+    padding: 14px;
+    background: #F5FAFF;
+    border-radius: 10px;
+}
+
+.admin-report-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+}
+
+.admin-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 24px;
+    color: #60748B;
+}
+
+.admin-empty {
+    text-align: center;
+    padding: 36px !important;
+    color: #60748B;
+}
+
+.admin-alert {
+    padding: 14px 18px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    line-height: 1.8;
+}
+
+.admin-alert p {
+    margin: 0;
+}
+
+.admin-alert.success {
+    background: #EDF8F1;
+    color: #306344;
+}
+
+.admin-alert.error {
+    background: #FFF2F2;
+    color: #A53838;
+}
+
+.admin-subnav {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.admin-subnav a {
+    padding: 9px 14px;
+    border-radius: 8px;
+    color: #60748B;
+    border: 1px solid #D4EAFF;
+}
+
+.admin-subnav a.is-active {
+    color: #006BB6;
+    background: #EAF6FF;
+}
+
+.admin-two-columns {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.admin-profile {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.admin-profile-avatar {
+    width: 80px;
+    height: 90px;
+    border-radius: 10px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #EAF6FF;
+    color: #006BB6;
+    font-size: 28px;
+    flex-shrink: 0;
+}
+
+.admin-profile-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.admin-rating {
+    color: #8D6700 !important;
+}
+
+.admin-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* จอเล็กให้เมนูอยู่ด้านบน ไม่บังตารางหรือฟอร์ม */
+@media (max-width: 1000px) {
+    /* เมนูด้านซ้ายของจอใหญ่ ยึดไว้กับขอบหน้าจอ */
+.admin-sidebar {
+        width: 195px;
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    .admin-workspace {
+        margin-left: 195px;
+    }
+
+    .admin-page {
+        padding: 0 20px;
+    }
+
+    /* การ์ดตัวเลขสรุป: จอใหญ่ 3 คอลัมน์ จอเล็ก 2 คอลัมน์ */
+.admin-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+}
+@media (max-width: 700px) {
+    /* เมนูด้านซ้ายของจอใหญ่ ยึดไว้กับขอบหน้าจอ */
+.admin-sidebar {
+        position: static;
+        width: 100%;
+        padding: 20px 16px;
+        border-right: 0;
+        border-bottom: 1px solid #D4EAFF;
+    }
+
+    .admin-sidebar nav {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 4px;
+    }
+
+    .admin-menu-label {
+        margin: 18px 10px 10px;
+    }
+
+    .admin-sidebar-bottom {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-top: 8px;
+    }
+
+    .admin-workspace {
+        margin-left: 0;
+    }
+
+    .admin-topbar {
+        height: 58px;
+        padding: 0 16px;
+    }
+
+    .admin-page {
+        padding: 0 16px;
+        margin-top: 20px;
+    }
+
+    /* กล่องหัวข้อแต่ละหน้า ใช้สีฟ้าอ่อนและหัวข้อ 22px */
+.admin-banner {
+        padding: 20px;
+    }
+
+    /* การ์ดตัวเลขสรุป: จอใหญ่ 3 คอลัมน์ จอเล็ก 2 คอลัมน์ */
+.admin-stats {
+        gap: 10px;
+    }
+
+    .admin-stat {
+        padding: 16px;
+    }
+
+    .admin-stat strong {
+        font-size: 26px;
+    }
+
+    .admin-two-columns {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+
+    .admin-inline-form {
+        flex-wrap: wrap;
+    }
+
+    .admin-filters label {
+        flex: 1;
+        min-width: 140px;
+    }
+
+    .admin-filters label:first-child {
+        flex-basis: 100%;
+    }
+
+    .admin-report-footer .admin-actions {
+        width: 100%;
+    }
+
+    .admin-report-footer .admin-actions select {
+        flex: 1;
+    }
+
+}

@@ -10,6 +10,9 @@ body {
     background-color: #ffffff;
     color: #222;
 }
+html {
+    overflow-y: scroll;
+}
 
 /* ---------- Navbar ---------- */
 .navbar {
@@ -57,6 +60,7 @@ body {
 
 .menu {
     display: flex;
+    align-items: center;
     gap: 8px;
 }
 
@@ -100,6 +104,10 @@ body {
     margin: 0 0 6px;
     font-size: 22px;
     font-weight: 500;
+}
+
+.welcome-box h1 b{
+    color: #e07a5f;
 }
 
 .welcome-box p {

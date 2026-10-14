@@ -4,211 +4,143 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>การแจ้งเตือน - PeerTutor</title>
-
-    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ asset('css/home.css') }}?v={{ time() }}">
-    <link rel="stylesheet" href="{{ asset('css/tutor-navbar.css') }}?v={{ time() }}">
-    <link rel="stylesheet" href="{{ asset('css/profile-card.css') }}?v={{ time() }}">
-    <!-- ลิงก์ไฟล์ CSS แจ้งเตือนแยก -->
-    <link rel="stylesheet" href="{{ asset('css/notifications.css') }}?v={{ time() }}">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('CSS/home.css') }}">
+    <link rel="stylesheet" href="{{ asset('CSS/tutor-navbar.css') }}">
+    <link rel="stylesheet" href="{{ asset('CSS/profile-card.css') }}">
+    <link rel="stylesheet" href="{{ asset('CSS/notifications.css') }}">
+    <style>
+        .pt-confirm-overlay { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45); z-index: 10000; align-items: center; justify-content: center; padding: 16px; }
+        .pt-confirm-overlay.show { display: flex; }
+        .pt-confirm-box { background: #fff; border-radius: 16px; padding: 24px; width: 100%; max-width: 380px; box-shadow: 0 10px 30px rgba(0,0,0,.2); font-family: 'Prompt', sans-serif; }
+        .pt-confirm-title { margin: 0 0 8px; font-size: 18px; font-weight: 700; color: #1e293b; }
+        .pt-confirm-text { margin: 0 0 20px; font-size: 14px; color: #64748b; line-height: 1.5; }
+        .pt-confirm-actions { display: flex; gap: 8px; justify-content: flex-end; }
+        .pt-confirm-actions button { padding: 9px 18px; border-radius: 999px; font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+        .pt-btn-cancel { background: #fff; border: 1px solid #cbd5e1; color: #64748b; }
+        .pt-btn-ok { background: #ef4444; border: 1px solid #ef4444; color: #fff; }
+    </style>
 </head>
 <body>
-
-    <!-- Header / Navbar ด้านบน -->
-    <header class="pt-navbar">
-        <a href="{{ route('home') }}" class="logo">PeerTutor</a>
-
-        <form action="{{ route('tutor.search') }}" method="GET" class="search-box">
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="ค้นหาวิชา ติวเตอร์">
-            <button type="submit">ค้นหา</button>
+<x-navbar />
+<main class="notif-container">
+    @if (session('success'))<p role="status">{{ session('success') }}</p>@endif
+    <div class="notif-header">
+        <h1 class="notif-title">การแจ้งเตือน</h1>
+        @if ($notifications->isNotEmpty())
+        <form action="{{ route('notifications.read-all') }}" method="POST">
+            @csrf
+            <button type="submit" class="btn-mark-all">อ่านทั้งหมด</button>
         </form>
-
-        <nav class="menu">
-            <a href="{{ route('home') }}" class="menu-btn">หน้าแรก</a>
-            <a href="{{ route('tutor.ranking') }}" class="menu-btn">จัดอันดับติวเตอร์</a>
-            <a href="{{ route('notifications.index') }}" class="menu-btn active">แจ้งเตือน</a>
-
-            <!-- รูปโปรไฟล์วงกลม + Pop-over Card "โปรไฟล์ของฉัน" -->
-            <div class="user-profile-wrapper">
-                <button type="button" class="user-avatar-btn" id="toggleProfileBtn">
-                    @if (Auth::check() && Auth::user()->profile_picture)
-                        <img src="{{ asset('storage/' . Auth::user()->profile_picture) }}" alt="Profile" class="user-avatar-img">
-                    @else
-                        <div class="user-avatar-placeholder">
-                            {{ Auth::check() ? mb_substr(Auth::user()->first_name ?? Auth::user()->email, 0, 1) : 'G' }}
-                        </div>
+        @endif
+    </div>
+    <div class="notif-list">
+        @forelse ($notifications as $notification)
+            <article class="notif-card {{ $notification->is_read ? 'read' : 'unread' }}">
+                <div class="notif-icon icon-system" aria-hidden="true">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2a1 1 0 0 1 1 1v1.1A6 6 0 0 1 18 10v4l2 3v1H4v-1l2-3v-4a6 6 0 0 1 5-5.9V3a1 1 0 0 1 1-1Z" />
+                        <path d="M9 20h6a3 3 0 0 1-6 0Z" />
+                    </svg>
+                </div>
+                <div class="notif-body">
+                    <p class="notif-message">{{ $notification->message }}</p>
+                    <span class="notif-time">{{ $notification->notificationType?->type_name }}</span>
+                    <span class="notif-time">{{ $notification->created_at->timezone('Asia/Bangkok')->format('d/m/Y H:i') }}</span>
+                </div>
+                <div class="notif-actions">
+                    @if ($notification->NotificationType_notification_type_id === 'TUTORAPP01')
+                        <a class="btn-notif-action notif-details" href="{{ route(auth()->user()->role === 'admin' || auth()->user()->current_role === 'admin' ? 'admin.tutor-applications.index' : 'tutor.application.index') }}">ดูคำขอ</a>
+                    @elseif ($notification->NotificationType_notification_type_id === 'REPORT0001')
+                        @if (auth()->user()->role === 'admin' || auth()->user()->current_role === 'admin')
+                            <a class="btn-notif-action notif-details" href="{{ route('admin.reports.index') }}">ดูรายงาน</a>
+                        @endif
+                    @elseif (in_array($notification->NotificationType_notification_type_id, ['BOOKREQ001', 'BOOKANS001', 'TYPE01', 'TYPE02']))
+                        <a class="btn-notif-action notif-details" href="{{ route('appointments.index') }}">ดูนัดหมาย</a>
                     @endif
-                </button>
-
-                <!-- Pop-over Card -->
-                <div class="profile-card-dropdown" id="profileDropdown">
-                    @if (Auth::check())
-                        <div class="card-head">
-                            <div>
-                                <h3>โปรไฟล์ของฉัน</h3>
-                                <p>ดูข้อมูลส่วนตัว และตารางนัดหมายของคุณ</p>
-                            </div>
-                            <a href="{{ Auth::user()->current_role === 'tutor' ? route('tutor.profile.edit') : route('student.profile.edit') }}" class="btn-settings-icon" title="ตั้งค่าโปรไฟล์">⚙</a>
-                        </div>
-
-                        <!-- User Info -->
-                        <div class="user-info-box">
-                            <div class="user-info-inner">
-                                @if (Auth::user()->profile_picture)
-                                    <img src="{{ asset('storage/' . Auth::user()->profile_picture) }}" alt="Profile" class="info-avatar">
-                                @else
-                                    <div class="user-avatar-placeholder" style="width:48px; height:48px; border-radius:12px;">
-                                        {{ mb_substr(Auth::user()->first_name ?? Auth::user()->email, 0, 1) }}
-                                    </div>
-                                @endif
-
-                                <div class="info-details">
-                                    <h4>คุณ{{ Auth::user()->first_name }} {{ Auth::user()->last_name }}</h4>
-                                    <p>{{ Auth::user()->current_role === 'tutor' ? 'ติวเตอร์' : 'นักเรียน' }}</p>
-                                </div>
-                            </div>
-
-                            @if(Auth::user()->current_role === 'tutor')
-                                <a href="{{ route('tutor.profile.edit') }}" class="btn-edit-profile">แก้ไขโปรไฟล์</a>
-                            @else
-                                <a href="{{ route('student.profile.edit') }}" class="btn-edit-profile">แก้ไขโปรไฟล์</a>
-                            @endif
-                        </div>
-
-                        <!-- Role Switcher -->
-                        <div class="card-section-title">สลับบทบาท</div>
-                        <div class="role-grid">
-                            <form action="{{ route('role.switch') }}" method="POST" style="margin: 0; flex:1;">
-                                @csrf
-                                <input type="hidden" name="role" value="student">
-                                <button type="submit" class="role-card role-btn {{ Auth::user()->current_role !== 'tutor' ? 'active' : '' }}">
-                                    <h5>นักเรียน</h5>
-                                    <p>ค้นหาติวเตอร์ และจองเรียนตามตารางที่สะดวก</p>
-                                </button>
-                            </form>
-                            <form action="{{ route('role.switch') }}" method="POST" style="margin: 0; flex:1;">
-                                @csrf
-                                <input type="hidden" name="role" value="tutor">
-                                <button type="submit" class="role-card role-btn {{ Auth::user()->current_role === 'tutor' ? 'active' : '' }}">
-                                    <h5>ติวเตอร์</h5>
-                                    <p>เปิดรับเรียนและจัดการนัดหมายของนักเรียน</p>
-                                </button>
-                            </form>
-                        </div>
-
-                        <!-- Logout -->
-                        <form method="POST" action="{{ route('logout') }}" style="margin-top: 12px;">
+                    @if (! $notification->is_read)
+                        <form action="{{ route('notifications.read', $notification->notification_id) }}" method="POST">
                             @csrf
-                            <button type="submit" class="card-logout-btn">ออกจากระบบ</button>
+                            <button class="btn-notif-action notif-mark-read" type="submit">ทำเครื่องหมายว่าอ่านแล้ว</button>
                         </form>
+                    @else
+                        <span class="notif-read-status">✓ อ่านแล้ว</span>
                     @endif
+                    {{-- data-confirm ใช้เปิดป๊อปอัพยืนยันของเว็บเอง แทน confirm() ของเบราว์เซอร์ --}}
+                    <form action="{{ route('notifications.destroy', $notification->notification_id) }}" method="POST"
+                          data-confirm-title="ลบการแจ้งเตือน"
+                          data-confirm-text="ต้องการลบการแจ้งเตือนนี้ใช่ไหม? ลบแล้วจะกู้คืนไม่ได้">
+                        @csrf
+                        @method('DELETE')
+                        <button class="btn-delete" type="submit" aria-label="ลบการแจ้งเตือน">&times;</button>
+                    </form>
                 </div>
-            </div>
-        </nav>
-    </header>
+            </article>
+        @empty
+            <section class="empty-notif">
+                <div class="empty-notif-icon" aria-hidden="true">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2a1 1 0 0 1 1 1v1.1A6 6 0 0 1 18 10v4l2 3v1H4v-1l2-3v-4a6 6 0 0 1 5-5.9V3a1 1 0 0 1 1-1Z" />
+                        <path d="M9 20h6a3 3 0 0 1-6 0Z" />
+                    </svg>
+                </div>
+                <h2 class="empty-notif-title">ยังไม่มีการแจ้งเตือน</h2>
+                <p class="empty-notif-sub">เมื่อมีความคืบหน้าเกี่ยวกับนัดหมายหรือรายงาน ระบบจะแจ้งให้คุณทราบที่นี่</p>
+            </section>
+        @endforelse
+    </div>
+</main>
 
-    <!-- Main Notification Area -->
-    <main class="notif-container">
-
-        <!-- ปุ่มย้อนกลับ -->
-        <div class="notif-back-box">
-             <a href="{{ route('home') }}" style="background: #e07a5f; color: #ffffff; padding: 10px 24px; border-radius: 10px; text-decoration: none; font-size: 14px; font-weight: 600; display: inline-block;">
-                    ← กลับหน้าหลัก
-            </a>
+{{-- ป๊อปอัพยืนยัน --}}
+<div id="ptConfirm" class="pt-confirm-overlay" role="dialog" aria-modal="true" aria-labelledby="ptConfirmTitle">
+    <div class="pt-confirm-box">
+        <h2 id="ptConfirmTitle" class="pt-confirm-title"></h2>
+        <p id="ptConfirmText" class="pt-confirm-text"></p>
+        <div class="pt-confirm-actions">
+            <button type="button" class="pt-btn-cancel" id="ptConfirmCancel">ยกเลิก</button>
+            <button type="button" class="pt-btn-ok" id="ptConfirmOk">ลบ</button>
         </div>
+    </div>
+</div>
 
-        <div class="notif-header">
-            <h1 class="notif-title">
-                🔔 การแจ้งเตือน
-            </h1>
-            <button class="btn-mark-all">อ่านแล้วทั้งหมด</button>
-        </div>
+<script>
+    var profileButton = document.getElementById('toggleProfileBtn');
+    var profileMenu = document.getElementById('profileDropdown');
+    if (profileButton && profileMenu) {
+        profileButton.addEventListener('click', function () {
+            profileMenu.classList.toggle('show');
+        });
+    }
 
-        <div class="notif-list">
-            
-            <!-- ตัวอย่าง 1: ยืนยันการนัดหมาย (อ่านแล้ว) -->
-            <div class="notif-card">
-                <div class="notif-icon icon-confirmed">✓</div>
-                <div class="notif-body">
-                    <p class="notif-message">
-                        <strong>พี่SAKPHON</strong> ได้ยืนยันคำขอจองเรียนวิชา <strong>แคลคูลัส 1</strong> เรียบร้อยแล้ว
-                    </p>
-                    <span class="notif-time">10 นาทีที่แล้ว</span>
-                </div>
-                <div class="notif-actions">
-                    <a href="{{ route('appointments.index') }}" class="btn-notif-action">ดูตารางเรียน</a>
-                    <button class="btn-delete" title="ลบการแจ้งเตือน">&times;</button>
-                </div>
-            </div>
+    // ป๊อปอัพยืนยันก่อนส่งฟอร์มที่มี data-confirm-text
+    (function () {
+        var overlay = document.getElementById('ptConfirm');
+        var pendingForm = null;
 
-            <!-- ตัวอย่าง 2: คำขอจองใหม่ (ยังไม่อ่าน) -->
-            <div class="notif-card unread">
-                <div class="notif-icon icon-pending">📅</div>
-                <div class="notif-body">
-                    <p class="notif-message">
-                        คุณได้รับคำขอจองเรียนใหม่จาก <strong>คุณtub tim</strong> ในวิชา <strong>ฟิสิกส์ทั่วไป</strong>
-                    </p>
-                    <span class="notif-time">2 ชั่วโมงที่แล้ว</span>
-                </div>
-                <div class="notif-actions">
-                    <a href="{{ route('appointments.index') }}" class="btn-notif-action">ตอบรับคำขอ</a>
-                    <button class="btn-delete" title="ลบการแจ้งเตือน">&times;</button>
-                </div>
-            </div>
+        function close() { overlay.classList.remove('show'); pendingForm = null; }
 
-            <!-- ตัวอย่าง 3: แจ้งเตือนระบบ -->
-            <div class="notif-card">
-                <div class="notif-icon icon-system">📢</div>
-                <div class="notif-body">
-                    <p class="notif-message">
-                        ยินดีด้วย! บัญชีติวเตอร์ของคุณได้รับการอนุมัติเรียบร้อยแล้ว
-                    </p>
-                    <span class="notif-time">เมื่อวานนี้</span>
-                </div>
-                <div class="notif-actions">
-                    <button class="btn-delete" title="ลบการแจ้งเตือน">&times;</button>
-                </div>
-            </div>
+        document.addEventListener('submit', function (e) {
+            var form = e.target;
+            if (!form.dataset || !form.dataset.confirmText) return;
+            e.preventDefault();
+            pendingForm = form;
+            document.getElementById('ptConfirmTitle').textContent = form.dataset.confirmTitle || 'ยืนยันการทำรายการ';
+            document.getElementById('ptConfirmText').textContent = form.dataset.confirmText;
+            overlay.classList.add('show');
+        });
 
-            <!-- Loop ดึงการแจ้งเตือนจริงจาก Database (ถ้ามี) -->
-            @if(isset($notifications) && $notifications->count() > 0)
-                @foreach($notifications as $notification)
-                    <div class="notif-card {{ $notification->read_at ? '' : 'unread' }}">
-                        <div class="notif-icon icon-system">🔔</div>
-                        <div class="notif-body">
-                            <p class="notif-message">{{ $notification->data['message'] ?? $notification->message }}</p>
-                            <span class="notif-time">{{ $notification->created_at->diffForHumans() }}</span>
-                        </div>
-                        <div class="notif-actions">
-                            <button class="btn-delete">&times;</button>
-                        </div>
-                    </div>
-                @endforeach
-            @endif
+        document.getElementById('ptConfirmCancel').addEventListener('click', close);
+        overlay.addEventListener('click', function (e) { if (e.target === overlay) close(); });
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
 
-        </div>
-
-    </main>
-
-    <!-- JS สำหรับ Pop-over Card Navbar -->
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const toggleBtn = document.getElementById('toggleProfileBtn');
-            const dropdown = document.getElementById('profileDropdown');
-
-            if (toggleBtn && dropdown) {
-                toggleBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    dropdown.classList.toggle('show');
-                });
-
-                document.addEventListener('click', (e) => {
-                    if (!dropdown.contains(e.target) && !toggleBtn.contains(e.target)) {
-                        dropdown.classList.remove('show');
-                    }
-                });
+        document.getElementById('ptConfirmOk').addEventListener('click', function () {
+            if (pendingForm) {
+                var f = pendingForm;
+                close();
+                f.submit(); // submit() ไม่เรียก event submit ซ้ำ จึงไม่วนลูป
             }
         });
-    </script>
+    })();
+</script>
 </body>
 </html>

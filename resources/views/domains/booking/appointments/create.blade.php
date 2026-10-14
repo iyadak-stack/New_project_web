@@ -7,8 +7,10 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="{{ asset('css/home.css') }}?v={{ time() }}">
-    <link rel="stylesheet" href="{{ asset('css/tutor-navbar.css') }}?v={{ time() }}">
+    {{-- ปกป้องแก้ให้: path เดิม css/home.css ต้องเป็น CSS/home.css ให้ตรงกับโฟลเดอร์บน Linux --}}
+    <link rel="stylesheet" href="{{ asset('CSS/home.css') }}?v={{ time() }}">
+    {{-- ปกป้องแก้ให้: path เดิม css/tutor-navbar.css ต้องเป็น CSS/tutor-navbar.css ให้ตรงกับโฟลเดอร์บน Linux --}}
+    <link rel="stylesheet" href="{{ asset('CSS/tutor-navbar.css') }}?v={{ time() }}">
     <!-- ลิงก์ไฟล์ CSS แยกของหน้าจองเรียน -->
     <link rel="stylesheet" href="{{ asset('css/create-appointment.css') }}?v={{ time() }}">
 </head>

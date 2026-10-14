@@ -35,8 +35,8 @@ class AvailabilityServiceTest extends TestCase
         });
 
         Schema::create('tutor_profiles', function (Blueprint $table): void {
-            $table->char('id', 10)->primary();
-            $table->char('user_id', 10);
+            $table->char('tutor_id', 10)->primary();
+            $table->char('Users_user_id', 10);
         });
 
         Schema::create('subjects', function (Blueprint $table): void {
@@ -81,7 +81,7 @@ class AvailabilityServiceTest extends TestCase
     public function test_it_uses_real_appointment_times_and_ignores_cancelled_appointments(): void
     {
         DB::table('student_profiles')->insert(['id' => 1, 'user_id' => 101]);
-        DB::table('tutor_profiles')->insert(['id' => 2, 'user_id' => 202]);
+        DB::table('tutor_profiles')->insert(['tutor_id' => 2, 'Users_user_id' => 202]);
 
         DB::table('availabilities')->insert([
             [
@@ -137,7 +137,7 @@ class AvailabilityServiceTest extends TestCase
     {
         $this->travelTo(Carbon::parse('2026-10-06 12:00:00'));
         DB::table('student_profiles')->insert(['id' => 1, 'user_id' => 101]);
-        DB::table('tutor_profiles')->insert(['id' => 2, 'user_id' => 101]);
+        DB::table('tutor_profiles')->insert(['tutor_id' => 2, 'Users_user_id' => 101]);
 
         foreach ([
             ['APP0000001', '1', '9', 'confirmed', '2026-10-05', null],
@@ -168,11 +168,12 @@ class AvailabilityServiceTest extends TestCase
 
     public function test_booking_rejects_student_and_tutor_conflicts_but_allows_adjacent_times(): void
     {
+        DB::table('subjects')->insert(['subject_id' => 'SUBJECT001', 'subject_name' => 'คณิตศาสตร์']);
         DB::table('student_profiles')->insert([
             ['id' => 1, 'user_id' => 101], ['id' => 3, 'user_id' => 303],
         ]);
         DB::table('tutor_profiles')->insert([
-            ['id' => 2, 'user_id' => 202], ['id' => 4, 'user_id' => 404],
+            ['tutor_id' => 2, 'Users_user_id' => 202], ['tutor_id' => 4, 'Users_user_id' => 404],
         ]);
 
         foreach ([101, 202, 303, 404] as $userId) {
@@ -236,10 +237,10 @@ class AvailabilityServiceTest extends TestCase
         $this->withoutVite();
         $this->travelTo(Carbon::parse('2026-10-06 12:00:00'));
         $user = new User;
-        $user->forceFill(['user_id' => 'USER000001', 'first_name' => 'Student', 'last_name' => 'Test', 'name' => 'Student Test', 'email' => 'student@example.test', 'current_role' => 'student']);
+        $user->forceFill(['user_id' => 'USER000001', 'first_name' => 'Student', 'last_name' => 'Test', 'name' => 'Student Test', 'email' => 'student@example.test', 'current_role' => 'student', 'is_active' => true]);
         $this->actingAs($user);
         DB::table('student_profiles')->insert(['id' => 'STUDENT001', 'user_id' => 'USER000001']);
-        DB::table('tutor_profiles')->insert(['id' => 'TUTOR00001', 'user_id' => 'USER000002']);
+        DB::table('tutor_profiles')->insert(['tutor_id' => 'TUTOR00001', 'Users_user_id' => 'USER000002']);
         DB::table('subjects')->insert(['subject_id' => 'SUBJECT001', 'subject_name' => 'คณิตศาสตร์']);
         DB::table('availabilities')->insert([
             'availability_id' => 'AVAIL00001', 'user_id' => 'USER000002',
@@ -276,7 +277,7 @@ class AvailabilityServiceTest extends TestCase
     public function test_matching_subtracts_bookings_even_when_the_user_switches_roles(): void
     {
         DB::table('student_profiles')->insert(['id' => 'STUDENT001', 'user_id' => 'USER000002']);
-        DB::table('tutor_profiles')->insert(['id' => 'TUTOR00001', 'user_id' => 'USER000001']);
+        DB::table('tutor_profiles')->insert(['tutor_id' => 'TUTOR00001', 'Users_user_id' => 'USER000001']);
         foreach (['USER000001', 'USER000002'] as $index => $userId) {
             DB::table('availabilities')->insert([
                 'availability_id' => 'AVAIL0000'.$index, 'user_id' => $userId,
@@ -299,11 +300,74 @@ class AvailabilityServiceTest extends TestCase
         app(AvailabilityService::class)->findSharedTimes('101', '202', Carbon::parse('2026-10-07 15:00'), Carbon::parse('2026-10-07 17:00'));
     }
 
+    public function test_booking_can_span_adjacent_availability_rows_through_the_service(): void
+    {
+        $this->travelTo(Carbon::parse('2026-10-13 12:00:00'));
+        DB::table('student_profiles')->insert(['id' => 'STUDENT001', 'user_id' => 'USER000001']);
+        DB::table('tutor_profiles')->insert(['tutor_id' => 'TUTOR00001', 'Users_user_id' => 'USER000002']);
+        DB::table('subjects')->insert(['subject_id' => 'SUBJECT001', 'subject_name' => 'คณิตศาสตร์']);
+        DB::table('availabilities')->insert([
+            ['availability_id' => 'AVAIL00001', 'user_id' => 'USER000001', 'start_datetime' => '2026-10-14 15:00:00', 'end_datetime' => '2026-10-14 17:00:00'],
+            ['availability_id' => 'AVAIL00002', 'user_id' => 'USER000002', 'start_datetime' => '2026-10-14 15:00:00', 'end_datetime' => '2026-10-14 16:00:00'],
+            ['availability_id' => 'AVAIL00003', 'user_id' => 'USER000002', 'start_datetime' => '2026-10-14 16:00:00', 'end_datetime' => '2026-10-14 17:00:00'],
+        ]);
+        $times = app(AvailabilityService::class)->resolveBookingTimes('USER000002', [
+            'start_datetime' => '2026-10-14 15:30:00',
+            'end_datetime' => '2026-10-14 16:30:00',
+        ]);
+        $this->assertSame(['start' => '2026-10-14 15:30:00', 'end' => '2026-10-14 16:30:00'], $times);
+        $appointment = app(ScheduleBookingService::class)->save([
+            'Appointment_id' => 'APP0000001', 'status' => 'pending',
+            'Subject_subject_id' => 'SUBJECT001',
+            'Student_profiles_student_id' => 'STUDENT001',
+            'Tutor_profiles_tutor_id' => 'TUTOR00001',
+            'start_datetime' => $times['start'], 'end_datetime' => $times['end'],
+        ]);
+        $this->assertSame('APP0000001', $appointment->getKey());
+        $this->assertSame(1, DB::table('appointments')->count());
+    }
+
+    public function test_booking_times_reject_a_gap_between_availability_rows(): void
+    {
+        $this->travelTo(Carbon::parse('2026-10-13 12:00:00'));
+        DB::table('availabilities')->insert([
+            ['availability_id' => 'AVAIL00001', 'user_id' => 'USER000002', 'start_datetime' => '2026-10-14 15:00:00', 'end_datetime' => '2026-10-14 16:00:00'],
+            ['availability_id' => 'AVAIL00002', 'user_id' => 'USER000002', 'start_datetime' => '2026-10-14 16:01:00', 'end_datetime' => '2026-10-14 17:00:00'],
+        ]);
+        $this->expectException(ValidationException::class);
+        app(AvailabilityService::class)->resolveBookingTimes('USER000002', [
+            'start_datetime' => '2026-10-14 15:30:00',
+            'end_datetime' => '2026-10-14 16:30:00',
+        ]);
+    }
+
+    public function test_tutor_service_returns_the_unbooked_remainder_and_keeps_cancelled_time_free(): void
+    {
+        $this->travelTo(Carbon::parse('2026-10-13 12:00:00'));
+        DB::table('tutor_profiles')->insert(['tutor_id' => 'TUTOR00001', 'Users_user_id' => 'USER000002']);
+        DB::table('availabilities')->insert([
+            'availability_id' => 'AVAIL00001', 'user_id' => 'USER000002',
+            'start_datetime' => '2026-10-14 15:00:00', 'end_datetime' => '2026-10-14 17:00:00',
+        ]);
+        DB::table('appointments')->insert([
+            ['Appointment_id' => 'APP0000001', 'status' => 'pending', 'Subject_subject_id' => 'SUBJECT001', 'Student_profiles_student_id' => 'STUDENT001', 'Tutor_profiles_tutor_id' => 'TUTOR00001', 'start_datetime' => '2026-10-14 15:00:00', 'end_datetime' => '2026-10-14 16:00:00'],
+            ['Appointment_id' => 'APP0000002', 'status' => 'cancelled', 'Subject_subject_id' => 'SUBJECT001', 'Student_profiles_student_id' => 'STUDENT002', 'Tutor_profiles_tutor_id' => 'TUTOR00001', 'start_datetime' => '2026-10-14 16:00:00', 'end_datetime' => '2026-10-14 17:00:00'],
+        ]);
+        $service = app(AvailabilityService::class);
+        $this->assertSame([['start' => '2026-10-14 16:00', 'end' => '2026-10-14 17:00']], $service->findTutorAvailableTimes('USER000002'));
+        $this->assertSame(['start' => '2026-10-14 16:01:00', 'end' => '2026-10-14 16:37:00'], $service->resolveBookingTimes('USER000002', [
+            'start_datetime' => '2026-10-14 16:01:00', 'end_datetime' => '2026-10-14 16:37:00',
+        ]));
+        $this->expectException(ValidationException::class);
+        $service->resolveBookingTimes('USER000002', ['availability_id' => 'AVAIL00001']);
+    }
+
     public function test_availability_crud_rejects_overlap_and_other_users_edits(): void
     {
         $this->withoutVite();
+        $this->travelTo(Carbon::parse('2026-10-06 12:00:00'));
         $user = new User;
-        $user->forceFill(['user_id' => 'USER000001', 'first_name' => 'Student', 'current_role' => 'student']);
+        $user->forceFill(['user_id' => 'USER000001', 'first_name' => 'Student', 'current_role' => 'student', 'is_active' => true]);
         $this->actingAs($user);
         $data = ['start_datetime' => '2026-10-07 15:00:00', 'end_datetime' => '2026-10-07 17:00:00'];
         $this->post(route('availabilities.store'), $data)->assertRedirect(route('availabilities.index'));
@@ -312,7 +376,7 @@ class AvailabilityServiceTest extends TestCase
         $this->put(route('availabilities.update', $id), array_replace($data, ['end_datetime' => '2026-10-07 18:00:00']))->assertRedirect();
         $this->assertSame('2026-10-07 18:00:00', DB::table('availabilities')->value('end_datetime'));
         $other = new User;
-        $other->forceFill(['user_id' => 'USER000002', 'first_name' => 'Other', 'current_role' => 'student']);
+        $other->forceFill(['user_id' => 'USER000002', 'first_name' => 'Other', 'current_role' => 'student', 'is_active' => true]);
         $this->actingAs($other);
         $this->get(route('availabilities.edit', $id))->assertForbidden();
         $this->put(route('availabilities.update', $id), $data)->assertForbidden();

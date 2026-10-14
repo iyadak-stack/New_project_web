@@ -144,7 +144,7 @@ class TutorProfileController extends Controller
         $request->validate([
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
-            'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
+            'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:2048'],
             'bio' => [$isApplication ? 'required' : 'nullable', 'string', 'max:3000'],
             'experience_years' => ['nullable', 'integer', 'min:0'],
             'teaching_mode' => [$isApplication ? 'required' : 'nullable', 'in:online,onsite,both'],
@@ -154,6 +154,13 @@ class TutorProfileController extends Controller
             'google_meet_link' => ['nullable', 'url', 'max:255'],
             'subjects' => [$isApplication ? 'required' : 'nullable', 'array', 'min:1'],
             'subjects.*' => ['string', 'distinct', 'exists:subjects,subject_id'],
+        ], [
+            'first_name.required' => 'กรุณากรอกชื่อ',
+            'last_name.required' => 'กรุณากรอกนามสกุล',
+            'avatar.image' => 'ไฟล์ที่เลือกต้องเป็นรูปภาพ',
+            'avatar.mimes' => 'รูปภาพต้องอยู่ในรูปแบบ jpeg, png, jpg, gif หรือ webp เท่านั้น',
+            'avatar.max' => 'รูปโปรไฟล์ต้องมีขนาดไม่เกิน 2 MB',
+            'avatar.uploaded' => 'อัปโหลดรูปไม่สำเร็จ ไฟล์อาจใหญ่เกินที่เซิร์ฟเวอร์รองรับ (เกิน 2 MB)',
         ]);
 
         // บันทึกโปรไฟล์และคำขอพร้อมกัน หากผิดพลาดให้ยกเลิกชุดนี้
